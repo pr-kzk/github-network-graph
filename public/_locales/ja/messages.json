@@ -1,0 +1,336 @@
+{
+  "ext_name": {
+    "message": "Git Graph for GitHub",
+    "description": "Extension display name shown in chrome://extensions and the toolbar."
+  },
+  "ext_description": {
+    "message": "GitHub のコミットネットワーク (フォーク含む) を専用タブで可視化。Manifest V3、リモートコード実行・テレメトリーなし。",
+    "description": "Extension description shown in the Chrome Web Store and chrome://extensions (must be 132 chars or less)."
+  },
+  "action_default_title": {
+    "message": "Git Graph for GitHub",
+    "description": "Tooltip shown when hovering the toolbar icon."
+  },
+  "popup_header_title": {
+    "message": "Git Graph for GitHub",
+    "description": "Popup header title."
+  },
+  "popup_header_subtitle": {
+    "message": "コミットグラフを可視化",
+    "description": "Popup header subtitle."
+  },
+  "popup_open_options": {
+    "message": "オプションを開く →",
+    "description": "Popup link that opens the options page."
+  },
+  "popup_launcher_title": {
+    "message": "Git Graph",
+    "description": "Title of the graph launcher card in the popup."
+  },
+  "popup_launcher_description": {
+    "message": "現在のリポジトリのコミットグラフを別タブで表示します。",
+    "description": "Description for the graph launcher card."
+  },
+  "popup_launcher_open_detected": {
+    "message": "$REPO$ を開く",
+    "description": "Button label for opening the detected repository.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "numpy/numpy"
+      }
+    }
+  },
+  "popup_launcher_not_on_github": {
+    "message": "GitHub のリポジトリページではないため、下に入力してください。",
+    "description": "Hint shown when the active tab is not a GitHub repository."
+  },
+  "popup_launcher_input_placeholder": {
+    "message": "owner/repo",
+    "description": "Placeholder for the manual owner/repo input."
+  },
+  "popup_launcher_submit": {
+    "message": "手入力で開く",
+    "description": "Submit button label for the manual repo input."
+  },
+  "popup_launcher_input_error": {
+    "message": "URL か \"owner/repo\" 形式で入力してください",
+    "description": "Validation error for invalid owner/repo input."
+  },
+  "popup_recent_title": {
+    "message": "最近開いたリポジトリ",
+    "description": "Heading for the recent repositories list in the popup."
+  },
+  "popup_recent_aria_label": {
+    "message": "最近開いたリポジトリ",
+    "description": "Accessible label for the recent repositories list."
+  },
+  "options_title": {
+    "message": "設定",
+    "description": "Options page main title."
+  },
+  "options_saved": {
+    "message": "保存しました",
+    "description": "Status text shown after settings are saved."
+  },
+  "options_mode_heading": {
+    "message": "Git Graph のデフォルト表示",
+    "description": "Heading for the default graph mode section."
+  },
+  "options_mode_description": {
+    "message": "グラフを新しく開いた時に使う初期モードです。グラフ画面のトグルでも一時的に切り替えられます。",
+    "description": "Description of the default graph mode setting."
+  },
+  "options_mode_legend": {
+    "message": "デフォルトモード",
+    "description": "Fieldset legend for the default mode radio group."
+  },
+  "options_mode_network_label": {
+    "message": "フォーク含む",
+    "description": "Radio label for the network (forks-inclusive) mode."
+  },
+  "options_mode_network_desc": {
+    "message": "本家リポジトリに加え、フォークからのコミットもグラフに表示します。",
+    "description": "Description of the network mode."
+  },
+  "options_mode_repo_only_label": {
+    "message": "本家のみ",
+    "description": "Radio label for the repo-only mode."
+  },
+  "options_mode_repo_only_desc": {
+    "message": "本家リポジトリのコミットのみを表示します（高速・軽量）。",
+    "description": "Description of the repo-only mode."
+  },
+  "relative_now": {
+    "message": "たった今",
+    "description": "Relative time: less than a minute ago."
+  },
+  "relative_minutes": {
+    "message": "$N$ 分前",
+    "description": "Relative time in minutes.",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "relative_hours": {
+    "message": "$N$ 時間前",
+    "description": "Relative time in hours.",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "relative_days": {
+    "message": "$N$ 日前",
+    "description": "Relative time in days.",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "relative_weeks": {
+    "message": "$N$ 週間前",
+    "description": "Relative time in weeks.",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "graph_header_brand": {
+    "message": "Git Graph",
+    "description": "Brand label in the graph page header."
+  },
+  "graph_mode_repo_only": {
+    "message": "本家のみ",
+    "description": "Mode toggle button: main repository only."
+  },
+  "graph_mode_network": {
+    "message": "フォーク含む",
+    "description": "Mode toggle button: include forks."
+  },
+  "graph_refresh": {
+    "message": "再取得",
+    "description": "Button label to refetch the current graph."
+  },
+  "graph_loading": {
+    "message": "読み込み中…",
+    "description": "Loading indicator for the initial graph fetch."
+  },
+  "graph_empty_commits": {
+    "message": "表示するコミットがありません。",
+    "description": "Empty state for a ready graph with zero commits."
+  },
+  "graph_repo_prompt_prefix": {
+    "message": "GitHub の URL または",
+    "description": "Prefix of the prompt asking the user to enter a repo (rendered before the monospace owner/repo sample)."
+  },
+  "graph_repo_prompt_suffix": {
+    "message": "を入力してください。",
+    "description": "Suffix of the prompt asking the user to enter a repo (rendered after the monospace owner/repo sample)."
+  },
+  "graph_footer_load_error": {
+    "message": "読み込みエラー: $MESSAGE$",
+    "description": "Footer row error when loading older commits fails.",
+    "placeholders": {
+      "message": {
+        "content": "$1",
+        "example": "HTTP 500"
+      }
+    }
+  },
+  "graph_footer_loading_more": {
+    "message": "古いコミットを読み込み中…",
+    "description": "Footer row text shown while older commits are being fetched."
+  },
+  "graph_footer_will_load_more": {
+    "message": "続きを読み込みます…",
+    "description": "Footer row text shown while waiting to load more."
+  },
+  "graph_footer_retry": {
+    "message": "再試行",
+    "description": "Retry button label in the graph footer row."
+  },
+  "graph_repoform_label": {
+    "message": "リポジトリ",
+    "description": "Label for the repository input in RepoForm."
+  },
+  "graph_repoform_placeholder": {
+    "message": "https://github.com/numpy/numpy または numpy/numpy",
+    "description": "Placeholder for the repository input in RepoForm."
+  },
+  "graph_repoform_submit": {
+    "message": "グラフを表示",
+    "description": "Submit button label for RepoForm."
+  },
+  "graph_repoform_error": {
+    "message": "GitHub の URL か \"owner/repo\" 形式で入力してください",
+    "description": "Validation error for invalid input in RepoForm."
+  },
+  "error_auth_heading": {
+    "message": "GitHub にログインしてください",
+    "description": "Heading shown for an authentication error."
+  },
+  "error_notfound_heading": {
+    "message": "リポジトリが見つかりません",
+    "description": "Heading shown when the repository is not found."
+  },
+  "error_network_heading": {
+    "message": "通信エラー",
+    "description": "Heading shown for a network error."
+  },
+  "error_empty_heading": {
+    "message": "まだコミットがありません",
+    "description": "Heading shown when the repository has no commits yet."
+  },
+  "error_shape_heading": {
+    "message": "GitHub の応答形式が変わった可能性があります",
+    "description": "Heading shown when the upstream response shape is unexpected."
+  },
+  "error_http_heading": {
+    "message": "HTTP エラー",
+    "description": "Heading shown for a generic HTTP error."
+  },
+  "error_unknown_heading": {
+    "message": "エラーが発生しました",
+    "description": "Heading shown for an unknown error."
+  },
+  "error_target_label": {
+    "message": "対象: $REPO$",
+    "description": "Label showing the owner/repo target of the failed request.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "numpy/numpy"
+      }
+    }
+  },
+  "error_retry": {
+    "message": "再試行",
+    "description": "Retry button label on the ErrorState card."
+  },
+  "error_signin_link": {
+    "message": "GitHub にログイン",
+    "description": "Link label that opens GitHub's sign-in page."
+  },
+  "commit_detail_select_prompt": {
+    "message": "コミットを選択すると詳細が表示されます",
+    "description": "Placeholder shown in the commit detail pane when no commit is selected."
+  },
+  "commit_detail_no_message": {
+    "message": "(no message)",
+    "description": "Placeholder shown when a commit has no subject/message."
+  },
+  "commit_detail_action_open_github": {
+    "message": "GitHub で開く",
+    "description": "Action: open the current commit on GitHub."
+  },
+  "commit_detail_action_copy_sha": {
+    "message": "SHA をコピー",
+    "description": "Action: copy the full commit SHA."
+  },
+  "commit_detail_action_copy_short_sha": {
+    "message": "短い SHA をコピー",
+    "description": "Action: copy the short commit SHA."
+  },
+  "commit_detail_action_copy_subject": {
+    "message": "Subject をコピー",
+    "description": "Action: copy the commit subject."
+  },
+  "commit_detail_action_jump_parent": {
+    "message": "親コミットへジャンプ",
+    "description": "Action: select the parent commit in the graph."
+  },
+  "commit_detail_parents_heading": {
+    "message": "parents",
+    "description": "Heading for the parents relation list."
+  },
+  "commit_detail_parents_empty": {
+    "message": "(root commit)",
+    "description": "Empty label for a root commit's parents list."
+  },
+  "commit_detail_children_heading": {
+    "message": "children",
+    "description": "Heading for the children relation list."
+  },
+  "commit_detail_children_empty": {
+    "message": "(現在の表示範囲では子コミットなし)",
+    "description": "Empty label when no children are visible in the current view."
+  },
+  "commit_detail_changes_heading": {
+    "message": "changes",
+    "description": "Heading for the file changes section."
+  },
+  "commit_detail_changes_loading": {
+    "message": "読み込み中…",
+    "description": "Loading indicator for the file changes section."
+  },
+  "commit_detail_changes_no_files": {
+    "message": "変更ファイルなし",
+    "description": "Empty state for the file changes section."
+  },
+  "commit_detail_changes_files_singular": {
+    "message": "files",
+    "description": "Suffix after the file count when not truncated."
+  },
+  "commit_detail_changes_files_truncated": {
+    "message": "+ files",
+    "description": "Suffix after the file count when the list is truncated."
+  },
+  "commit_detail_changes_truncated_note": {
+    "message": "※ GitHub API は files を 300 件で打ち切ります。残りは GitHub 上で確認してください。",
+    "description": "Note explaining the 300-file truncation."
+  },
+  "commit_unknown_author": {
+    "message": "unknown",
+    "description": "Fallback shown when a commit's author name is missing."
+  }
+}
