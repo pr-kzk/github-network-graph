@@ -1,0 +1,11 @@
+node_modules
+dist
+releases
+coverage
+.DS_Store
+*.log
+.vite
+.env
+.env.local
+*.tsbuildinfo
+*.mhtml
