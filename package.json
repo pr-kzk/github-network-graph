@@ -1,7 +1,7 @@
 {
   "name": "github-network-graph",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Visualize the GitHub network graph (forks + main repo) in a dedicated tab.",
   "scripts": {
