@@ -36,7 +36,8 @@ The session cookie is sent **only** when the request target is `github.com`. The
 | --- | --- |
 | `storage` | Persist the default graph mode and the recent-repositories list locally in the browser. |
 | `activeTab` | Read the URL of the active tab when the user clicks the toolbar icon, so the popup can offer to open the current repository. Access is granted only on explicit user action and does not persist. |
-| `host_permissions: https://github.com/*` | Fetch commit network data directly from GitHub on demand. Limited to `github.com`; no other origins are accessed. |
+| `host_permissions: https://github.com/*` | Fetch commit network data directly from GitHub (`github.com/{owner}/{repo}/network/meta` and `/network/chunk`). |
+| `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / file changes) from the GitHub REST API (`api.github.com/repos/{owner}/{repo}/commits/{sha}`) when you select a commit. Requests are unauthenticated and rate-limited to 60/hour per IP. |
 
 ## Contact
 

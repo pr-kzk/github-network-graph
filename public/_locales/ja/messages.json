@@ -243,6 +243,72 @@
     "message": "エラーが発生しました",
     "description": "Heading shown for an unknown error."
   },
+  "error_auth_body": {
+    "message": "GitHub にログインしていないか、このリポジトリにアクセスできません。",
+    "description": "Body text for an authentication / access denied error from the GitHub network endpoint."
+  },
+  "error_notfound_body": {
+    "message": "リポジトリが見つかりません。",
+    "description": "Body text for a 404 from the GitHub network endpoint."
+  },
+  "error_network_body": {
+    "message": "通信に失敗しました: $CAUSE$",
+    "description": "Body text for a generic network failure. $CAUSE$ is the underlying error message.",
+    "placeholders": {
+      "cause": {
+        "content": "$1",
+        "example": "Failed to fetch"
+      }
+    }
+  },
+  "error_empty_body": {
+    "message": "このリポジトリにはまだコミットがありません。",
+    "description": "Body text for an empty repository (no commits)."
+  },
+  "error_shape_body": {
+    "message": "GitHub からグラフ用データを取得できませんでした。リポジトリの状態が変わったか、一時的に利用できない可能性があります。",
+    "description": "Body text for an unexpected upstream response shape."
+  },
+  "error_shape_json_body": {
+    "message": "JSON のパースに失敗しました: $CAUSE$",
+    "description": "Body text for a JSON parse failure. $CAUSE$ is the underlying error message.",
+    "placeholders": {
+      "cause": {
+        "content": "$1",
+        "example": "Unexpected end of JSON input"
+      }
+    }
+  },
+  "error_http_body": {
+    "message": "HTTP $STATUS$",
+    "description": "Body text for a generic HTTP error. $STATUS$ is the response status code.",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "error_unknown_body": {
+    "message": "予期しないエラーが発生しました。",
+    "description": "Body text fallback for an unknown error."
+  },
+  "error_commit_notfound_body": {
+    "message": "コミットが見つかりません。",
+    "description": "Body text for a 404 on a single-commit detail fetch."
+  },
+  "error_ratelimit_body": {
+    "message": "GitHub API のレート制限に達しました (未認証は 60 回/時間)。",
+    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
+  },
+  "error_auth_denied_body": {
+    "message": "リポジトリへのアクセスが拒否されました。",
+    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
+  },
+  "error_auth_required_body": {
+    "message": "認証が必要です。",
+    "description": "Body text for a 401 on a single-commit detail fetch."
+  },
   "error_target_label": {
     "message": "対象: $REPO$",
     "description": "Label showing the owner/repo target of the failed request.",

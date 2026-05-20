@@ -15,10 +15,7 @@ A Chrome extension (Manifest V3) that opens a VSCode-Git-Graph-style commit view
 
 ## Screenshots
 
-> Place screenshots under `docs/`:
->
-> - `docs/screenshot-graph.png` — the graph view
-> - `docs/screenshot-popup.png` — the popup launcher
+Screenshots will be added alongside the first Chrome Web Store release. To preview locally, load the built `dist/` folder as an unpacked extension (see [Install → From source](#from-source)) and open any GitHub repository.
 
 ## Install
 
@@ -54,6 +51,7 @@ The graph view supports:
 | `storage` | Save the default graph mode and the recent-repositories list locally. |
 | `activeTab` | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes. |
 | `host_permissions: https://github.com/*` | Fetch the commit network data directly from GitHub on demand. |
+| `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / files) from the GitHub REST API when you select a commit. Unauthenticated, rate-limited to 60 requests/hour per IP. |
 
 No `scripting`, no content scripts, no remote code, no analytics. See [PRIVACY.md](./PRIVACY.md).
 

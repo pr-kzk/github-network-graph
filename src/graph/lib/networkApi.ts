@@ -1,4 +1,5 @@
 import { asString, errorMessage, isObject } from '@/shared/errors';
+import { t, tWith } from '@/shared/i18n';
 import type {
   FetchedInitialPage,
   FetchedNetwork,
@@ -46,22 +47,22 @@ async function fetchJson(url: string): Promise<unknown> {
   } catch (cause) {
     throw new NetworkApiError(
       'network',
-      `Network request failed: ${errorMessage(cause, 'unknown')}`,
+      tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
     );
   }
 
   if (response.status === 401 || response.status === 403) {
-    throw new NetworkApiError(
-      'auth',
-      'GitHub にログインしていないか、このリポジトリにアクセスできません。',
-      response.status,
-    );
+    throw new NetworkApiError('auth', t('error_auth_body'), response.status);
   }
   if (response.status === 404) {
-    throw new NetworkApiError('notFound', 'リポジトリが見つかりません。', response.status);
+    throw new NetworkApiError('notFound', t('error_notfound_body'), response.status);
   }
   if (!response.ok) {
-    throw new NetworkApiError('http', `HTTP ${response.status}`, response.status);
+    throw new NetworkApiError(
+      'http',
+      tWith('error_http_body', { status: String(response.status) }),
+      response.status,
+    );
   }
 
   const contentType = response.headers.get('content-type') ?? '';
@@ -77,15 +78,9 @@ async function fetchJson(url: string): Promise<unknown> {
       // 読めなくても致命ではない。汎用エラーに落とす。
     }
     if (looksLikeEmptyRepoPage(bodyText)) {
-      throw new NetworkApiError(
-        'empty',
-        'このリポジトリにはまだコミットがありません。',
-      );
+      throw new NetworkApiError('empty', t('error_empty_body'));
     }
-    throw new NetworkApiError(
-      'shape',
-      'GitHub からグラフ用データを取得できませんでした。リポジトリの状態が変わったか、一時的に利用できない可能性があります。',
-    );
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
 
   try {
@@ -93,7 +88,7 @@ async function fetchJson(url: string): Promise<unknown> {
   } catch (cause) {
     throw new NetworkApiError(
       'shape',
-      `JSON のパースに失敗しました: ${errorMessage(cause, 'unknown')}`,
+      tWith('error_shape_json_body', { cause: errorMessage(cause, 'unknown') }),
     );
   }
 }

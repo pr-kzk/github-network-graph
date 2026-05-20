@@ -168,7 +168,7 @@ export function useGraphData({
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        const info = toGraphError(err, t('error_unknown_heading'));
+        const info = toGraphError(err, t('error_unknown_body'));
         dispatch({ type: 'init/error', kind: info.kind, message: info.message });
       });
     return () => {
@@ -186,7 +186,7 @@ export function useGraphData({
         dispatch({ type: 'older/success', commits, nextEnd });
       })
       .catch((err: unknown) => {
-        const info = toGraphError(err, t('error_unknown_heading'));
+        const info = toGraphError(err, t('error_unknown_body'));
         dispatch({ type: 'older/error', kind: info.kind, message: info.message });
       });
   }, [client, owner, repo, pageSize]);

@@ -19,7 +19,7 @@ export default defineManifest({
     type: 'module',
   },
   permissions: ['storage', 'activeTab'],
-  host_permissions: ['https://github.com/*'],
+  host_permissions: ['https://github.com/*', 'https://api.github.com/*'],
   web_accessible_resources: [
     {
       resources: ['src/graph/index.html'],

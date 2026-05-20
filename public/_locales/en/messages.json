@@ -243,6 +243,72 @@
     "message": "Something went wrong",
     "description": "Heading shown for an unknown error."
   },
+  "error_auth_body": {
+    "message": "You're not signed in to GitHub, or you don't have access to this repository.",
+    "description": "Body text for an authentication / access denied error from the GitHub network endpoint."
+  },
+  "error_notfound_body": {
+    "message": "Repository not found.",
+    "description": "Body text for a 404 from the GitHub network endpoint."
+  },
+  "error_network_body": {
+    "message": "Network request failed: $CAUSE$",
+    "description": "Body text for a generic network failure. $CAUSE$ is the underlying error message.",
+    "placeholders": {
+      "cause": {
+        "content": "$1",
+        "example": "Failed to fetch"
+      }
+    }
+  },
+  "error_empty_body": {
+    "message": "This repository has no commits yet.",
+    "description": "Body text for an empty repository (no commits)."
+  },
+  "error_shape_body": {
+    "message": "Couldn't load graph data from GitHub. The repository state may have changed, or the service may be temporarily unavailable.",
+    "description": "Body text for an unexpected upstream response shape."
+  },
+  "error_shape_json_body": {
+    "message": "Failed to parse JSON: $CAUSE$",
+    "description": "Body text for a JSON parse failure. $CAUSE$ is the underlying error message.",
+    "placeholders": {
+      "cause": {
+        "content": "$1",
+        "example": "Unexpected end of JSON input"
+      }
+    }
+  },
+  "error_http_body": {
+    "message": "HTTP $STATUS$",
+    "description": "Body text for a generic HTTP error. $STATUS$ is the response status code.",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
+  },
+  "error_unknown_body": {
+    "message": "Something went wrong.",
+    "description": "Body text fallback for an unknown error."
+  },
+  "error_commit_notfound_body": {
+    "message": "Commit not found.",
+    "description": "Body text for a 404 on a single-commit detail fetch."
+  },
+  "error_ratelimit_body": {
+    "message": "GitHub API rate limit reached (unauthenticated: 60 requests/hour).",
+    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
+  },
+  "error_auth_denied_body": {
+    "message": "Access to the repository was denied.",
+    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
+  },
+  "error_auth_required_body": {
+    "message": "Authentication required.",
+    "description": "Body text for a 401 on a single-commit detail fetch."
+  },
   "error_target_label": {
     "message": "Target: $REPO$",
     "description": "Label showing the owner/repo target of the failed request.",

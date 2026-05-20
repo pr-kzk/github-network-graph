@@ -8,6 +8,7 @@
 // authorLogin/authorRepo が指定されていればそちらを優先で試し、404 のときに
 // 入力 owner/repo へフォールバックする。
 import { asNumber, asString, errorMessage, isObject } from '@/shared/errors';
+import { t, tWith } from '@/shared/i18n';
 
 export type CommitDetailFile = {
   filename: string;
@@ -136,29 +137,32 @@ async function fetchOne(
       signal,
     });
   } catch (cause) {
-    throw makeError('network', `fetch failed: ${errorMessage(cause, 'unknown')}`);
+    throw makeError(
+      'network',
+      tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
+    );
   }
 
   if (response.status === 404) {
-    throw makeError('notFound', 'コミットが見つかりません', 404);
+    throw makeError('notFound', t('error_commit_notfound_body'), 404);
   }
   if (response.status === 403) {
     // 403 のうち rate limit は header で判別。
     const remaining = response.headers.get('x-ratelimit-remaining');
     if (remaining === '0') {
-      throw makeError(
-        'rateLimit',
-        'GitHub API のレート制限に達しました (未認証は 60 回/時間)',
-        403,
-      );
+      throw makeError('rateLimit', t('error_ratelimit_body'), 403);
     }
-    throw makeError('auth', 'リポジトリへのアクセスが拒否されました', 403);
+    throw makeError('auth', t('error_auth_denied_body'), 403);
   }
   if (response.status === 401) {
-    throw makeError('auth', '認証が必要です', 401);
+    throw makeError('auth', t('error_auth_required_body'), 401);
   }
   if (!response.ok) {
-    throw makeError('http', `HTTP ${response.status}`, response.status);
+    throw makeError(
+      'http',
+      tWith('error_http_body', { status: String(response.status) }),
+      response.status,
+    );
   }
 
   let body: unknown;
