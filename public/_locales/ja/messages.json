@@ -267,6 +267,10 @@
     "message": "HTTP エラー",
     "description": "Heading shown for a generic HTTP error."
   },
+  "error_pending_heading": {
+    "message": "GitHub がグラフを生成中です",
+    "description": "Heading shown when GitHub is still computing the network graph data (HTTP 202)."
+  },
   "error_unknown_heading": {
     "message": "エラーが発生しました",
     "description": "Heading shown for an unknown error."
@@ -316,6 +320,10 @@
         "example": "500"
       }
     }
+  },
+  "error_pending_body": {
+    "message": "GitHub がこのリポジトリのグラフデータを生成中です。少し時間を置いてから再読み込みしてください。",
+    "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
   },
   "error_unknown_body": {
     "message": "予期しないエラーが発生しました。",

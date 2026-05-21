@@ -200,6 +200,45 @@ git push -u origin main</pre>
     await expect(client.fetchMeta('owner', 'repo')).rejects.toBeInstanceOf(NetworkApiError);
   });
 
+  it('retries 202 (still computing) responses and returns parsed body on eventual 200', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock
+        .mockResolvedValueOnce(new Response('', { status: 202 }))
+        .mockResolvedValueOnce(new Response('', { status: 202 }))
+        .mockResolvedValueOnce(jsonResponse(META_BODY));
+
+      const client = createGithubNetworkClient();
+      const promise = client.fetchMeta('owner', 'repo');
+      // 各 202 後にバックオフを挟むので、十分に進める。
+      await vi.runAllTimersAsync();
+      const meta = await promise;
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(meta.nethash).toBe('abc123');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('throws pending NetworkApiError when 202 persists past the retry limit', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockResolvedValue(new Response('', { status: 202 }));
+
+      const client = createGithubNetworkClient();
+      const promise = client.fetchMeta('owner', 'repo').catch((e) => e);
+      await vi.runAllTimersAsync();
+      const err = await promise;
+
+      expect(err).toBeInstanceOf(NetworkApiError);
+      expect(err.kind).toBe('pending');
+      expect(err.status).toBe(202);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('encodes special characters in owner/repo segments', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(META_BODY));
     const client = createGithubNetworkClient();

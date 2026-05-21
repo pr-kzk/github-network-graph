@@ -267,6 +267,10 @@
     "message": "HTTP error",
     "description": "Heading shown for a generic HTTP error."
   },
+  "error_pending_heading": {
+    "message": "GitHub is still building the graph",
+    "description": "Heading shown when GitHub is still computing the network graph data (HTTP 202)."
+  },
   "error_unknown_heading": {
     "message": "Something went wrong",
     "description": "Heading shown for an unknown error."
@@ -316,6 +320,10 @@
         "example": "500"
       }
     }
+  },
+  "error_pending_body": {
+    "message": "GitHub is still computing the graph data for this repository. Please try reloading in a moment.",
+    "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
   },
   "error_unknown_body": {
     "message": "Something went wrong.",

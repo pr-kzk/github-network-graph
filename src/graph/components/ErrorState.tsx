@@ -16,6 +16,7 @@ const HEADING_KEYS: Record<ErrorStateProps['kind'], MessageKey> = {
   empty: 'error_empty_heading',
   shape: 'error_shape_heading',
   http: 'error_http_heading',
+  pending: 'error_pending_heading',
   unknown: 'error_unknown_heading',
 };
 

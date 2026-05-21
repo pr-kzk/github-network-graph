@@ -16,7 +16,8 @@ export type NetworkApiErrorKind =
   | 'notFound'
   | 'empty'
   | 'shape'
-  | 'http';
+  | 'http'
+  | 'pending';
 
 export class NetworkApiError extends Error {
   readonly kind: NetworkApiErrorKind;
@@ -32,26 +33,51 @@ export class NetworkApiError extends Error {
 const GITHUB_ORIGIN = 'https://github.com';
 const CHUNK_PAGE_SIZE = 100;
 const DEFAULT_MAX_COMMITS = 500;
+const PENDING_MAX_ATTEMPTS = 8;
+const PENDING_BASE_DELAY_MS = 400;
+const PENDING_MAX_DELAY_MS = 4000;
 
 function encodePath(value: string): string {
   return encodeURIComponent(value).replace(/%2F/gi, '/');
 }
 
-async function fetchJson(url: string): Promise<unknown> {
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-      cache: 'no-store',
-    });
-  } catch (cause) {
-    throw new NetworkApiError(
-      'network',
-      tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
-    );
-  }
+function pendingDelayMs(attempt: number): number {
+  return Math.min(PENDING_BASE_DELAY_MS * 2 ** attempt, PENDING_MAX_DELAY_MS);
+}
 
+async function fetchJson(url: string): Promise<unknown> {
+  let attempt = 0;
+  // GitHub の /network/* は、データが未計算のとき 202 + 空ボディを返してバックグラウンド
+  // 計算をキューする。生成完了 (200) までバックオフでリトライ。
+  for (;;) {
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+    } catch (cause) {
+      throw new NetworkApiError(
+        'network',
+        tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
+      );
+    }
+
+    if (response.status === 202) {
+      attempt += 1;
+      if (attempt >= PENDING_MAX_ATTEMPTS) {
+        throw new NetworkApiError('pending', t('error_pending_body'), 202);
+      }
+      await new Promise((resolve) => setTimeout(resolve, pendingDelayMs(attempt - 1)));
+      continue;
+    }
+
+    return handleFinalResponse(response);
+  }
+}
+
+async function handleFinalResponse(response: Response): Promise<unknown> {
   if (response.status === 401 || response.status === 403) {
     throw new NetworkApiError('auth', t('error_auth_body'), response.status);
   }
