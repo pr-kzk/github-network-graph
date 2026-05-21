@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-05-20
+Last updated: 2026-05-22
 
 ## Summary
 
@@ -10,11 +10,9 @@ This Chrome extension does **not** collect, transmit, or share any personal data
 
 - **No data collection.** The extension does not send any data to any remote server it controls.
 - **No remote code execution.** All executable code is bundled with the extension and audited at build time. The extension does not load JavaScript from remote sources.
-- **Local-only storage.** User preferences are stored exclusively in the browser via `chrome.storage.local` and `chrome.storage.sync`. The stored values are:
-  - `graphPrefs` (default graph mode)
-  - `recentRepos` (the list of recently opened repositories)
-
-  `chrome.storage.sync` data is synchronized by Google across the user's signed-in Chrome instances; this synchronization is governed by Google's own privacy policy, not this extension.
+- **Local-only storage.** User preferences are stored exclusively in the browser via `chrome.storage.local`. Stored values never leave the user's machine. The stored values are:
+  - `graphPrefs` — the default graph mode (`network` or `repo-only`) and color theme (`dark` or `light`)
+  - `recentRepos` — up to 6 entries of `{owner, repo, openedAt}` for the recently opened repositories list shown in the popup
 - **No analytics, telemetry, or tracking.**
 - **No third-party services.**
 
