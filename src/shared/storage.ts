@@ -1,7 +1,10 @@
 export type GraphMode = 'repo-only' | 'network';
 
+export type Theme = 'dark' | 'light';
+
 export type GraphPrefs = {
   mode: GraphMode;
+  theme: Theme;
 };
 
 export type RecentRepo = {
@@ -15,7 +18,7 @@ export type LocalSchema = {
   recentRepos: RecentRepo[];
 };
 
-export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network' };
+export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'dark' };
 
 export const MAX_RECENT_REPOS = 6;
 
@@ -25,6 +28,16 @@ export const LOCAL_DEFAULTS: LocalSchema = {
 };
 
 const LOCAL_KEYS = Object.keys(LOCAL_DEFAULTS) as (keyof LocalSchema)[];
+
+// 旧バージョンで保存された graphPrefs に新フィールド (theme 等) を補完する。
+// 他キーは shape が変わらないので素通し。
+function normalize<K extends keyof LocalSchema>(key: K, value: unknown): LocalSchema[K] {
+  if (key === 'graphPrefs') {
+    const v = (value ?? {}) as Partial<GraphPrefs>;
+    return { ...DEFAULT_GRAPH_PREFS, ...v } as LocalSchema[K];
+  }
+  return (value ?? LOCAL_DEFAULTS[key]) as LocalSchema[K];
+}
 
 type Listener = () => void;
 
@@ -92,7 +105,7 @@ class LocalStoreCache {
         // 自身は古い情報なので破棄する。
         if (this.hydrated.has(key)) return;
         this.hydrated.add(key);
-        const next = data[key as string] as LocalSchema[K];
+        const next = normalize(key, data[key as string]);
         if (!Object.is(this.snapshots[key], next)) {
           this.snapshots[key] = next;
           this.emit(key);
@@ -120,7 +133,7 @@ class LocalStoreCache {
   private applyExternalChange<K extends keyof LocalSchema>(key: K, raw: unknown): void {
     // 外部書き込みは hydrate より新しい情報。後追いの初回 get の上書きを防ぐ。
     this.hydrated.add(key);
-    const next = (raw ?? LOCAL_DEFAULTS[key]) as LocalSchema[K];
+    const next = normalize(key, raw);
     if (Object.is(this.snapshots[key], next)) return;
     this.snapshots[key] = next;
     this.emit(key);
@@ -138,7 +151,7 @@ export function __resetLocalStoreCacheForTest(): void {
 export const localStore = {
   async get<K extends keyof LocalSchema>(key: K): Promise<LocalSchema[K]> {
     const data = await chrome.storage.local.get({ [key]: LOCAL_DEFAULTS[key] });
-    const value = data[key] as LocalSchema[K];
+    const value = normalize(key, data[key]);
     localStoreCache.applyLocalWrite(key, value);
     return value;
   },

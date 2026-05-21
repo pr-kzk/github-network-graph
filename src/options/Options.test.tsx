@@ -6,7 +6,7 @@ import { DEFAULT_GRAPH_PREFS, localStore } from '@/shared/storage';
 
 describe('Options', () => {
   it('reflects the stored graph mode as the initial selection', async () => {
-    await localStore.set('graphPrefs', { mode: 'repo-only' });
+    await localStore.set('graphPrefs', { ...DEFAULT_GRAPH_PREFS, mode: 'repo-only' });
     render(<Options />);
 
     const repoOnly = await screen.findByLabelText(/Main repository only/i);
@@ -22,7 +22,10 @@ describe('Options', () => {
     await userEvent.click(screen.getByLabelText(/Main repository only/i));
 
     expect(await screen.findByText('Saved')).toBeInTheDocument();
-    expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only' });
+    expect(await localStore.get('graphPrefs')).toEqual({
+      ...DEFAULT_GRAPH_PREFS,
+      mode: 'repo-only',
+    });
   });
 
   it('falls back to default when storage is empty', async () => {
@@ -30,5 +33,17 @@ describe('Options', () => {
     const defaultLabel =
       DEFAULT_GRAPH_PREFS.mode === 'network' ? /Include forks/i : /Main repository only/i;
     expect(await screen.findByLabelText(defaultLabel)).toBeChecked();
+  });
+
+  it('persists the selected theme on change', async () => {
+    render(<Options />);
+
+    const dark = await screen.findByLabelText(/Mid-grey background/i);
+    expect(dark).toBeChecked();
+
+    await userEvent.click(screen.getByLabelText(/White background with high contrast/i));
+
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
+    expect((await localStore.get('graphPrefs')).theme).toBe('light');
   });
 });

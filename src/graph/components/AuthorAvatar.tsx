@@ -24,7 +24,7 @@ export function AuthorAvatar({
         aria-hidden="true"
         style={{ ...style, fontSize: Math.max(8, Math.floor(size * 0.55)) }}
         className={[
-          'inline-flex shrink-0 items-center justify-center rounded-full bg-slate-700 font-semibold text-slate-300',
+          'inline-flex shrink-0 items-center justify-center rounded-full bg-slate-300 font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-300',
           className,
         ].join(' ')}
       >
@@ -42,7 +42,7 @@ export function AuthorAvatar({
       alt={alt}
       style={style}
       onError={() => setFailed(true)}
-      className={['shrink-0 rounded-full bg-slate-700 object-cover', className].join(' ')}
+      className={['shrink-0 rounded-full bg-slate-300 object-cover dark:bg-slate-700', className].join(' ')}
     />
   );
 }

@@ -14,8 +14,16 @@ describe('localStore', () => {
   });
 
   it('round-trips graph prefs', async () => {
-    await localStore.set('graphPrefs', { mode: 'repo-only' });
-    expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only' });
+    await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'light' });
+    expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'light' });
+  });
+
+  it('back-fills missing theme on legacy graphPrefs values', async () => {
+    await chrome.storage.local.set({ graphPrefs: { mode: 'repo-only' } });
+    expect(await localStore.get('graphPrefs')).toEqual({
+      mode: 'repo-only',
+      theme: DEFAULT_GRAPH_PREFS.theme,
+    });
   });
 
   it('returns the default recent repos when unset', async () => {
@@ -69,8 +77,11 @@ describe('localStoreCache', () => {
       notified += 1;
     });
     try {
-      await localStore.set('graphPrefs', { mode: 'repo-only' });
-      expect(localStoreCache.getSnapshot('graphPrefs')).toEqual({ mode: 'repo-only' });
+      await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'dark' });
+      expect(localStoreCache.getSnapshot('graphPrefs')).toEqual({
+        mode: 'repo-only',
+        theme: 'dark',
+      });
       expect(notified).toBeGreaterThan(0);
     } finally {
       unsub();
@@ -96,7 +107,9 @@ describe('localStoreCache', () => {
   });
 
   it('falls back to defaults when a key is removed externally', async () => {
-    await chrome.storage.local.set({ graphPrefs: { mode: 'repo-only' } });
+    await chrome.storage.local.set({
+      graphPrefs: { mode: 'repo-only', theme: 'light' },
+    });
     const unsub = localStoreCache.subscribe('graphPrefs', () => undefined);
     try {
       await chrome.storage.local.remove('graphPrefs');

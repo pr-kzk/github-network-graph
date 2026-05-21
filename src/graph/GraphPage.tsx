@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '@/shared/i18n';
 import { type GraphMode, localStore, recordRecentRepo } from '@/shared/storage';
 import { useLocalValue } from '@/shared/useLocalValue';
+import { useTheme } from '@/shared/useTheme';
 import { CommitContextMenu } from './components/CommitContextMenu';
 import { CommitDetail } from './components/CommitDetail';
 import { CommitTooltip } from './components/CommitTooltip';
@@ -23,6 +24,7 @@ export type GraphPageProps = {
 };
 
 export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
+  useTheme();
   const [owner, setOwner] = useState(initialOwner);
   const [repo, setRepo] = useState(initialRepo);
   const prefs = useLocalValue('graphPrefs');
@@ -54,8 +56,8 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
 
   const handleModeChange = useCallback(async (next: GraphMode) => {
     // useLocalValue が同期的に新値を返すので setMode は不要 (cache が optimistic 更新する)。
-    await localStore.set('graphPrefs', { mode: next });
-  }, []);
+    await localStore.set('graphPrefs', { ...prefs, mode: next });
+  }, [prefs]);
 
   const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -72,7 +74,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
   const ctx = useCommitContextMenu({ commitBySha, owner, repo, onSelectSha: setSelectedSha });
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
+    <div className="flex h-screen flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <GraphHeader
         owner={owner}
         repo={repo}
@@ -84,16 +86,16 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
       <div className="flex min-h-0 flex-1">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {!owner || !repo ? (
-            <div className="m-6 max-w-xl rounded-lg border border-slate-800 bg-slate-900/60 p-6">
-              <p className="mb-3 text-sm text-slate-400">
+            <div className="m-6 max-w-xl rounded-lg border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900/60">
+              <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
                 {t('graph_repo_prompt_prefix')}{' '}
-                <span className="font-mono text-slate-200">owner/repo</span>{' '}
+                <span className="font-mono text-slate-800 dark:text-slate-200">owner/repo</span>{' '}
                 {t('graph_repo_prompt_suffix')}
               </p>
               <RepoForm onSubmit={handleSubmitRepo} />
             </div>
           ) : state.status === 'loading' || state.status === 'idle' ? (
-            <div className="flex flex-1 items-center justify-center text-sm text-slate-400">
+            <div className="flex flex-1 items-center justify-center text-sm text-slate-600 dark:text-slate-400">
               {t('graph_loading')}
             </div>
           ) : state.status === 'error' ? (
@@ -119,7 +121,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
             />
           )}
         </div>
-        <aside className="w-[420px] shrink-0 border-l border-slate-800 bg-slate-950/50">
+        <aside className="w-[420px] shrink-0 border-l border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/50">
           <CommitDetail
             commit={selectedCommit}
             owner={owner}

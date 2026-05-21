@@ -28,16 +28,16 @@ export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: Comm
       data-selected={isSelected ? 'true' : undefined}
       className={[
         'group flex w-full cursor-pointer items-center text-xs',
-        'border-b border-slate-900/40',
+        'border-b border-slate-200 dark:border-slate-900/40',
         isSelected
           ? 'bg-indigo-500/15 ring-1 ring-inset ring-indigo-500/40'
-          : 'hover:bg-slate-800/40',
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800/40',
       ].join(' ')}
       style={{ height: ROW_HEIGHT }}
     >
       <div style={{ width: graphAreaWidth }} className="shrink-0" aria-hidden="true" />
-      <div className="min-w-0 flex-1 truncate pr-3 text-slate-100">
-        {commit.subject || <span className="text-slate-500">{t('commit_detail_no_message')}</span>}
+      <div className="min-w-0 flex-1 truncate pr-3 text-slate-900 dark:text-slate-100">
+        {commit.subject || <span className="text-slate-400 dark:text-slate-500">{t('commit_detail_no_message')}</span>}
       </div>
       <div className="flex shrink-0 items-center gap-1 pr-3">
         {commit.refs.map((r) => (
@@ -45,7 +45,7 @@ export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: Comm
         ))}
       </div>
       <div
-        className="flex w-32 shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-400"
+        className="flex w-32 shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-600 dark:text-slate-400"
         title={commit.authorLogin || commit.authorName}
       >
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} />

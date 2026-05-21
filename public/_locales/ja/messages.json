@@ -101,6 +101,34 @@
     "message": "本家リポジトリのコミットのみを表示します（高速・軽量）。",
     "description": "Description of the repo-only mode."
   },
+  "options_theme_heading": {
+    "message": "テーマ",
+    "description": "Heading for the color theme section."
+  },
+  "options_theme_description": {
+    "message": "ポップアップ・設定ページ・グラフ画面で使うテーマカラーを選択します。",
+    "description": "Description of the theme setting."
+  },
+  "options_theme_legend": {
+    "message": "テーマ",
+    "description": "Fieldset legend for the theme radio group."
+  },
+  "options_theme_dark_label": {
+    "message": "ダーク",
+    "description": "Radio label for the dark theme."
+  },
+  "options_theme_dark_desc": {
+    "message": "中間グレー背景で目に優しい暗色テーマ。",
+    "description": "Description of the dark theme."
+  },
+  "options_theme_light_label": {
+    "message": "ライト",
+    "description": "Radio label for the light theme."
+  },
+  "options_theme_light_desc": {
+    "message": "白背景・高コントラストの明色テーマ。",
+    "description": "Description of the light theme."
+  },
   "relative_now": {
     "message": "たった今",
     "description": "Relative time: less than a minute ago."

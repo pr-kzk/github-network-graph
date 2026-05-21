@@ -108,7 +108,7 @@ export function GraphList({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div
-        className="flex items-center border-b border-slate-800 bg-slate-900/40 px-0 text-[10px] font-medium uppercase tracking-wider text-slate-500"
+        className="flex items-center border-b border-slate-200 bg-slate-50 px-0 text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/40"
         style={{ height: 24 }}
       >
         <div style={{ width: gw }} className="shrink-0 px-3">
@@ -190,7 +190,7 @@ function FooterRow({
 }) {
   return (
     <div
-      className="flex w-full items-center border-b border-slate-900/40 text-xs text-slate-400"
+      className="flex w-full items-center border-b border-slate-200 text-xs text-slate-600 dark:border-slate-900/40 dark:text-slate-400"
       style={{ height: ROW_HEIGHT }}
     >
       <div style={{ width: graphAreaWidth }} className="shrink-0" aria-hidden="true" />
@@ -202,7 +202,7 @@ function FooterRow({
           <button
             type="button"
             onClick={onRetry}
-            className="rounded bg-slate-800 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-700"
+            className="rounded bg-slate-200 px-2 py-0.5 text-[11px] text-slate-800 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
             {t('graph_footer_retry')}
           </button>

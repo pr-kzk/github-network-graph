@@ -101,6 +101,34 @@
     "message": "Show only commits from the main repository (fast and lightweight).",
     "description": "Description of the repo-only mode."
   },
+  "options_theme_heading": {
+    "message": "Theme",
+    "description": "Heading for the color theme section."
+  },
+  "options_theme_description": {
+    "message": "Choose a color theme for the popup, options page, and graph view.",
+    "description": "Description of the theme setting."
+  },
+  "options_theme_legend": {
+    "message": "Theme",
+    "description": "Fieldset legend for the theme radio group."
+  },
+  "options_theme_dark_label": {
+    "message": "Dark",
+    "description": "Radio label for the dark theme."
+  },
+  "options_theme_dark_desc": {
+    "message": "Mid-grey background, easy on the eyes in dim rooms.",
+    "description": "Description of the dark theme."
+  },
+  "options_theme_light_label": {
+    "message": "Light",
+    "description": "Radio label for the light theme."
+  },
+  "options_theme_light_desc": {
+    "message": "White background with high contrast text.",
+    "description": "Description of the light theme."
+  },
   "relative_now": {
     "message": "just now",
     "description": "Relative time: less than a minute ago."

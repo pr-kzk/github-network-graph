@@ -15,7 +15,7 @@ export function IconButton({ label, onClick, disabled, children }: IconButtonPro
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+      className="inline-flex h-7 w-7 items-center justify-center rounded text-slate-600 hover:bg-slate-200 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
     >
       {children}
     </button>

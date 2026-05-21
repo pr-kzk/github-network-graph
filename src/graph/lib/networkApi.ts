@@ -43,6 +43,7 @@ async function fetchJson(url: string): Promise<unknown> {
     response = await fetch(url, {
       credentials: 'include',
       headers: { Accept: 'application/json' },
+      cache: 'no-store',
     });
   } catch (cause) {
     throw new NetworkApiError(

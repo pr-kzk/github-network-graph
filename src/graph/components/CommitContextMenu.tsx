@@ -68,13 +68,13 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
     <div
       ref={ref}
       role="menu"
-      className="fixed z-50 min-w-[220px] overflow-hidden rounded-md border border-slate-700 bg-slate-900/95 py-1 text-xs text-slate-100 shadow-xl ring-1 ring-black/40 backdrop-blur"
+      className="fixed z-50 min-w-[220px] overflow-hidden rounded-md border border-slate-300 bg-white/95 py-1 text-xs text-slate-900 shadow-xl ring-1 ring-black/10 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100 dark:ring-black/40"
       style={{ left: pos.left, top: pos.top }}
       onContextMenu={(e) => e.preventDefault()}
     >
       {items.map((it, i) => {
         if (it.kind === 'separator') {
-          return <div key={`sep-${i}`} className="my-1 border-t border-slate-800" />;
+          return <div key={`sep-${i}`} className="my-1 border-t border-slate-200 dark:border-slate-800" />;
         }
         return (
           <button
@@ -87,7 +87,7 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
               it.onClick();
               onClose();
             }}
-            className="block w-full px-3 py-1.5 text-left text-slate-100 hover:bg-indigo-600/40 disabled:cursor-not-allowed disabled:text-slate-500 disabled:hover:bg-transparent"
+            className="block w-full px-3 py-1.5 text-left text-slate-900 hover:bg-indigo-600/20 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-transparent dark:text-slate-100 dark:hover:bg-indigo-600/40 dark:disabled:text-slate-500"
           >
             {it.label}
           </button>

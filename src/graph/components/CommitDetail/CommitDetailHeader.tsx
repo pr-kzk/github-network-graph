@@ -13,7 +13,7 @@ export type CommitDetailHeaderProps = {
 export function CommitDetailHeader({ commit, commitUrl }: CommitDetailHeaderProps) {
   return (
     <header className="flex flex-wrap items-center gap-2">
-      <span className="font-mono text-xs text-slate-400">{commit.shortSha}</span>
+      <span className="font-mono text-xs text-slate-600 dark:text-slate-400">{commit.shortSha}</span>
       {commit.refs.map((r) => (
         <RefBadge key={`${r.ownerName}:${r.name}`} refItem={r} />
       ))}

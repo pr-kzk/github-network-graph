@@ -25,7 +25,7 @@ export function RepoForm({ initialValue = '', onSubmit }: RepoFormProps) {
       }}
       className="flex flex-col gap-3"
     >
-      <label className="text-xs font-medium text-slate-400" htmlFor="repo-input">
+      <label className="text-xs font-medium text-slate-600 dark:text-slate-400" htmlFor="repo-input">
         {t('graph_repoform_label')}
       </label>
       <input
@@ -33,9 +33,9 @@ export function RepoForm({ initialValue = '', onSubmit }: RepoFormProps) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={t('graph_repoform_placeholder')}
-        className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-indigo-400"
+        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-400"
       />
-      {error ? <p className="text-xs text-rose-400">{error}</p> : null}
+      {error ? <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p> : null}
       <button
         type="submit"
         className="self-start rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"

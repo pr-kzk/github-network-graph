@@ -124,7 +124,7 @@ export function GraphCanvas({
                 cy={cy}
                 r={r}
                 fill={laneColor(c.lane)}
-                stroke={isSelected ? '#ffffff' : '#0b0f1a'}
+                stroke={isSelected ? 'var(--graph-node-stroke-selected)' : 'var(--graph-node-stroke)'}
                 strokeWidth={isSelected ? 2.5 : 2}
               />
               {interactive ? (

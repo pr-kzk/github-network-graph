@@ -135,6 +135,7 @@ async function fetchOne(
       credentials: 'omit',
       headers: { Accept: 'application/vnd.github+json' },
       signal,
+      cache: 'no-store',
     });
   } catch (cause) {
     throw makeError(

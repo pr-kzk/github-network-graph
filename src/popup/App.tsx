@@ -1,8 +1,10 @@
 import { GraphLauncher } from './GraphLauncher';
 import { RecentRepos } from './RecentRepos';
 import { t } from '@/shared/i18n';
+import { useTheme } from '@/shared/useTheme';
 
 export function App() {
+  useTheme();
   return (
     <main className="flex min-w-[320px] flex-col gap-4 bg-white p-6 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
       <header className="flex items-center gap-3">

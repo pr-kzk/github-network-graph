@@ -1,5 +1,31 @@
 @import 'tailwindcss';
 
-:root {
-  color-scheme: light dark;
+/* dark: ユーティリティを html.theme-dark にぶら下げる (デフォルトの prefers-color-scheme ではなく) */
+@custom-variant dark (&:where(.theme-dark, .theme-dark *));
+
+/* dark テーマでは slate 階調をニュートラルブラック寄りに差し替える。
+   既存の bg-slate-* / text-slate-* / border-slate-* がそのままテーマ対応になる。 */
+.theme-dark {
+  --color-slate-950: #0a0a0a;
+  --color-slate-900: #1a1a1a;
+  --color-slate-800: #2a2a2a;
+  --color-slate-700: #3a3a3a;
+  --color-slate-600: #4a4a4a;
+  --color-slate-500: #707070;
+  --color-slate-400: #9a9a9a;
+  --color-slate-300: #c0c0c0;
+  --color-slate-200: #d8d8d8;
+  --color-slate-100: #f0f0f0;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --graph-node-stroke: #0b0f1a;
+  --graph-node-stroke-selected: #ffffff;
+}
+
+.theme-light {
+  color-scheme: light;
+  --graph-node-stroke: #ffffff;
+  --graph-node-stroke-selected: #0b0f1a;
 }

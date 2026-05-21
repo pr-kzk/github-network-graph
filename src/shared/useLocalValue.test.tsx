@@ -10,17 +10,21 @@ describe('useLocalValue', () => {
   });
 
   it('hydrates from chrome.storage.local on mount', async () => {
-    await chrome.storage.local.set({ graphPrefs: { mode: 'repo-only' } });
+    await chrome.storage.local.set({
+      graphPrefs: { mode: 'repo-only', theme: 'light' },
+    });
     const { result } = renderHook(() => useLocalValue('graphPrefs'));
-    await waitFor(() => expect(result.current).toEqual({ mode: 'repo-only' }));
+    await waitFor(() =>
+      expect(result.current).toEqual({ mode: 'repo-only', theme: 'light' }),
+    );
   });
 
   it('reflects optimistic updates from localStore.set in the same context', async () => {
     const { result } = renderHook(() => useLocalValue('graphPrefs'));
     await act(async () => {
-      await localStore.set('graphPrefs', { mode: 'repo-only' });
+      await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'dark' });
     });
-    expect(result.current).toEqual({ mode: 'repo-only' });
+    expect(result.current).toEqual({ mode: 'repo-only', theme: 'dark' });
   });
 
   it('reflects external chrome.storage writes via onChanged', async () => {
@@ -58,7 +62,7 @@ describe('useLocalValue', () => {
     const beforeA = renderCounts.a;
     const beforeB = renderCounts.b;
     await act(async () => {
-      await localStore.set('graphPrefs', { mode: 'repo-only' });
+      await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'dark' });
     });
     expect(getByTestId('a').textContent).toBe('repo-only');
     expect(getByTestId('b').textContent).toBe('repo-only');
@@ -71,7 +75,7 @@ describe('useLocalValue', () => {
     await waitFor(() => expect(result.current).toEqual(DEFAULT_GRAPH_PREFS));
     unmount();
     await act(async () => {
-      await localStore.set('graphPrefs', { mode: 'repo-only' });
+      await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'dark' });
     });
     expect(result.current).toEqual(DEFAULT_GRAPH_PREFS);
   });
