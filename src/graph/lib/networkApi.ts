@@ -333,6 +333,9 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       return parseMeta(body);
     },
 
+    // 注意: GitHub の /network/chunk は end が inclusive で、index [start, end] の
+    // (end - start + 1) 件を返す。半開区間 [start, end) が欲しい呼び出し側は
+    // end - 1 を渡すこと (隣接ページが境界 commit を二重取得しないようにするため)。
     async fetchChunk(owner, repo, nethash, start, end) {
       const params = new URLSearchParams({
         nethash,
@@ -364,7 +367,7 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       let start = desiredStart;
       while (start < desiredEnd && collected.length < maxCommits) {
         const end = Math.min(start + pageSize, desiredEnd);
-        const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end);
+        const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1);
         if (chunk.commits.length === 0) break;
         collected.push(...chunk.commits);
         if (chunk.commits.length < end - start) break;
@@ -384,7 +387,9 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       const end = totalCount;
       const start = Math.max(0, end - pageSize);
       const chunk =
-        end > start ? await this.fetchChunk(owner, repo, meta.nethash, start, end) : { commits: [] };
+        end > start
+          ? await this.fetchChunk(owner, repo, meta.nethash, start, end - 1)
+          : { commits: [] };
       // チャンクは time 昇順 (古→新) で来るので、画面表示順 (新→古) に逆順化。
       const commits = [...chunk.commits].reverse();
       return { meta, commits, nextEnd: start, totalCount };
@@ -397,7 +402,7 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       }
       const end = nextEnd;
       const start = Math.max(0, end - pageSize);
-      const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end);
+      const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1);
       const commits = [...chunk.commits].reverse();
       return { commits, nextEnd: start, exhausted: start === 0 };
     },

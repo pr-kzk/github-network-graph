@@ -257,7 +257,7 @@ git push -u origin main</pre>
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[1]![0]).toBe(
-      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=6&end=10',
+      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=6&end=9',
     );
     expect(result.totalCount).toBe(10);
     expect(result.nextEnd).toBe(6);
@@ -279,7 +279,7 @@ git push -u origin main</pre>
     const result = await client.fetchInitialPage('owner', 'repo', { pageSize: 10 });
 
     expect(fetchMock.mock.calls[1]![0]).toBe(
-      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=3',
+      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=2',
     );
     expect(result.nextEnd).toBe(0);
     expect(result.totalCount).toBe(3);
@@ -294,7 +294,7 @@ git push -u origin main</pre>
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]![0]).toBe(
-      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=5',
+      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=4',
     );
     expect(result.nextEnd).toBe(0);
     expect(result.exhausted).toBe(true);
@@ -321,9 +321,43 @@ git push -u origin main</pre>
     const result = await client.fetchOlderPage('owner', 'repo', meta, 100, { pageSize: 10 });
 
     expect(fetchMock.mock.calls[0]![0]).toBe(
-      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=90&end=100',
+      'https://github.com/owner/repo/network/chunk?nethash=abc123&start=90&end=99',
     );
     expect(result.nextEnd).toBe(90);
     expect(result.exhausted).toBe(false);
+  });
+
+  it('does not double-fetch the boundary commit across initial + older pages (end is inclusive)', async () => {
+    // GitHub の chunk は end inclusive: index [start, end] を返す。
+    // URL の start/end をパースして inclusive レンジを再現するモック。
+    const inclusiveChunk = (url: string) => {
+      const u = new URL(url);
+      if (u.pathname.endsWith('/network/meta')) {
+        return jsonResponse({ ...META_BODY, dates: Array.from({ length: 4 }, () => 'd') });
+      }
+      const start = Number(u.searchParams.get('start'));
+      const end = Number(u.searchParams.get('end'));
+      const commits = [];
+      for (let i = start; i <= end; i++) {
+        commits.push({ id: `sha-${i}`, author: 0, time: i, space: 0, parents: [], message: 'm' });
+      }
+      return jsonResponse({ commits });
+    };
+    fetchMock.mockImplementation((url: string) => Promise.resolve(inclusiveChunk(url)));
+
+    const client = createGithubNetworkClient();
+    const initial = await client.fetchInitialPage('owner', 'repo', { pageSize: 2 });
+    const older = await client.fetchOlderPage('owner', 'repo', initial.meta, initial.nextEnd, {
+      pageSize: 2,
+    });
+
+    const initialIds = initial.commits.map((c) => c.id);
+    const olderIds = older.commits.map((c) => c.id);
+    // total=4, pageSize=2 → initial=[sha-3, sha-2], older=[sha-1, sha-0]、重複なし。
+    expect(initialIds).toEqual(['sha-3', 'sha-2']);
+    expect(olderIds).toEqual(['sha-1', 'sha-0']);
+    expect(initialIds.filter((id) => olderIds.includes(id))).toEqual([]);
+    expect(older.nextEnd).toBe(0);
+    expect(older.exhausted).toBe(true);
   });
 });
