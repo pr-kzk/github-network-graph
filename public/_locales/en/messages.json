@@ -185,6 +185,24 @@
     "message": "Include forks",
     "description": "Mode toggle button: include forks."
   },
+  "graph_branch_button": {
+    "message": "Branches ($COUNT$)",
+    "description": "Branch jump menu button label in the graph header. $COUNT$ is the number of branches.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "graph_branch_search_placeholder": {
+    "message": "Search branches…",
+    "description": "Placeholder for the branch search input in the branch jump menu."
+  },
+  "graph_branch_no_match": {
+    "message": "No matching branches",
+    "description": "Empty state shown when no branch matches the search query."
+  },
   "graph_refresh": {
     "message": "Refresh",
     "description": "Button label to refetch the current graph."
