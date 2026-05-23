@@ -72,6 +72,7 @@ function makeView(): GraphView {
     focusOwner: 'o',
     focusRepo: 'r',
     focusHeads: [],
+    branches: [],
     spaceToLane: new Map(),
   };
 }

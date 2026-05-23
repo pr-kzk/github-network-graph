@@ -21,6 +21,13 @@ export type ViewRef = {
   ownerName: string;
 };
 
+// 本家リポジトリのブランチ先端。ヘッダーのジャンプ用セレクタが name で表示し、
+// sha でその先端コミット行へスクロールする。
+export type GraphBranch = {
+  name: string;
+  sha: string;
+};
+
 export type ViewEdge = {
   fromSha: string;
   toSha: string;
@@ -39,6 +46,8 @@ export type GraphView = {
   focusOwner: string;
   focusRepo: string;
   focusHeads: ViewRef[];
+  // 本家ブランチ一覧 (name 昇順)。ヘッダーのブランチジャンプに使う。
+  branches: GraphBranch[];
   // 採番済みの space → lane のスナップショット。次回 transform に渡すと
   // 既存 lane 番号が維持され、追加コミットによるレーン左右シフトを防げる。
   spaceToLane: ReadonlyMap<number, number>;
