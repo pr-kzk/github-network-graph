@@ -13,10 +13,12 @@ import { RepoForm } from './components/RepoForm';
 import { useChildrenIndex } from './hooks/useChildrenIndex';
 import { useCommitContextMenu } from './hooks/useCommitContextMenu';
 import { useGraphData } from './hooks/useGraphData';
-import type { ViewCommit } from './lib/transform.types';
+import type { GraphBranch, ViewCommit } from './lib/transform.types';
 
 // 派生 Map の deps として「コミットなし」状態の安定参照を提供する。
 const EMPTY_COMMITS: ViewCommit[] = [];
+// ready でない間に GraphHeader へ渡す安定参照。
+const EMPTY_BRANCHES: GraphBranch[] = [];
 
 export type GraphPageProps = {
   initialOwner: string;
@@ -79,8 +81,10 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
         owner={owner}
         repo={repo}
         mode={mode}
+        branches={state.status === 'ready' ? state.view.branches : EMPTY_BRANCHES}
         onModeChange={handleModeChange}
         onRefresh={handleRefresh}
+        onSelectBranch={setSelectedSha}
       />
 
       <div className="flex min-h-0 flex-1">

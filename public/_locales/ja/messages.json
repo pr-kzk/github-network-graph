@@ -185,6 +185,24 @@
     "message": "フォーク含む",
     "description": "Mode toggle button: include forks."
   },
+  "graph_branch_button": {
+    "message": "ブランチ ($COUNT$)",
+    "description": "Branch jump menu button label in the graph header. $COUNT$ is the number of branches.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "graph_branch_search_placeholder": {
+    "message": "ブランチを検索…",
+    "description": "Placeholder for the branch search input in the branch jump menu."
+  },
+  "graph_branch_no_match": {
+    "message": "一致するブランチがありません",
+    "description": "Empty state shown when no branch matches the search query."
+  },
   "graph_refresh": {
     "message": "再取得",
     "description": "Button label to refetch the current graph."

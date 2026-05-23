@@ -1,6 +1,6 @@
 import type { GraphMode } from '@/shared/storage';
 import type { FetchedNetwork, NetworkRawCommit } from './networkApi.types';
-import type { GraphView, ViewCommit, ViewEdge, ViewRef } from './transform.types';
+import type { GraphBranch, GraphView, ViewCommit, ViewEdge, ViewRef } from './transform.types';
 
 export type TransformOptions = {
   mode: GraphMode;
@@ -216,6 +216,10 @@ export function transformNetwork(
     ownerName: focusUser?.name ?? '',
   }));
 
+  const branches: GraphBranch[] = (focusUser?.heads ?? [])
+    .map((h) => ({ name: h.name, sha: h.id }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return {
     commits: viewCommits,
     edges,
@@ -224,6 +228,7 @@ export function transformNetwork(
     focusOwner: focusUser?.name ?? '',
     focusRepo: focusUser?.repo ?? '',
     focusHeads,
+    branches,
     spaceToLane,
   };
 }
