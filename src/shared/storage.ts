@@ -13,18 +13,27 @@ export type RecentRepo = {
   openedAt: number;
 };
 
+export type TelemetryPrefs = {
+  enabled: boolean;
+  promptSeen: boolean;
+};
+
 export type LocalSchema = {
   graphPrefs: GraphPrefs;
   recentRepos: RecentRepo[];
+  telemetry: TelemetryPrefs;
 };
 
 export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'dark' };
+
+export const DEFAULT_TELEMETRY: TelemetryPrefs = { enabled: true, promptSeen: false };
 
 export const MAX_RECENT_REPOS = 6;
 
 export const LOCAL_DEFAULTS: LocalSchema = {
   graphPrefs: DEFAULT_GRAPH_PREFS,
   recentRepos: [],
+  telemetry: DEFAULT_TELEMETRY,
 };
 
 const LOCAL_KEYS = Object.keys(LOCAL_DEFAULTS) as (keyof LocalSchema)[];
@@ -35,6 +44,10 @@ function normalize<K extends keyof LocalSchema>(key: K, value: unknown): LocalSc
   if (key === 'graphPrefs') {
     const v = (value ?? {}) as Partial<GraphPrefs>;
     return { ...DEFAULT_GRAPH_PREFS, ...v } as LocalSchema[K];
+  }
+  if (key === 'telemetry') {
+    const v = (value ?? {}) as Partial<TelemetryPrefs>;
+    return { ...DEFAULT_TELEMETRY, ...v } as LocalSchema[K];
   }
   return (value ?? LOCAL_DEFAULTS[key]) as LocalSchema[K];
 }
@@ -54,7 +67,7 @@ class LocalStoreCache {
 
   constructor() {
     this.snapshots = { ...LOCAL_DEFAULTS };
-    this.listeners = { graphPrefs: new Set(), recentRepos: new Set() };
+    this.listeners = { graphPrefs: new Set(), recentRepos: new Set(), telemetry: new Set() };
   }
 
   getSnapshot<K extends keyof LocalSchema>(key: K): LocalSchema[K] {

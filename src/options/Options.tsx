@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '@/shared/i18n';
 import { type GraphMode, type Theme, localStore } from '@/shared/storage';
+import { isTelemetryConfigured, setTelemetryEnabled } from '@/shared/telemetry';
 import { useLocalValue } from '@/shared/useLocalValue';
 import { useTheme } from '@/shared/useTheme';
+
+const PRIVACY_URL = 'https://github.com/pr-kzk/github-network-graph/blob/main/PRIVACY.md';
 
 const MODE_OPTIONS: ReadonlyArray<{
   value: GraphMode;
@@ -43,6 +46,7 @@ export function Options() {
   const prefs = useLocalValue('graphPrefs');
   const mode = prefs.mode;
   const theme = prefs.theme;
+  const telemetry = useLocalValue('telemetry');
   const [saved, setSaved] = useState(false);
   const savedTimerRef = useRef<number | null>(null);
 
@@ -72,6 +76,11 @@ export function Options() {
 
   const handleThemeChange = async (next: Theme) => {
     await localStore.set('graphPrefs', { ...prefs, theme: next });
+    markSaved();
+  };
+
+  const handleTelemetryChange = async (next: boolean) => {
+    await setTelemetryEnabled(telemetry, next);
     markSaved();
   };
 
@@ -159,6 +168,35 @@ export function Options() {
           ))}
         </fieldset>
       </section>
+
+      {isTelemetryConfigured() && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">{t('options_telemetry_heading')}</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {t('options_telemetry_description')}{' '}
+              <a
+                href={PRIVACY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                {t('options_telemetry_learn_more')}
+              </a>
+            </p>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 transition hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600">
+            <input
+              type="checkbox"
+              checked={telemetry.enabled}
+              onChange={(e) => handleTelemetryChange(e.target.checked)}
+              className="h-4 w-4 accent-indigo-600"
+            />
+            <span className="text-sm font-medium">{t('options_telemetry_toggle_label')}</span>
+          </label>
+        </section>
+      )}
 
       <footer className="border-t border-slate-200 pt-4 dark:border-slate-800">
         <a

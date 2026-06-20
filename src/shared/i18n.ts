@@ -105,7 +105,14 @@ export type MessageKey =
   | 'commit_detail_changes_files_singular'
   | 'commit_detail_changes_files_truncated'
   | 'commit_detail_changes_truncated_note'
-  | 'commit_unknown_author';
+  | 'commit_unknown_author'
+  | 'popup_telemetry_banner_text'
+  | 'popup_telemetry_banner_dismiss'
+  | 'popup_telemetry_banner_opt_out'
+  | 'options_telemetry_heading'
+  | 'options_telemetry_description'
+  | 'options_telemetry_toggle_label'
+  | 'options_telemetry_learn_more';
 
 // chrome.i18n.getMessage の薄いラッパ。
 // - subs は単一文字列 or 文字列配列。messages.json の placeholders に渡る。

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_GRAPH_PREFS,
+  DEFAULT_TELEMETRY,
   LOCAL_DEFAULTS,
   MAX_RECENT_REPOS,
   localStore,
@@ -28,6 +29,23 @@ describe('localStore', () => {
 
   it('returns the default recent repos when unset', async () => {
     expect(await localStore.get('recentRepos')).toEqual(LOCAL_DEFAULTS.recentRepos);
+  });
+
+  it('defaults telemetry to enabled with the prompt unseen', async () => {
+    expect(await localStore.get('telemetry')).toEqual(DEFAULT_TELEMETRY);
+  });
+
+  it('round-trips telemetry prefs', async () => {
+    await localStore.set('telemetry', { enabled: false, promptSeen: true });
+    expect(await localStore.get('telemetry')).toEqual({ enabled: false, promptSeen: true });
+  });
+
+  it('back-fills missing fields on legacy telemetry values', async () => {
+    await chrome.storage.local.set({ telemetry: { enabled: false } });
+    expect(await localStore.get('telemetry')).toEqual({
+      enabled: false,
+      promptSeen: DEFAULT_TELEMETRY.promptSeen,
+    });
   });
 });
 

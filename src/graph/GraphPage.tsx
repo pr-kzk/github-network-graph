@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '@/shared/i18n';
 import { type GraphMode, localStore, recordRecentRepo } from '@/shared/storage';
+import { trackEvent } from '@/shared/telemetry';
 import { useLocalValue } from '@/shared/useLocalValue';
 import { useTheme } from '@/shared/useTheme';
 import { CommitContextMenu } from './components/CommitContextMenu';
@@ -58,10 +59,19 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
 
   const handleModeChange = useCallback(async (next: GraphMode) => {
     // useLocalValue が同期的に新値を返すので setMode は不要 (cache が optimistic 更新する)。
+    trackEvent('mode_change', { mode: next });
     await localStore.set('graphPrefs', { ...prefs, mode: next });
   }, [prefs]);
 
-  const handleRefresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const handleRefresh = useCallback(() => {
+    trackEvent('graph_refresh');
+    setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleSelectCommit = useCallback((sha: string | null) => {
+    setSelectedSha(sha);
+    if (sha) trackEvent('commit_select');
+  }, []);
 
   const handleSubmitRepo = useCallback((o: string, r: string) => {
     setOwner(o);
@@ -114,7 +124,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
             <GraphList
               view={state.view}
               selectedSha={selectedSha}
-              onSelect={setSelectedSha}
+              onSelect={handleSelectCommit}
               onHoverCommit={ctx.handlers.onHoverCommit}
               onLeaveCommit={ctx.handlers.onLeaveCommit}
               onContextCommit={ctx.handlers.onContextCommit}

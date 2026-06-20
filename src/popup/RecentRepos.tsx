@@ -25,7 +25,7 @@ export function RecentRepos() {
           <li key={`${entry.owner}/${entry.repo}`}>
             <button
               type="button"
-              onClick={() => void openGraphTab(entry.owner, entry.repo)}
+              onClick={() => void openGraphTab(entry.owner, entry.repo, 'recent')}
               className="group flex w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <span className="truncate font-mono text-xs text-slate-700 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-300">

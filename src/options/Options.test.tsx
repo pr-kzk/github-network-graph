@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Options } from './Options';
@@ -45,5 +45,34 @@ describe('Options', () => {
 
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     expect((await localStore.get('graphPrefs')).theme).toBe('light');
+  });
+});
+
+describe('Options telemetry toggle', () => {
+  beforeEach(() => {
+    vi.stubEnv('VITE_APTABASE_APP_KEY', 'A-US-0000000000');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('is on by default and persists opt-out on change', async () => {
+    render(<Options />);
+
+    const toggle = await screen.findByLabelText(/Send anonymous usage statistics/i);
+    expect(toggle).toBeChecked();
+
+    await userEvent.click(toggle);
+
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
+    expect((await localStore.get('telemetry')).enabled).toBe(false);
+  });
+
+  it('is hidden when no telemetry key is configured', async () => {
+    vi.stubEnv('VITE_APTABASE_APP_KEY', '');
+    render(<Options />);
+    expect(await screen.findByLabelText(/Include forks/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Send anonymous usage statistics/i)).not.toBeInTheDocument();
   });
 });
