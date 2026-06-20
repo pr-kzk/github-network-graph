@@ -1,0 +1,51 @@
+Visualize the full GitHub commit network — including forks — in a clean,
+VSCode-Git-Graph-style viewer that opens in its own browser tab.
+
+GitHub's built-in network graph is great for a quick glance, but the moment
+you actually want to read a commit message or see which fork diverged where,
+you end up clicking through five separate pages. Git Graph for GitHub puts
+the graph and a full commit detail panel side by side, so you can explore a
+repository's history (and its entire fork family) without leaving the tab.
+
+KEY FEATURES
+
+• Commit graph for any public GitHub repository, rendered in a dedicated tab
+• Virtualized rendering — large histories stay smooth and responsive
+• Fork-aware: switch between "Main only" (the focus repo's branches) and
+  "Include forks" (the full network)
+• Commit detail panel with parent / child navigation and a per-file diff
+  summary (additions, deletions, status)
+• Right-click a commit to copy its SHA or subject, or jump to a parent
+• Recent repositories list in the toolbar popup
+• Dark and light themes
+• English and Japanese UI (automatic, based on Chrome's language setting)
+
+WHY YOU MIGHT WANT IT
+
+• You contribute to or maintain open-source projects with many forks and
+  want a faster way to see who diverged, when, and why
+• You like VSCode's Git Graph extension and want a similar experience in
+  the browser, without cloning the repo locally
+• You're researching a project before contributing and want to understand
+  its structure at a glance
+
+PRIVACY
+
+• No analytics, no tracking, no remote code
+• All requests go directly from your browser to github.com and
+  api.github.com — nothing is routed through any third-party server
+• The only data stored locally is your preferences (theme, default graph
+  mode) and the list of recently opened repositories
+• No content scripts are injected into pages you visit
+
+PERMISSIONS
+
+• storage — save your preferences and recent repositories locally
+• activeTab — read the URL of the current tab when you open the popup, so
+  it can offer to graph the repo you're looking at
+• Access to github.com and api.github.com — to fetch the commit network
+  and per-commit details on demand (unauthenticated, subject to GitHub's
+  60 requests/hour rate limit)
+
+Open-source under the MIT license. Issues and feature requests welcome at
+https://github.com/pr-kzk/github-network-graph/issues
