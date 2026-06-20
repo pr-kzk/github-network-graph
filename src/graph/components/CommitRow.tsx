@@ -36,6 +36,13 @@ export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: Comm
       style={{ height: ROW_HEIGHT }}
     >
       <div style={{ width: graphAreaWidth }} className="shrink-0" aria-hidden="true" />
+      <div
+        className="flex w-32 shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-600 dark:text-slate-400"
+        title={commit.authorLogin || commit.authorName}
+      >
+        <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} />
+        <span className="min-w-0 truncate">{commit.authorName || t('commit_unknown_author')}</span>
+      </div>
       <div className="min-w-0 flex-1 truncate pr-3 text-slate-900 dark:text-slate-100">
         {commit.subject || <span className="text-slate-400 dark:text-slate-500">{t('commit_detail_no_message')}</span>}
       </div>
@@ -43,13 +50,6 @@ export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: Comm
         {commit.refs.map((r) => (
           <RefBadge key={`${r.ownerName}:${r.name}`} refItem={r} />
         ))}
-      </div>
-      <div
-        className="flex w-32 shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-600 dark:text-slate-400"
-        title={commit.authorLogin || commit.authorName}
-      >
-        <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} />
-        <span className="min-w-0 truncate">{commit.authorName || t('commit_unknown_author')}</span>
       </div>
       <div className="w-16 shrink-0 truncate pr-3 font-mono text-[10px] text-slate-500">
         {commit.shortSha}
