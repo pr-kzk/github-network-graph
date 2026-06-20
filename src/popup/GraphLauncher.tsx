@@ -37,7 +37,7 @@ export function GraphLauncher() {
       {detected ? (
         <button
           type="button"
-          onClick={() => void openGraphTab(detected.owner, detected.repo)}
+          onClick={() => void openGraphTab(detected.owner, detected.repo, 'detected')}
           className="mt-3 w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.99]"
         >
           {tWith('popup_launcher_open_detected', { repo: `${detected.owner}/${detected.repo}` })}
@@ -57,7 +57,7 @@ export function GraphLauncher() {
             return;
           }
           setError(null);
-          void openGraphTab(parsed.owner, parsed.repo);
+          void openGraphTab(parsed.owner, parsed.repo, 'manual');
         }}
         className="mt-3 flex flex-col gap-2"
       >

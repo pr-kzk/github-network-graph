@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
+import { trackEvent } from '@/shared/telemetry';
 import { NetworkApiError, createGithubNetworkClient, toGraphError } from '../lib/networkApi';
 import type { NetworkMeta, NetworkRawCommit } from '../lib/networkApi.types';
 import { transformNetwork } from '../lib/transform';
@@ -169,6 +170,7 @@ export function useGraphData({
       .catch((err: unknown) => {
         if (cancelled) return;
         const info = toGraphError(err, t('error_unknown_body'));
+        trackEvent('graph_error', { phase: 'init', kind: info.kind });
         dispatch({ type: 'init/error', kind: info.kind, message: info.message });
       });
     return () => {
@@ -187,6 +189,7 @@ export function useGraphData({
       })
       .catch((err: unknown) => {
         const info = toGraphError(err, t('error_unknown_body'));
+        trackEvent('graph_error', { phase: 'older', kind: info.kind });
         dispatch({ type: 'older/error', kind: info.kind, message: info.message });
       });
   }, [client, owner, repo, pageSize]);

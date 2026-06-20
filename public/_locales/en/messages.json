@@ -4,7 +4,7 @@
     "description": "Extension display name shown in chrome://extensions and the toolbar."
   },
   "ext_description": {
-    "message": "Visualize the GitHub commit network (forks + main repo) in a dedicated tab. Manifest V3, no remote code, no telemetry.",
+    "message": "Visualize the GitHub commit network (forks + main repo) in a dedicated tab. Manifest V3, no remote code, opt-out anonymous stats.",
     "description": "Extension description shown in the Chrome Web Store and chrome://extensions (must be 132 chars or less)."
   },
   "action_default_title": {
@@ -128,6 +128,10 @@
   "options_theme_light_desc": {
     "message": "White background with high contrast text.",
     "description": "Description of the light theme."
+  },
+  "options_view_source": {
+    "message": "View source on GitHub",
+    "description": "Footer link to the project's GitHub repository."
   },
   "relative_now": {
     "message": "just now",
@@ -452,5 +456,33 @@
   "commit_unknown_author": {
     "message": "unknown",
     "description": "Fallback shown when a commit's author name is missing."
+  },
+  "popup_telemetry_banner_text": {
+    "message": "We collect anonymous usage stats to improve the extension. No personal data, no repository names.",
+    "description": "First-run telemetry consent banner shown in the popup."
+  },
+  "popup_telemetry_banner_dismiss": {
+    "message": "Got it",
+    "description": "Button that dismisses the consent banner while keeping telemetry on."
+  },
+  "popup_telemetry_banner_opt_out": {
+    "message": "Turn off",
+    "description": "Button that opts out of telemetry from the consent banner."
+  },
+  "options_telemetry_heading": {
+    "message": "Anonymous usage statistics",
+    "description": "Heading of the telemetry section on the options page."
+  },
+  "options_telemetry_description": {
+    "message": "Help improve the extension by sending anonymous usage and error events. No personal data, no repository names, no commit SHAs. You can opt out anytime.",
+    "description": "Explains what the telemetry toggle does."
+  },
+  "options_telemetry_toggle_label": {
+    "message": "Send anonymous usage statistics",
+    "description": "Label for the telemetry opt-out toggle."
+  },
+  "options_telemetry_learn_more": {
+    "message": "What we collect",
+    "description": "Link text to the privacy policy detailing what is collected."
   }
 }

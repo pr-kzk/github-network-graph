@@ -114,8 +114,8 @@ export function GraphList({
         <div style={{ width: gw }} className="shrink-0 px-3">
           Graph
         </div>
-        <div className="min-w-0 flex-1 truncate pr-3">Subject</div>
         <div className="w-32 shrink-0 pr-3">Author</div>
+        <div className="min-w-0 flex-1 truncate pr-3">Subject</div>
         <div className="w-16 shrink-0 pr-3">SHA</div>
         <div className="w-16 shrink-0 pr-3 text-right">Date</div>
       </div>
