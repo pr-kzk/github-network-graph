@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { t } from '@/shared/i18n';
 import { type GraphMode, type Theme, localStore } from '@/shared/storage';
+import { isTelemetryConfigured, setTelemetryEnabled } from '@/shared/telemetry';
 import { useLocalValue } from '@/shared/useLocalValue';
 import { useTheme } from '@/shared/useTheme';
+
+const PRIVACY_URL = 'https://github.com/pr-kzk/github-network-graph/blob/main/PRIVACY.md';
 
 const MODE_OPTIONS: ReadonlyArray<{
   value: GraphMode;
@@ -43,6 +46,7 @@ export function Options() {
   const prefs = useLocalValue('graphPrefs');
   const mode = prefs.mode;
   const theme = prefs.theme;
+  const telemetry = useLocalValue('telemetry');
   const [saved, setSaved] = useState(false);
   const savedTimerRef = useRef<number | null>(null);
 
@@ -72,6 +76,11 @@ export function Options() {
 
   const handleThemeChange = async (next: Theme) => {
     await localStore.set('graphPrefs', { ...prefs, theme: next });
+    markSaved();
+  };
+
+  const handleTelemetryChange = async (next: boolean) => {
+    await setTelemetryEnabled(telemetry, next);
     markSaved();
   };
 
@@ -159,6 +168,49 @@ export function Options() {
           ))}
         </fieldset>
       </section>
+
+      {isTelemetryConfigured() && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">{t('options_telemetry_heading')}</h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {t('options_telemetry_description')}{' '}
+              <a
+                href={PRIVACY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-indigo-600 hover:underline dark:text-indigo-400"
+              >
+                {t('options_telemetry_learn_more')}
+              </a>
+            </p>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 transition hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600">
+            <input
+              type="checkbox"
+              checked={telemetry.enabled}
+              onChange={(e) => handleTelemetryChange(e.target.checked)}
+              className="h-4 w-4 accent-indigo-600"
+            />
+            <span className="text-sm font-medium">{t('options_telemetry_toggle_label')}</span>
+          </label>
+        </section>
+      )}
+
+      <footer className="border-t border-slate-200 pt-4 dark:border-slate-800">
+        <a
+          href="https://github.com/pr-kzk/github-network-graph"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden className="h-4 w-4 fill-current">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+          </svg>
+          {t('options_view_source')}
+        </a>
+      </footer>
     </main>
   );
 }
