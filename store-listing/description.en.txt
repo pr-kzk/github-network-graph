@@ -31,12 +31,18 @@ WHY YOU MIGHT WANT IT
 
 PRIVACY
 
-• No analytics, no tracking, no remote code
-• All requests go directly from your browser to github.com and
-  api.github.com — nothing is routed through any third-party server
+• No remote code, and no content scripts injected into the pages you visit
+• No personal data, repository names, commit SHAs, URLs, or page content is
+  ever collected or transmitted
+• GitHub requests go directly from your browser to github.com and
+  api.github.com
+• Anonymous usage and error stats are sent via Aptabase, a privacy-first
+  analytics service, to help improve the extension — on by default, and you
+  can turn it off anytime from the options page. No cookies, no persistent
+  identifiers, so events can't be tied to you or correlated across sessions.
+  Builds without an Aptabase key send nothing
 • The only data stored locally is your preferences (theme, default graph
   mode) and the list of recently opened repositories
-• No content scripts are injected into pages you visit
 
 PERMISSIONS
 
