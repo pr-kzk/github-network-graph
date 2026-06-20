@@ -129,6 +129,10 @@
     "message": "白背景・高コントラストの明色テーマ。",
     "description": "Description of the light theme."
   },
+  "options_view_source": {
+    "message": "GitHub でソースを見る",
+    "description": "Footer link to the project's GitHub repository."
+  },
   "relative_now": {
     "message": "たった今",
     "description": "Relative time: less than a minute ago."

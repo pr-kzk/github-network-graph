@@ -39,6 +39,7 @@ export type MessageKey =
   | 'options_theme_dark_desc'
   | 'options_theme_light_label'
   | 'options_theme_light_desc'
+  | 'options_view_source'
   | 'relative_now'
   | 'relative_minutes'
   | 'relative_hours'
