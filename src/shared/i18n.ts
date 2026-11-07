@@ -1,12 +1,3 @@
-// chrome.i18n.getMessage の薄いラッパ。
-//
-// 文字列リソースは public/_locales/<locale>/messages.json で管理する。
-// このモジュールはキー型を狭めて誤用を防ぎ、placeholder 解決を Chrome の標準
-// (https://developer.chrome.com/docs/extensions/reference/api/i18n) に委譲する。
-//
-// 文言を追加する時は messages.json (en/ja) に同じキーを追加し、ここの MessageKey
-// にも追記すること。両ファイルでキー集合が一致している必要がある。
-
 export type MessageKey =
   | 'ext_name'
   | 'ext_description'
@@ -15,7 +6,6 @@ export type MessageKey =
   | 'popup_header_subtitle'
   | 'popup_open_options'
   | 'popup_launcher_title'
-  | 'popup_launcher_description'
   | 'popup_launcher_open_detected'
   | 'popup_launcher_not_on_github'
   | 'popup_launcher_input_placeholder'
@@ -35,6 +25,8 @@ export type MessageKey =
   | 'options_theme_heading'
   | 'options_theme_description'
   | 'options_theme_legend'
+  | 'options_theme_system_label'
+  | 'options_theme_system_desc'
   | 'options_theme_dark_label'
   | 'options_theme_dark_desc'
   | 'options_theme_light_label'
@@ -48,8 +40,10 @@ export type MessageKey =
   | 'graph_header_brand'
   | 'graph_mode_repo_only'
   | 'graph_mode_network'
+  | 'graph_tab_title'
   | 'graph_branch_button'
   | 'graph_branch_search_placeholder'
+  | 'graph_branch_search_label'
   | 'graph_branch_no_match'
   | 'graph_refresh'
   | 'graph_loading'
@@ -70,6 +64,7 @@ export type MessageKey =
   | 'error_empty_heading'
   | 'error_shape_heading'
   | 'error_http_heading'
+  | 'error_ratelimit_heading'
   | 'error_pending_heading'
   | 'error_unknown_heading'
   | 'error_auth_body'
@@ -79,12 +74,9 @@ export type MessageKey =
   | 'error_shape_body'
   | 'error_shape_json_body'
   | 'error_http_body'
+  | 'error_ratelimit_body'
   | 'error_pending_body'
   | 'error_unknown_body'
-  | 'error_commit_notfound_body'
-  | 'error_ratelimit_body'
-  | 'error_auth_denied_body'
-  | 'error_auth_required_body'
   | 'error_target_label'
   | 'error_retry'
   | 'error_signin_link'
@@ -105,6 +97,12 @@ export type MessageKey =
   | 'commit_detail_changes_files_singular'
   | 'commit_detail_changes_files_truncated'
   | 'commit_detail_changes_truncated_note'
+  | 'commit_detail_changes_error_ratelimit'
+  | 'commit_detail_changes_error_ratelimit_reset'
+  | 'commit_detail_changes_error_auth'
+  | 'commit_detail_changes_error_notfound'
+  | 'commit_detail_changes_error_network'
+  | 'commit_detail_changes_error_generic'
   | 'commit_unknown_author'
   | 'popup_telemetry_banner_text'
   | 'popup_telemetry_banner_dismiss'
@@ -112,14 +110,103 @@ export type MessageKey =
   | 'options_telemetry_heading'
   | 'options_telemetry_description'
   | 'options_telemetry_toggle_label'
-  | 'options_telemetry_learn_more';
+  | 'options_telemetry_learn_more'
+  | 'toast_copied'
+  | 'toast_copy_failed'
+  | 'toast_refresh_failed'
+  | 'graph_column_graph'
+  | 'graph_column_author'
+  | 'graph_column_subject'
+  | 'graph_column_sha'
+  | 'graph_column_date'
+  | 'graph_tooltip_commit'
+  | 'graph_tooltip_parents'
+  | 'graph_mode_group_label'
+  | 'graph_mode_help_label'
+  | 'graph_mode_repo_only_hint'
+  | 'graph_mode_network_hint'
+  | 'graph_status_commits_one'
+  | 'graph_status_commits_many'
+  | 'graph_status_more_available'
+  | 'graph_status_complete'
+  | 'file_status_added'
+  | 'file_status_modified'
+  | 'file_status_removed'
+  | 'file_status_renamed'
+  | 'file_status_copied'
+  | 'file_status_changed'
+  | 'file_status_unchanged'
+  | 'graph_search_label'
+  | 'graph_search_placeholder'
+  | 'graph_search_count'
+  | 'graph_search_none'
+  | 'graph_search_partial'
+  | 'graph_search_load_older'
+  | 'graph_search_previous'
+  | 'graph_search_next'
+  | 'graph_list_label'
+  | 'commit_detail_panel_label'
+  | 'commit_detail_action_copy_link'
+  | 'toast_commit_not_found'
+  | 'toast_commit_hidden_by_mode'
+  | 'graph_shortcuts_button'
+  | 'graph_shortcuts_title'
+  | 'graph_shortcuts_close'
+  | 'graph_shortcut_next'
+  | 'graph_shortcut_previous'
+  | 'graph_shortcut_first'
+  | 'graph_shortcut_last'
+  | 'graph_shortcut_parent'
+  | 'graph_shortcut_child'
+  | 'graph_shortcut_open_detail'
+  | 'graph_shortcut_back_to_list'
+  | 'graph_shortcut_search'
+  | 'graph_shortcut_search_step'
+  | 'graph_shortcut_search_clear'
+  | 'graph_shortcut_context_menu'
+  | 'graph_shortcut_help'
+  | 'popup_recent_clear'
+  | 'popup_recent_remove'
+  | 'popup_launcher_input_label'
+  | 'popup_telemetry_banner_label'
+  | 'graph_repo_switch_label'
+  | 'graph_repo_switch_recent'
+  | 'graph_repo_switch_hint'
+  | 'graph_repo_open_github'
+  | 'graph_status_refreshing'
+  | 'graph_status_pending'
+  | 'graph_status_seek_cancel'
+  | 'graph_branch_group_repo'
+  | 'commit_detail_branches_heading'
+  | 'commit_detail_branches_empty'
+  | 'commit_detail_branches_show_all'
+  | 'graph_detail_collapse'
+  | 'graph_detail_expand'
+  | 'graph_detail_resize'
+  | 'graph_seek_title'
+  | 'graph_seek_progress_total'
+  | 'graph_seek_progress'
+  | 'graph_seek_busy'
+  | 'toast_jumped'
+  | 'graph_detail_rail_label'
+  | 'graph_lanes_folded'
+  | 'graph_lanes_folded_hint'
+  | 'relative_now_short'
+  | 'error_server_heading'
+  | 'error_server_body'
+  | 'error_ratelimit_body_wait'
+  | 'error_hint_ratelimit'
+  | 'error_hint_network'
+  | 'error_hint_server'
+  | 'graph_status_retry_ratelimit'
+  | 'graph_status_retry_network'
+  | 'graph_status_retry_server'
+  | 'graph_status_cooldown'
+  | 'popup_launcher_description'
+  | 'error_commit_notfound_body'
+  | 'error_auth_denied_body'
+  | 'error_auth_required_body';
 
-// chrome.i18n.getMessage の薄いラッパ。
-// - subs は単一文字列 or 文字列配列。messages.json の placeholders に渡る。
-// - 戻り値が空文字列 (= キー未定義) の場合:
-//     DEV ビルドでは throw して取りこぼしを早期検知。
-//     prod ビルドでは fail-safe で key 自身を返す。
-// - chrome.i18n が未定義の test 環境 (fixture 未注入時) でも key を返して壊さない。
 export function t(key: MessageKey, substitutions?: string | string[]): string {
   const getMessage = (
     globalThis as {
@@ -137,13 +224,6 @@ export function t(key: MessageKey, substitutions?: string | string[]): string {
   return value;
 }
 
-// 名前付き placeholder を順序対応の subs に変換するシュガー。
-//
-// 重要: 内部では Object.values(named) を **そのまま** subs として渡す。
-// 挿入順 (= 呼び出し側が記述した順) は保たれるが、messages.json の placeholders
-// 宣言順 (= $1, $2, ...) と一致している必要がある。
-// 順序の責任は呼び出し側にあるため、placeholder が 2 個以上ある key を使う場合は
-// messages.json の content ($1, $2) と引数オブジェクトのキー順を必ず確認すること。
 export function tWith(key: MessageKey, named: Record<string, string>): string {
   return t(key, Object.values(named));
 }

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-06-20
+Last updated: 2026-11-07
 
 ## Summary
 
@@ -34,7 +34,8 @@ On user action, the extension fetches data **directly from GitHub**. The only ot
 | ----------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `https://github.com/{owner}/{repo}/network/meta`            | When you open a repository graph                                      | Cookie session (sent with `credentials: 'include'` so private repos work for the signed-in user) |
 | `https://github.com/{owner}/{repo}/network/chunk`           | Pagination through commit pages                                       | Same                                                                                             |
-| `https://api.github.com/repos/{owner}/{repo}/commits/{sha}` | When you select a commit, to load stats / files                       | Unauthenticated (rate-limited to 60 / hour / IP)                                                 |
+| `https://github.com/{owner}/{repo}/commit/{sha}.diff`       | When you select a commit, to load stats / files                       | Cookie session (sent with `credentials: 'include'` so private repos work for the signed-in user) |
+| `https://api.github.com/repos/{owner}/{repo}/commits/{sha}` | Fallback when the request above is unavailable                        | Unauthenticated (rate-limited to 60 / hour / IP)                                                 |
 | `https://*.aptabase.com/api/v0/event`                       | When anonymous telemetry is enabled, to record a usage or error event | Anonymous (no cookies; sent with `credentials: 'omit'`)                                          |
 
 The session cookie is sent **only** when the request target is `github.com`. The extension never reads or transmits the cookie itself; it relies on the browser's normal credentialed fetch behavior.

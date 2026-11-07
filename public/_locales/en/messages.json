@@ -27,10 +27,6 @@
     "message": "Git Graph",
     "description": "Title of the graph launcher card in the popup."
   },
-  "popup_launcher_description": {
-    "message": "Open the commit graph for the current repository in a new tab.",
-    "description": "Description for the graph launcher card."
-  },
   "popup_launcher_open_detected": {
     "message": "Open $REPO$",
     "description": "Button label for opening the detected repository.",
@@ -113,6 +109,14 @@
     "message": "Theme",
     "description": "Fieldset legend for the theme radio group."
   },
+  "options_theme_system_label": {
+    "message": "System",
+    "description": "Radio label for following the OS color scheme."
+  },
+  "options_theme_system_desc": {
+    "message": "Follow your operating system's light or dark setting.",
+    "description": "Description of the system theme."
+  },
   "options_theme_dark_label": {
     "message": "Dark",
     "description": "Radio label for the dark theme."
@@ -189,6 +193,16 @@
     "message": "Include forks",
     "description": "Mode toggle button: include forks."
   },
+  "graph_tab_title": {
+    "message": "$REPO$ - Git Graph",
+    "description": "Browser tab title of the graph page for a repository.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "octocat/hello-world"
+      }
+    }
+  },
   "graph_branch_button": {
     "message": "Branches ($COUNT$)",
     "description": "Branch jump menu button label in the graph header. $COUNT$ is the number of branches.",
@@ -202,6 +216,10 @@
   "graph_branch_search_placeholder": {
     "message": "Search branches…",
     "description": "Placeholder for the branch search input in the branch jump menu."
+  },
+  "graph_branch_search_label": {
+    "message": "Search branches",
+    "description": "Accessible name of the branch search input."
   },
   "graph_branch_no_match": {
     "message": "No matching branches",
@@ -270,7 +288,7 @@
     "description": "Heading shown for an authentication error."
   },
   "error_notfound_heading": {
-    "message": "Repository not found",
+    "message": "Repository not found or private",
     "description": "Heading shown when the repository is not found."
   },
   "error_network_heading": {
@@ -289,6 +307,10 @@
     "message": "HTTP error",
     "description": "Heading shown for a generic HTTP error."
   },
+  "error_ratelimit_heading": {
+    "message": "Too many requests",
+    "description": "Heading shown when GitHub answers HTTP 429."
+  },
   "error_pending_heading": {
     "message": "GitHub is still building the graph",
     "description": "Heading shown when GitHub is still computing the network graph data (HTTP 202)."
@@ -302,12 +324,12 @@
     "description": "Body text for an authentication / access denied error from the GitHub network endpoint."
   },
   "error_notfound_body": {
-    "message": "Repository not found.",
+    "message": "This repository doesn't exist, or it is private and you're not signed in to GitHub in this browser.",
     "description": "Body text for a 404 from the GitHub network endpoint."
   },
   "error_network_body": {
-    "message": "Network request failed: $CAUSE$",
-    "description": "Body text for a generic network failure. $CAUSE$ is the underlying error message.",
+    "message": "Couldn't reach GitHub: $CAUSE$",
+    "description": "Body text for a network failure. $CAUSE$ is the underlying error message.",
     "placeholders": {
       "cause": {
         "content": "$1",
@@ -343,6 +365,10 @@
       }
     }
   },
+  "error_ratelimit_body": {
+    "message": "GitHub API rate limit reached (unauthenticated: 60 requests/hour).",
+    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
+  },
   "error_pending_body": {
     "message": "GitHub is still computing the graph data for this repository. Please try reloading in a moment.",
     "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
@@ -350,22 +376,6 @@
   "error_unknown_body": {
     "message": "Something went wrong.",
     "description": "Body text fallback for an unknown error."
-  },
-  "error_commit_notfound_body": {
-    "message": "Commit not found.",
-    "description": "Body text for a 404 on a single-commit detail fetch."
-  },
-  "error_ratelimit_body": {
-    "message": "GitHub API rate limit reached (unauthenticated: 60 requests/hour).",
-    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
-  },
-  "error_auth_denied_body": {
-    "message": "Access to the repository was denied.",
-    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
-  },
-  "error_auth_required_body": {
-    "message": "Authentication required.",
-    "description": "Body text for a 401 on a single-commit detail fetch."
   },
   "error_target_label": {
     "message": "Target: $REPO$",
@@ -450,8 +460,38 @@
     "description": "Suffix after the file count when the list is truncated."
   },
   "commit_detail_changes_truncated_note": {
-    "message": "Note: GitHub truncates files at 300; view the rest on GitHub.",
-    "description": "Note explaining the 300-file truncation."
+    "message": "Note: only part of the file list is shown. View the rest on GitHub.",
+    "description": "Note shown when the file list is cut short."
+  },
+  "commit_detail_changes_error_ratelimit": {
+    "message": "GitHub's API rate limit was reached, so the changed files can't be shown right now. It resets within the hour; you can open the commit on GitHub meanwhile.",
+    "description": "Shown in the Changes section when the GitHub API rate limit is hit."
+  },
+  "commit_detail_changes_error_ratelimit_reset": {
+    "message": "GitHub's rate limit for unauthenticated requests (60 per hour) was reached, so the changed files can't be shown right now. It resets at $TIME$; you can open the commit on GitHub meanwhile.",
+    "description": "Shown in the Changes section when the rate limit is hit and the reset time is known. $TIME$ is a local clock time.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "3:45 PM"
+      }
+    }
+  },
+  "commit_detail_changes_error_auth": {
+    "message": "Access to this repository is required. Sign in to GitHub in this browser, then try again.",
+    "description": "Shown in the Changes section when GitHub denies access."
+  },
+  "commit_detail_changes_error_notfound": {
+    "message": "GitHub could not find this commit. If the repository is private, sign in to GitHub in this browser first.",
+    "description": "Shown in the Changes section when the commit is not found."
+  },
+  "commit_detail_changes_error_network": {
+    "message": "Could not load the changed files. Check your connection and try again.",
+    "description": "Shown in the Changes section on a network failure."
+  },
+  "commit_detail_changes_error_generic": {
+    "message": "Could not load the changed files from GitHub.",
+    "description": "Shown in the Changes section for unexpected HTTP or response-shape errors."
   },
   "commit_unknown_author": {
     "message": "unknown",
@@ -484,5 +524,519 @@
   "options_telemetry_learn_more": {
     "message": "What we collect",
     "description": "Link text to the privacy policy detailing what is collected."
+  },
+  "toast_copied": {
+    "message": "Copied",
+    "description": "Toast shown after text was copied to the clipboard."
+  },
+  "toast_copy_failed": {
+    "message": "Copy failed",
+    "description": "Toast shown when copying to the clipboard failed."
+  },
+  "toast_refresh_failed": {
+    "message": "Couldn't refresh. Showing the previous data.",
+    "description": "Toast shown when a refresh fails while earlier data is still displayed."
+  },
+  "graph_column_graph": {
+    "message": "Graph",
+    "description": "Column header for the branch graph lanes."
+  },
+  "graph_column_author": {
+    "message": "Author",
+    "description": "Column header for the commit author."
+  },
+  "graph_column_subject": {
+    "message": "Subject",
+    "description": "Column header for the commit subject line."
+  },
+  "graph_column_sha": {
+    "message": "SHA",
+    "description": "Column header for the abbreviated commit SHA."
+  },
+  "graph_column_date": {
+    "message": "Date",
+    "description": "Column header for the commit date."
+  },
+  "graph_tooltip_commit": {
+    "message": "Commit",
+    "description": "Label of the abbreviated SHA in the commit hover tooltip."
+  },
+  "graph_tooltip_parents": {
+    "message": "Parents",
+    "description": "Label of the parent SHAs in the commit hover tooltip."
+  },
+  "graph_mode_group_label": {
+    "message": "Display mode",
+    "description": "Accessible name of the mode toggle button group."
+  },
+  "graph_mode_help_label": {
+    "message": "About display modes",
+    "description": "Accessible name of the help button next to the mode toggle."
+  },
+  "graph_mode_repo_only_hint": {
+    "message": "Shows only commits from the repository you entered.",
+    "description": "Help text for the main-only mode."
+  },
+  "graph_mode_network_hint": {
+    "message": "Also shows commits from forks. This loads more data, so large networks can take longer.",
+    "description": "Help text for the include-forks mode."
+  },
+  "graph_status_commits_one": {
+    "message": "1 commit loaded",
+    "description": "Status line text when exactly one commit is loaded."
+  },
+  "graph_status_commits_many": {
+    "message": "$COUNT$ commits loaded",
+    "description": "Status line text for several loaded commits. $COUNT$ is the number.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "250"
+      }
+    }
+  },
+  "graph_status_more_available": {
+    "message": "older history available",
+    "description": "Status line suffix when older commits can still be loaded."
+  },
+  "graph_status_complete": {
+    "message": "full history loaded",
+    "description": "Status line suffix when the oldest commit has been reached."
+  },
+  "file_status_added": {
+    "message": "added",
+    "description": "Accessible name of the file status badge: added."
+  },
+  "file_status_modified": {
+    "message": "modified",
+    "description": "Accessible name of the file status badge: modified."
+  },
+  "file_status_removed": {
+    "message": "removed",
+    "description": "Accessible name of the file status badge: removed."
+  },
+  "file_status_renamed": {
+    "message": "renamed",
+    "description": "Accessible name of the file status badge: renamed."
+  },
+  "file_status_copied": {
+    "message": "copied",
+    "description": "Accessible name of the file status badge: copied."
+  },
+  "file_status_changed": {
+    "message": "changed",
+    "description": "Accessible name of the file status badge: changed."
+  },
+  "file_status_unchanged": {
+    "message": "unchanged",
+    "description": "Accessible name of the file status badge: unchanged."
+  },
+  "relative_now_short": {
+    "message": "now",
+    "description": "Compact relative time for under a minute ago, shown in the commit list."
+  },
+  "graph_search_label": {
+    "message": "Search loaded commits",
+    "description": "Accessible name of the commit search field."
+  },
+  "graph_search_placeholder": {
+    "message": "Search subject, SHA, author, branch  ( / )",
+    "description": "Placeholder of the commit search field. The slash is the shortcut that focuses it."
+  },
+  "graph_search_count": {
+    "message": "$MATCHES$ of $LOADED$ loaded",
+    "description": "Search result count. $MATCHES$ is the number of matches, $LOADED$ the number of loaded commits.",
+    "placeholders": {
+      "matches": {
+        "content": "$1",
+        "example": "3"
+      },
+      "loaded": {
+        "content": "$2",
+        "example": "120"
+      }
+    }
+  },
+  "graph_search_none": {
+    "message": "No matches in $LOADED$ loaded commits",
+    "description": "Search result text when nothing matches. $LOADED$ is the number of loaded commits.",
+    "placeholders": {
+      "loaded": {
+        "content": "$1",
+        "example": "120"
+      }
+    }
+  },
+  "graph_search_partial": {
+    "message": "Older commits are not searched yet.",
+    "description": "Hint shown while a search is active and older history has not been loaded."
+  },
+  "graph_search_load_older": {
+    "message": "Load older commits",
+    "description": "Button next to the search result that loads older commits so they are searched too."
+  },
+  "graph_search_previous": {
+    "message": "Previous match (Shift+Enter)",
+    "description": "Button that selects the previous search match."
+  },
+  "graph_search_next": {
+    "message": "Next match (Enter)",
+    "description": "Button that selects the next search match."
+  },
+  "graph_list_label": {
+    "message": "Commits",
+    "description": "Accessible name of the commit list."
+  },
+  "commit_detail_panel_label": {
+    "message": "Commit details",
+    "description": "Accessible name of the commit detail panel."
+  },
+  "commit_detail_action_copy_link": {
+    "message": "Copy link to this commit view",
+    "description": "Copies a link that reopens the graph on this commit with the same mode."
+  },
+  "toast_commit_not_found": {
+    "message": "That commit was not found in the repository history. It may have been removed or belong to another repository. Try Refresh, or pick a branch instead.",
+    "description": "Toast shown when the commit from the link or selection cannot be found after loading all history."
+  },
+  "toast_commit_hidden_by_mode": {
+    "message": "That commit is only in a fork. Switch to \"Include forks\" to see it.",
+    "description": "Toast shown when the linked commit exists only in forks while forks are hidden."
+  },
+  "graph_shortcuts_button": {
+    "message": "Shortcuts",
+    "description": "Header button that opens the keyboard shortcuts dialog."
+  },
+  "graph_shortcuts_title": {
+    "message": "Keyboard shortcuts",
+    "description": "Title of the keyboard shortcuts dialog."
+  },
+  "graph_shortcuts_close": {
+    "message": "Close",
+    "description": "Button that closes the keyboard shortcuts dialog."
+  },
+  "graph_shortcut_next": {
+    "message": "Select the next (older) commit",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_previous": {
+    "message": "Select the previous (newer) commit",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_first": {
+    "message": "Jump to the newest loaded commit",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_last": {
+    "message": "Jump to the oldest loaded commit",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_parent": {
+    "message": "Go to the first parent",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_child": {
+    "message": "Go to the first child",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_open_detail": {
+    "message": "Move focus to the commit details",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_back_to_list": {
+    "message": "Return from the details to the list",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search": {
+    "message": "Focus the search field",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search_step": {
+    "message": "Next / previous match (in the search field)",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search_clear": {
+    "message": "Clear the search (in the search field)",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_context_menu": {
+    "message": "Open the context menu for the focused commit",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_help": {
+    "message": "Show this dialog",
+    "description": "Keyboard shortcut description."
+  },
+  "popup_recent_clear": {
+    "message": "Clear all",
+    "description": "Button that clears the whole recent repositories list."
+  },
+  "popup_recent_remove": {
+    "message": "Remove $REPO$ from recent repositories",
+    "description": "Accessible label of the button that removes one recent repository. $REPO$ is owner/repo.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "numpy/numpy"
+      }
+    }
+  },
+  "popup_launcher_input_label": {
+    "message": "Repository URL or owner/repo",
+    "description": "Accessible label of the manual repository input in the popup."
+  },
+  "popup_telemetry_banner_label": {
+    "message": "Anonymous usage stats",
+    "description": "Accessible name of the first-run telemetry notice in the popup."
+  },
+  "graph_repo_switch_label": {
+    "message": "Switch repository",
+    "description": "Tooltip and accessible name of the repository chip that opens the inline switcher."
+  },
+  "graph_repo_switch_recent": {
+    "message": "Recent repositories",
+    "description": "Accessible name of the suggestion list in the inline repository switcher."
+  },
+  "graph_repo_switch_hint": {
+    "message": "Enter to open · Esc to cancel",
+    "description": "Keyboard hint below the inline repository switcher."
+  },
+  "graph_repo_open_github": {
+    "message": "Open on GitHub",
+    "description": "Tooltip and accessible name of the link that opens the repository on GitHub."
+  },
+  "graph_status_refreshing": {
+    "message": "Refreshing…",
+    "description": "Status bar text while the graph is refreshed and the previous data stays visible."
+  },
+  "graph_status_pending": {
+    "message": "GitHub is still preparing this graph. Large repositories can take a minute.",
+    "description": "Reassuring text shown when GitHub keeps answering that the network data is not ready yet."
+  },
+  "graph_status_seek_cancel": {
+    "message": "Cancel",
+    "description": "Button that stops the search for an older commit."
+  },
+  "graph_branch_group_repo": {
+    "message": "This repository",
+    "description": "Heading of the main repository group in the branch menu when fork branches are also listed."
+  },
+  "commit_detail_branches_heading": {
+    "message": "contained in",
+    "description": "Heading of the list of branches whose history contains the selected commit."
+  },
+  "commit_detail_branches_empty": {
+    "message": "(no branch tip among loaded commits)",
+    "description": "Empty label when no loaded branch tip contains the selected commit."
+  },
+  "commit_detail_branches_show_all": {
+    "message": "Show all $COUNT$",
+    "description": "Button that reveals every branch containing the selected commit when only the first few are listed.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "graph_detail_collapse": {
+    "message": "Hide details panel",
+    "description": "Tooltip and accessible name of the button that collapses the details panel."
+  },
+  "graph_detail_expand": {
+    "message": "Show details panel",
+    "description": "Tooltip and accessible name of the button that expands the details panel."
+  },
+  "graph_detail_resize": {
+    "message": "Resize details panel",
+    "description": "Accessible name of the drag handle that resizes the details panel."
+  },
+  "graph_seek_title": {
+    "message": "Looking for $TARGET$ in older history…",
+    "description": "Banner title while older pages are fetched to reach a branch or commit. $TARGET$ is a branch name or short commit hash.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "release/1.x"
+      }
+    }
+  },
+  "graph_seek_progress_total": {
+    "message": "$COUNT$ of $TOTAL$ commits scanned",
+    "description": "Progress text of the older-history search when the total number of commits is known.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3,100"
+      },
+      "total": {
+        "content": "$2",
+        "example": "8,000"
+      }
+    }
+  },
+  "graph_seek_progress": {
+    "message": "$COUNT$ commits scanned",
+    "description": "Progress text of the older-history search when the total is unknown.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3,100"
+      }
+    }
+  },
+  "graph_seek_busy": {
+    "message": "Searching older history…",
+    "description": "Tooltip of the busy indicator on the branch menu button while an older commit is being searched for."
+  },
+  "toast_jumped": {
+    "message": "Jumped to $TARGET$",
+    "description": "Toast shown after the list reached a commit that had to be loaded first. $TARGET$ is a branch name or short commit hash.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "release/1.x"
+      }
+    }
+  },
+  "graph_detail_rail_label": {
+    "message": "Details",
+    "description": "Vertical label on the collapsed details panel rail."
+  },
+  "graph_lanes_folded": {
+    "message": "+$COUNT$",
+    "description": "Chip in the graph column header: number of lanes folded into the overflow gutter.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "37"
+      }
+    }
+  },
+  "graph_lanes_folded_hint": {
+    "message": "$COUNT$ more lanes do not fit and are folded into the dashed line on the right. Select a commit to highlight its path there.",
+    "description": "Tooltip of the overflow chip in the graph column header.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "37"
+      }
+    }
+  },
+  "error_server_heading": {
+    "message": "GitHub is having problems",
+    "description": "Heading shown when GitHub answers with a server error (HTTP 5xx)."
+  },
+  "error_server_body": {
+    "message": "GitHub returned a server error (HTTP $STATUS$).",
+    "description": "Body text for an HTTP 5xx answer. $STATUS$ is the response status code.",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "503"
+      }
+    }
+  },
+  "error_ratelimit_body_wait": {
+    "message": "GitHub is limiting requests from this browser. It asked us to wait about $MINUTES$ min.",
+    "description": "Body text shown when GitHub says how long to wait. $MINUTES$ is a whole number of minutes.",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "error_hint_ratelimit": {
+    "message": "Wait a few minutes, then press Retry. You can keep browsing the repository on GitHub in the meantime.",
+    "description": "Advice shown under a rate limit error."
+  },
+  "error_hint_network": {
+    "message": "Check your internet connection or VPN. If GitHub opens in other tabs but this keeps failing, GitHub may be blocking this connection for a few minutes; wait, then press Retry.",
+    "description": "Advice shown under a network error."
+  },
+  "error_hint_server": {
+    "message": "GitHub may be having problems. Wait a moment, then press Retry.",
+    "description": "Advice shown under a server error."
+  },
+  "graph_status_retry_ratelimit": {
+    "message": "GitHub is limiting requests. Retrying in $SECONDS$ s (attempt $ATTEMPT$ of $MAX$)…",
+    "description": "Status text while waiting to retry after GitHub throttled a request.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "8"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "2"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_retry_network": {
+    "message": "Connection problem. Retrying in $SECONDS$ s (attempt $ATTEMPT$ of $MAX$)…",
+    "description": "Status text while waiting to retry after a network failure.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "4"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "2"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_retry_server": {
+    "message": "GitHub had a problem. Retrying in $SECONDS$ s (attempt $ATTEMPT$ of $MAX$)…",
+    "description": "Status text while waiting to retry after a GitHub server error.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "2"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "1"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_cooldown": {
+    "message": "Pausing requests to GitHub for $SECONDS$ s to let it recover…",
+    "description": "Status text shown while new requests wait for an earlier failure to cool down.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "popup_launcher_description": {
+    "message": "Open the commit graph for the current repository in a new tab.",
+    "description": "Description for the graph launcher card."
+  },
+  "error_commit_notfound_body": {
+    "message": "Commit not found.",
+    "description": "Body text for a 404 on a single-commit detail fetch."
+  },
+  "error_auth_denied_body": {
+    "message": "Access to the repository was denied.",
+    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
+  },
+  "error_auth_required_body": {
+    "message": "Authentication required.",
+    "description": "Body text for a 401 on a single-commit detail fetch."
   }
 }

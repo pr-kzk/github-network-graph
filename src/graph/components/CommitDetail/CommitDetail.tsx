@@ -26,7 +26,7 @@ export function CommitDetail({
   onParentClick,
   onChildClick,
 }: CommitDetailProps) {
-  const extra = useCommitDetailExtra({
+  const { state: extra, retry } = useCommitDetailExtra({
     owner,
     repo,
     authorOwner: commit?.authorLogin || undefined,
@@ -78,7 +78,7 @@ export function CommitDetail({
         emptyLabel={t('commit_detail_children_empty')}
         onClick={onChildClick}
       />
-      <ChangesSection state={extra} />
+      <ChangesSection state={extra} commitUrl={commitUrl} onRetry={retry} />
     </div>
   );
 }

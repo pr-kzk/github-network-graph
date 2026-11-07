@@ -8,7 +8,7 @@ A Chrome extension (Manifest V3) that opens a VSCode-Git-Graph-style commit view
 
 - Browse the **commit graph** of any GitHub repository in its own tab, with virtualized rendering for large histories.
 - **Fork-aware**: choose between `Main only` (commits reachable from the focus repo's heads) and `Include forks` (full network).
-- **Commit detail panel** with parent / children navigation and a per-file diff summary (additions / deletions / status).
+- **Commit detail panel** with parent / children navigation and a per-file diff summary (additions / deletions / status). If the changed files can't be loaded, the panel says why (for example a rate limit with its reset time) and offers Retry and Open on GitHub.
 - **Recent repositories** list in the popup.
 - **Dark theme** by default.
 - **Privacy-friendly.** Requests go directly to GitHub from your browser. Optional anonymous, opt-out usage and error stats — no personal data, no repository names. See [PRIVACY.md](./PRIVACY.md).
@@ -46,12 +46,12 @@ The graph view supports:
 
 ## Permissions
 
-| Permission                                   | Why                                                                                                                                                  |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storage`                                    | Save the default graph mode and the recent-repositories list locally.                                                                                |
-| `activeTab`                                  | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes.          |
-| `host_permissions: https://github.com/*`     | Fetch the commit network data directly from GitHub on demand.                                                                                        |
-| `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / files) from the GitHub REST API when you select a commit. Unauthenticated, rate-limited to 60 requests/hour per IP. |
+| Permission                                   | Why                                                                                                                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                                    | Save the default graph mode and the recent-repositories list locally.                                                                                                 |
+| `activeTab`                                  | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes.                           |
+| `host_permissions: https://github.com/*`     | Fetch the commit network data and each commit's changed files directly from GitHub on demand, using your signed-in session so private repositories work.              |
+| `host_permissions: https://api.github.com/*` | Fallback for per-commit detail (stats / files) from the GitHub REST API when the page above is unavailable. Unauthenticated, rate-limited to 60 requests/hour per IP. |
 
 No `scripting`, no content scripts, no remote code; optional opt-out anonymous diagnostics. See [PRIVACY.md](./PRIVACY.md).
 

@@ -1,8 +1,8 @@
-import type { CommitDetailFile } from '../../lib/commitDetailApi';
+import type { CommitDetailFile } from '../../lib/commitDetailTypes';
 import { t } from '@/shared/i18n';
 import { FileStatusBadge } from './FileStatusBadge';
 
-export type ChangesReadyProps = {
+type ChangesReadyProps = {
   data: {
     additions: number;
     deletions: number;

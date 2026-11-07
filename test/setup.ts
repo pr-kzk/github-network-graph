@@ -10,8 +10,6 @@ type I18nMessageEntry = {
   placeholders?: Record<string, { content: string; example?: string }>;
 };
 
-// chrome.i18n のテスト用 fixture は en/messages.json を再利用する。
-// (ja は本番ロケール解決経由でのみ使われるため、ユニットテストでは en で十分。)
 const i18nFixture: Record<string, I18nMessageEntry> = enMessages;
 
 type StorageChange = { oldValue?: unknown; newValue?: unknown };
@@ -104,6 +102,10 @@ function createChromeMock() {
         addListener: vi.fn<(cb: MessageListener) => void>((cb) => {
           messageListeners.push(cb);
         }),
+        removeListener: vi.fn<(cb: MessageListener) => void>((cb) => {
+          const i = messageListeners.indexOf(cb);
+          if (i >= 0) messageListeners.splice(i, 1);
+        }),
       },
       sendMessage: vi.fn<(message: unknown) => Promise<unknown>>(async (message) => {
         return new Promise((resolve) => {
@@ -120,6 +122,7 @@ function createChromeMock() {
     storage: {
       local: createStorageArea('local', emitStorageChange),
       sync: createStorageArea('sync', emitStorageChange),
+      session: createStorageArea('session', emitStorageChange),
       onChanged: {
         addListener: vi.fn<(cb: StorageChangeListener) => void>((cb) => {
           onChangedListeners.push(cb);
@@ -134,12 +137,21 @@ function createChromeMock() {
     tabs: {
       query: vi.fn<() => Promise<Array<{ url?: string }>>>(async () => []),
       create: vi.fn<() => Promise<{ id: number }>>(async () => ({ id: 1 })),
+      getCurrent: vi.fn<() => Promise<{ id: number; windowId: number }>>(async () => ({
+        id: 1,
+        windowId: 1,
+      })),
+      update: vi.fn<(tabId: number, props: object) => Promise<{ id: number }>>(async (id) => ({
+        id,
+      })),
+    },
+    windows: {
+      update: vi.fn<(windowId: number, info: object) => Promise<{ id: number }>>(async (id) => ({
+        id,
+      })),
     },
     i18n: {
-      // chrome.i18n.getMessage の最小実装。
-      //   1. messages.json の placeholders.<name>.content = "$N" → subsArr[N-1] にマップ
-      //   2. メッセージ中の $NAME$ を解決済み値で置換 (Chrome 同様 case-insensitive)
-      // 未定義キーは Chrome 本体と同じく空文字列を返す。
+      getUILanguage: vi.fn<() => string>(() => 'en'),
       getMessage: vi.fn<(key: string, subs?: string | string[]) => string>((key, subs) => {
         const entry = i18nFixture[key];
         if (!entry) return '';
@@ -167,6 +179,15 @@ class ResizeObserverStub {
   disconnect(): void {}
 }
 vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+vi.stubGlobal(
+  'matchMedia',
+  vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn<() => void>(),
+    removeEventListener: vi.fn<() => void>(),
+  })),
+);
 Element.prototype.scrollIntoView = vi.fn<Element['scrollIntoView']>();
 
 afterEach(() => {

@@ -50,8 +50,9 @@ PERMISSIONS
 • activeTab — read the URL of the current tab when you open the popup, so
   it can offer to graph the repo you're looking at
 • Access to github.com and api.github.com — to fetch the commit network
-  and per-commit details on demand (unauthenticated, subject to GitHub's
-  60 requests/hour rate limit)
+  and per-commit details on demand (details use your signed-in GitHub
+  session; only when that fails does it fall back to the unauthenticated
+  API, subject to GitHub's 60 requests/hour rate limit)
 
 Open-source under the MIT license. Issues and feature requests welcome at
 https://github.com/pr-kzk/github-network-graph/issues
