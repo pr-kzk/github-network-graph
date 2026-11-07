@@ -24,8 +24,8 @@ describe('localStore', () => {
     expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'light' });
   });
 
-  it('follows the system theme for users with no saved preferences', async () => {
-    expect((await localStore.get('graphPrefs')).theme).toBe('system');
+  it('uses the dark theme for users with no saved preferences', async () => {
+    expect((await localStore.get('graphPrefs')).theme).toBe('dark');
   });
 
   it('keeps dark for legacy graphPrefs saved before themes existed', async () => {
@@ -41,6 +41,37 @@ describe('localStore', () => {
   it('keeps dark for an unrecognised saved theme', async () => {
     await chrome.storage.local.set({ graphPrefs: { mode: 'network', theme: 'sepia' } });
     expect((await localStore.get('graphPrefs')).theme).toBe('dark');
+  });
+
+  it('keeps both fields when two partial updates start from the same stale snapshot', async () => {
+    await localStore.set('graphPrefs', { mode: 'network', theme: 'dark' });
+    const stale = await localStore.get('graphPrefs');
+
+    await localStore.update('graphPrefs', { mode: 'repo-only' });
+    await localStore.update('graphPrefs', { theme: 'light' });
+
+    expect(stale).toEqual({ mode: 'network', theme: 'dark' });
+    expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'light' });
+  });
+
+  it('keeps both fields when partial updates are issued without waiting', async () => {
+    await Promise.all([
+      localStore.update('graphLayout', { detailWidth: 500 }),
+      localStore.update('graphLayout', { detailCollapsed: true }),
+    ]);
+
+    expect(await localStore.get('graphLayout')).toEqual({
+      detailWidth: 500,
+      detailCollapsed: true,
+    });
+  });
+
+  it('merges a partial update into what is already stored before the cache was loaded', async () => {
+    await chrome.storage.local.set({ telemetry: { enabled: false, promptSeen: false } });
+
+    await localStore.update('telemetry', { promptSeen: true });
+
+    expect(await localStore.get('telemetry')).toEqual({ enabled: false, promptSeen: true });
   });
 
   it('returns the default recent repos when unset', async () => {

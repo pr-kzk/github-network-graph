@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { answerFocusRequests, focusExistingGraphTab } from './graphTabFocus';
 import { openGraphTab } from './openGraphTab';
 
@@ -28,6 +28,31 @@ describe('focusExistingGraphTab', () => {
     shown = { owner: 'numpy', repo: 'numpy' };
 
     expect(await focusExistingGraphTab('numpy', 'numpy')).toBe(true);
+  });
+
+  it('ignores requests sent by another extension', async () => {
+    const addListener = vi.spyOn(chrome.runtime.onMessage, 'addListener');
+    const stop = answerFocusRequests(() => ({ owner: 'numpy', repo: 'numpy' }));
+    const respond = vi.fn<(response: unknown) => void>();
+    const listener = addListener.mock.calls.at(-1)?.[0];
+
+    const handled = listener?.(
+      { type: 'focus-graph-tab', owner: 'numpy', repo: 'numpy' },
+      { id: 'some-other-extension' },
+      respond,
+    );
+    stop();
+
+    expect(handled).toBeFalsy();
+    expect(respond).not.toHaveBeenCalled();
+    expect(chrome.tabs.update).not.toHaveBeenCalled();
+  });
+
+  it('ignores malformed messages', async () => {
+    answerFocusRequests(() => ({ owner: 'numpy', repo: 'numpy' }));
+
+    expect(await chrome.runtime.sendMessage({ type: 'focus-graph-tab', owner: 1 })).toBeUndefined();
+    expect(await chrome.runtime.sendMessage(null)).toBeUndefined();
   });
 
   it('stops answering once the listener is removed', async () => {

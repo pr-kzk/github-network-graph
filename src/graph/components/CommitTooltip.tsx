@@ -1,17 +1,19 @@
 import type { ViewCommit } from '../lib/transform.types';
 import { formatFullDate } from '@/shared/format';
 import { t } from '@/shared/i18n';
+import { useSyncExternalStore } from 'react';
 import { flipAroundPointer, useAnchoredPosition } from '../hooks/useAnchoredPosition';
+import type { TooltipPointer } from '../hooks/useCommitTooltip';
 import { AuthorAvatar } from './AuthorAvatar';
 import { RefBadge } from './RefBadge';
 
 type CommitTooltipProps = {
   commit: ViewCommit;
-  x: number;
-  y: number;
+  pointer: TooltipPointer;
 };
 
-export function CommitTooltip({ commit, x, y }: CommitTooltipProps) {
+export function CommitTooltip({ commit, pointer }: CommitTooltipProps) {
+  const { x, y } = useSyncExternalStore(pointer.subscribe, pointer.getSnapshot);
   const { ref, position } = useAnchoredPosition<HTMLDivElement>(x, y, flipAroundPointer);
 
   const date = formatFullDate(commit.dateLabel);

@@ -97,6 +97,7 @@ function createChromeMock() {
   };
   return {
     runtime: {
+      id: 'test-extension-id',
       onInstalled: { addListener: vi.fn<(cb: () => void) => void>() },
       onMessage: {
         addListener: vi.fn<(cb: MessageListener) => void>((cb) => {
@@ -110,7 +111,7 @@ function createChromeMock() {
       sendMessage: vi.fn<(message: unknown) => Promise<unknown>>(async (message) => {
         return new Promise((resolve) => {
           for (const listener of messageListeners) {
-            const isAsync = listener(message, {}, resolve);
+            const isAsync = listener(message, { id: 'test-extension-id' }, resolve);
             if (isAsync) return;
           }
           resolve(undefined);

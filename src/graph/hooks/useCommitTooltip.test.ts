@@ -42,7 +42,37 @@ describe('useCommitTooltip', () => {
     expect(result.current.commit).toBeNull();
     act(() => void vi.advanceTimersByTime(400));
     expect(result.current.commit?.sha).toBe('a');
-    expect(result.current.anchor).toEqual({ sha: 'a', x: 10, y: 20 });
+    expect(result.current.pointer.getSnapshot()).toEqual({ x: 10, y: 20 });
+  });
+
+  it('does not re-render its host while the pointer moves within the same commit', () => {
+    let renders = 0;
+    const { result } = renderHook(() => {
+      renders += 1;
+      return useCommitTooltip(BY_SHA, false);
+    });
+    act(() => result.current.onHover('a', 10, 20));
+    act(() => void vi.advanceTimersByTime(400));
+    act(() => result.current.onHover('a', 11, 21));
+    const settled = renders;
+
+    for (let i = 0; i < 20; i++) act(() => result.current.onHover('a', 12 + i, 22 + i));
+
+    expect(renders).toBe(settled);
+  });
+
+  it('moves the tooltip with the pointer and tells subscribers', () => {
+    const { result } = renderHook(() => useCommitTooltip(BY_SHA, false));
+    const listener = vi.fn<() => void>();
+    result.current.pointer.subscribe(listener);
+    act(() => result.current.onHover('a', 10, 20));
+    act(() => void vi.advanceTimersByTime(400));
+    listener.mockClear();
+
+    act(() => result.current.onHover('a', 50, 60));
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(result.current.pointer.getSnapshot()).toEqual({ x: 50, y: 60 });
   });
 
   it('does not show a tooltip when the pointer leaves before the delay', () => {

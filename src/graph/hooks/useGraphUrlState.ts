@@ -26,11 +26,11 @@ export function useGraphUrlState({ owner, repo, initial }: UseGraphUrlStateArgs)
     async (next: GraphMode) => {
       if (next === mode) return;
       trackEvent('mode_change', { mode: next });
-      const saved = localStore.set('graphPrefs', { ...prefs, mode: next });
+      const saved = localStore.update('graphPrefs', { mode: next });
       setTabMode(null);
       await saved;
     },
-    [mode, prefs],
+    [mode],
   );
 
   const linkTo = useCallback(

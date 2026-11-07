@@ -228,7 +228,7 @@ export function GraphPage({
     selectedSha,
     onSelect: setSelectedSha,
     onFocusDetail: () => {
-      detailLayout.setCollapsed(false);
+      detailLayout.reveal();
       detailRef.current?.focus();
     },
     onFocusSearch: () => {
@@ -347,9 +347,7 @@ export function GraphPage({
       </div>
 
       <Toast toast={toast} />
-      {tooltip.commit && tooltip.anchor ? (
-        <CommitTooltip commit={tooltip.commit} x={tooltip.anchor.x} y={tooltip.anchor.y} />
-      ) : null}
+      {tooltip.commit ? <CommitTooltip commit={tooltip.commit} pointer={tooltip.pointer} /> : null}
       {ctx.menu && ctx.menuItems.length > 0 ? (
         <CommitContextMenu
           x={ctx.menu.x}

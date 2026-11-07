@@ -38,14 +38,14 @@ export function App() {
           <div className="mt-2 flex gap-2">
             <button
               type="button"
-              onClick={() => void markTelemetryPromptSeen(telemetry)}
+              onClick={() => void markTelemetryPromptSeen()}
               className="rounded-md bg-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
             >
               {t('popup_telemetry_banner_dismiss')}
             </button>
             <button
               type="button"
-              onClick={() => void declineTelemetry(telemetry)}
+              onClick={() => void declineTelemetry()}
               className="rounded-md px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               {t('popup_telemetry_banner_opt_out')}

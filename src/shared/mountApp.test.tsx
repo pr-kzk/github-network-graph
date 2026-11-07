@@ -26,6 +26,18 @@ describe('mountApp', () => {
     expect(document.documentElement).toHaveClass('theme-light');
   });
 
+  it('paints dark on the first frame when no preferences were saved', async () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+
+    await mountApp(<ModeProbe />);
+
+    expect(document.documentElement).toHaveClass('theme-dark');
+  });
+
   it('sets the document language from the UI language', async () => {
     vi.mocked(chrome.i18n.getUILanguage).mockReturnValue('ja');
 

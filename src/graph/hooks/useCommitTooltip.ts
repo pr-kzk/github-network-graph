@@ -4,11 +4,16 @@ import type { ViewCommit } from '../lib/transform.types';
 const SHOW_DELAY_MS = 350;
 const FOCUS_HIDE_MS = 3000;
 
-type TooltipAnchor = { sha: string; x: number; y: number };
+type Point = { x: number; y: number };
+
+export type TooltipPointer = {
+  subscribe: (listener: () => void) => () => void;
+  getSnapshot: () => Point;
+};
 
 type UseCommitTooltipResult = {
-  anchor: TooltipAnchor | null;
   commit: ViewCommit | null;
+  pointer: TooltipPointer;
   onHover: (sha: string, x: number, y: number) => void;
   onFocus: (sha: string, x: number, y: number) => void;
   onLeave: () => void;
@@ -18,28 +23,43 @@ export function useCommitTooltip(
   commitBySha: ReadonlyMap<string, ViewCommit>,
   suppressed: boolean,
 ): UseCommitTooltipResult {
-  const [anchor, setAnchor] = useState<TooltipAnchor | null>(null);
+  const [sha, setSha] = useState<string | null>(null);
   const showTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const visible = useRef(false);
+  const point = useRef<Point>({ x: 0, y: 0 });
+  const listeners = useRef(new Set<() => void>());
+
+  const pointer = useMemo<TooltipPointer>(
+    () => ({
+      subscribe: (listener) => {
+        listeners.current.add(listener);
+        return () => void listeners.current.delete(listener);
+      },
+      getSnapshot: () => point.current,
+    }),
+    [],
+  );
 
   const onLeave = useCallback(() => {
     clearTimeout(showTimer.current);
     clearTimeout(hideTimer.current);
     visible.current = false;
-    setAnchor(null);
+    setSha(null);
   }, []);
 
-  const show = useCallback((next: TooltipAnchor, autoHide: boolean) => {
+  const show = useCallback((nextSha: string, x: number, y: number, autoHide: boolean) => {
     clearTimeout(showTimer.current);
     clearTimeout(hideTimer.current);
     const reveal = () => {
       visible.current = true;
-      setAnchor(next);
+      point.current = { x, y };
+      for (const listener of listeners.current) listener();
+      setSha(nextSha);
       if (autoHide) {
         hideTimer.current = setTimeout(() => {
           visible.current = false;
-          setAnchor(null);
+          setSha(null);
         }, FOCUS_HIDE_MS);
       }
     };
@@ -48,11 +68,11 @@ export function useCommitTooltip(
   }, []);
 
   const onHover = useCallback(
-    (sha: string, x: number, y: number) => show({ sha, x, y }, false),
+    (nextSha: string, x: number, y: number) => show(nextSha, x, y, false),
     [show],
   );
   const onFocus = useCallback(
-    (sha: string, x: number, y: number) => show({ sha, x, y }, true),
+    (nextSha: string, x: number, y: number) => show(nextSha, x, y, true),
     [show],
   );
 
@@ -65,9 +85,9 @@ export function useCommitTooltip(
   );
 
   const commit = useMemo(
-    () => (anchor && !suppressed ? (commitBySha.get(anchor.sha) ?? null) : null),
-    [anchor, commitBySha, suppressed],
+    () => (sha && !suppressed ? (commitBySha.get(sha) ?? null) : null),
+    [sha, commitBySha, suppressed],
   );
 
-  return { anchor, commit, onHover, onFocus, onLeave };
+  return { commit, pointer, onHover, onFocus, onLeave };
 }

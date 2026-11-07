@@ -37,7 +37,7 @@ describe('Options', () => {
   it('persists the selected theme on change', async () => {
     render(<Options />);
 
-    expect(await screen.findByLabelText(/Follow your operating system/i)).toBeChecked();
+    expect(await screen.findByLabelText(/Mid-grey background/i)).toBeChecked();
 
     await userEvent.click(screen.getByLabelText(/White background with high contrast/i));
 

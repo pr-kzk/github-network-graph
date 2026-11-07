@@ -68,17 +68,17 @@ export function Options() {
   };
 
   const handleModeChange = async (next: GraphMode) => {
-    await localStore.set('graphPrefs', { ...prefs, mode: next });
+    await localStore.update('graphPrefs', { mode: next });
     markSaved();
   };
 
   const handleThemeChange = async (next: Theme) => {
-    await localStore.set('graphPrefs', { ...prefs, theme: next });
+    await localStore.update('graphPrefs', { theme: next });
     markSaved();
   };
 
   const handleTelemetryChange = async (next: boolean) => {
-    await setTelemetryEnabled(telemetry, next);
+    await setTelemetryEnabled(next);
     markSaved();
   };
 

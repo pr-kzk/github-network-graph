@@ -30,13 +30,11 @@ export type LocalSchema = {
   telemetry: TelemetryPrefs;
 };
 
-export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'system' };
+export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'dark' };
 
 export const DETAIL_WIDTH_MIN = 280;
 export const DETAIL_WIDTH_MAX = 720;
 export const DEFAULT_GRAPH_LAYOUT: GraphLayout = { detailWidth: null, detailCollapsed: null };
-
-const THEME_BEFORE_THEMES_EXISTED: Theme = 'dark';
 
 export const DEFAULT_TELEMETRY: TelemetryPrefs = { enabled: true, promptSeen: false };
 
@@ -86,11 +84,7 @@ const LOCAL_PARSERS: { [K in keyof LocalSchema]: (value: unknown) => LocalSchema
     const v = isRecord(value) ? value : {};
     return {
       mode: isGraphMode(v.mode) ? v.mode : DEFAULT_GRAPH_PREFS.mode,
-      theme: isTheme(v.theme)
-        ? v.theme
-        : isRecord(value)
-          ? THEME_BEFORE_THEMES_EXISTED
-          : DEFAULT_GRAPH_PREFS.theme,
+      theme: isTheme(v.theme) ? v.theme : DEFAULT_GRAPH_PREFS.theme,
     };
   },
   graphLayout: (value) => {
@@ -169,7 +163,11 @@ class LocalStoreCache {
     for (const l of this.listeners[key]) l();
   }
 
-  private ensureHydrated(key: keyof LocalSchema): Promise<void> {
+  isHydrated(key: keyof LocalSchema): boolean {
+    return this.hydrated.has(key);
+  }
+
+  ensureHydrated(key: keyof LocalSchema): Promise<void> {
     if (this.hydrated.has(key)) return Promise.resolve();
     const existing = this.hydrating.get(key);
     if (existing) return existing;
@@ -221,6 +219,8 @@ export async function preloadLocalValues(keys: readonly (keyof LocalSchema)[]): 
   await Promise.all(keys.map((key) => localStore.get(key)));
 }
 
+type PatchableKey = Exclude<keyof LocalSchema, 'recentRepos'>;
+
 export const localStore = {
   async get<K extends keyof LocalSchema>(key: K): Promise<LocalSchema[K]> {
     const data = await chrome.storage.local.get({ [key]: LOCAL_DEFAULTS[key] });
@@ -231,6 +231,10 @@ export const localStore = {
   async set<K extends keyof LocalSchema>(key: K, value: LocalSchema[K]): Promise<void> {
     localStoreCache.applyLocalWrite(key, value);
     await chrome.storage.local.set({ [key]: value });
+  },
+  async update<K extends PatchableKey>(key: K, patch: Partial<LocalSchema[K]>): Promise<void> {
+    if (!localStoreCache.isHydrated(key)) await localStoreCache.ensureHydrated(key);
+    await localStore.set(key, { ...localStoreCache.getSnapshot(key), ...patch });
   },
 };
 

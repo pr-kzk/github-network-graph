@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GraphPage } from './GraphPage';
 import { copyToClipboard } from './lib/clipboard';
@@ -161,5 +161,55 @@ describe('GraphPage', () => {
     const user = userEvent.setup();
     await user.type(screen.getByRole('textbox', { name: 'Search loaded commits' }), 'jk');
     expect(row(C)).toHaveAttribute('aria-current', 'true');
+  });
+
+  describe('in a narrow window', () => {
+    const originalWidth = window.innerWidth;
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 900 });
+    });
+    afterEach(() => {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+    });
+
+    it('opens the details with Enter without saving that as the panel preference', async () => {
+      await renderPage({ sha: C, mode: 'repo-only' });
+      expect(screen.getByRole('button', { name: 'Show details panel' })).toBeInTheDocument();
+      fireEvent.keyDown(row(C), { key: 'Enter' });
+
+      expect(screen.getByRole('button', { name: 'Hide details panel' })).toBeInTheDocument();
+      expect(await chrome.storage.local.get('graphLayout')).toEqual({});
+    });
+  });
+
+  describe('commit tooltip', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const rest = (ms: number) => act(() => void vi.advanceTimersByTime(ms));
+
+    it('appears after the pointer rests, follows it to another commit and hides on leave', async () => {
+      vi.useRealTimers();
+      await renderPage();
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+      fireEvent.mouseMove(row(C), { clientX: 100, clientY: 100 });
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+      rest(400);
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Fix crash');
+
+      fireEvent.mouseMove(row(C), { clientX: 120, clientY: 110 });
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Fix crash');
+
+      fireEvent.mouseMove(row(B), { clientX: 120, clientY: 130 });
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Add docs');
+
+      fireEvent.mouseLeave(row(B));
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    });
   });
 });
