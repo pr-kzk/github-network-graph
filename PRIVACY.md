@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-11-07
+Last updated: 2026-11-08
 
 ## Summary
 
@@ -8,12 +8,14 @@ This Chrome extension does **not** collect, transmit, or share any personal data
 
 ## Data handling
 
-- **No personal data.** The extension never collects or transmits personal data, repository names, commit SHAs, URLs, or any content you view.
+- **No personal data.** The extension does not collect personal data, and it never sends repository names, commit SHAs, URLs, or any content you view to the developer or to any analytics service. Your requests to GitHub (see [Network requests](#network-requests)) necessarily name the repository you open, because GitHub is the service being displayed.
 - **No remote code execution.** All executable code is bundled with the extension and audited at build time. The extension does not load JavaScript from remote sources.
 - **Local-only preferences.** User preferences are stored exclusively in the browser via `chrome.storage.local`. Stored values never leave the user's machine. The stored values are:
-  - `graphPrefs` — the default graph mode (`network` or `repo-only`) and color theme (`dark` or `light`)
+  - `graphPrefs` — the default graph mode (`network` or `repo-only`) and color theme (`dark`, `light` or `system`)
+  - `graphLayout` — the width and collapsed state of the details panel, when you have set them
   - `recentRepos` — up to 6 entries of `{owner, repo, openedAt}` for the recently opened repositories list shown in the popup
   - `telemetry` — `{enabled, promptSeen}`: whether anonymous telemetry is on, and whether the first-run notice has been shown
+- **Session cache.** Per-commit details (changed files and line counts) you have opened are cached in `chrome.storage.session` so reselecting a commit does not use another request. It stays on your machine and is cleared when the browser closes.
 - **Anonymous, opt-out telemetry only.** See [Anonymous telemetry](#anonymous-telemetry) below. No persistent identifiers, no other third-party services.
 
 ## Anonymous telemetry
@@ -21,9 +23,10 @@ This Chrome extension does **not** collect, transmit, or share any personal data
 To understand which features are used and where errors happen, the extension can send anonymous events through [Aptabase](https://aptabase.com), a privacy-first analytics service.
 
 - **On by default, opt-out anytime.** A first-run notice in the popup explains this, and the Options page has a toggle to turn it off. When off, nothing is sent.
-- **No identifiers.** Aptabase uses no cookies and no persistent user ID. A random session id is held in memory only and rotates after an hour of inactivity, so events cannot be tied to a person or correlated across sessions.
-- **What is sent:** an event name plus a small, fixed label — for example which graph mode was selected (`network` / `repo-only`), how a graph was opened (`detected` / `manual` / `recent`), and error categories (e.g. `network`, `notFound`).
-- **What is never sent:** personal data, repository owner/name, commit SHAs, URLs, page content, precise location, or any persistent identifier.
+- **No persistent identifiers.** Requests are sent without cookies. The extension attaches a random session id that is held in memory only and rotates after an hour of inactivity; it is never written to storage.
+- **What the analytics server sees.** Like any web request, each event reaches Aptabase's server together with your IP address and browser User-Agent. According to [Aptabase's privacy statement](https://aptabase.com/legal/privacy), these are processed in memory only and never stored, and are used to derive a pseudonymous daily user ID with a salt that is rotated every 24 hours and deleted within 48 hours. Events from the same browser can therefore be grouped together for up to a day, but not linked across days or to a person.
+- **What is sent:** a timestamp, the random session id, your browser's language setting (for example `en-US`), the SDK version, and an event name with at most a small, fixed label. The events are: a graph was opened (`detected` / `manual` / `recent`), the mode changed (`network` / `repo-only`), a graph was refreshed, a commit was selected, the repository was switched, a link was copied, search was used, the shortcut list was opened, and error categories (for example `network`, `notFound`, `rateLimit`).
+- **What is never sent:** personal data, repository owner/name, commit SHAs, URLs, search text, page content, precise location, or any persistent identifier.
 - **Build-time key.** Telemetry runs only in builds configured with an Aptabase app key (`VITE_APTABASE_APP_KEY`). Community builds without the key never send anything.
 
 ## Network requests

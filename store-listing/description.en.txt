@@ -53,9 +53,12 @@ PRIVACY
   api.github.com
 • Anonymous usage and error stats are sent via Aptabase, a privacy-first
   analytics service, to help improve the extension — on by default, and you
-  can turn it off anytime from the options page. No cookies, no persistent
-  identifiers, so events can't be tied to you or correlated across sessions.
-  Builds without an Aptabase key send nothing
+  can turn it off anytime from the options page. Only a fixed event name,
+  your browser language and a random in-memory session id are sent: no
+  cookies, no persistent identifiers. Like any web request, it reaches
+  Aptabase's server with your IP address, which Aptabase says it processes
+  in memory only and never stores
+• Builds without an Aptabase key send nothing
 • The only data stored locally is your preferences (theme, default graph
   mode) and the list of recently opened repositories
 
