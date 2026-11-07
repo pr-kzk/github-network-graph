@@ -99,7 +99,7 @@ describe('transformNetwork - repo-only', () => {
 
   it('falls back to author-index when focus heads are missing or unreachable', () => {
     const fixture = makeFixture();
-    fixture.meta.users[0]!.heads = []; // 本家ヘッドを消す
+    fixture.meta.users[0].heads = []; // 本家ヘッドを消す
     const view = transformNetwork(fixture, {
       mode: 'repo-only',
       inputOwner: 'owner',

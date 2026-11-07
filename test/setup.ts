@@ -12,10 +12,7 @@ type I18nMessageEntry = {
 
 // chrome.i18n のテスト用 fixture は en/messages.json を再利用する。
 // (ja は本番ロケール解決経由でのみ使われるため、ユニットテストでは en で十分。)
-const i18nFixture: Record<string, I18nMessageEntry> = enMessages as Record<
-  string,
-  I18nMessageEntry
->;
+const i18nFixture: Record<string, I18nMessageEntry> = enMessages;
 
 type StorageChange = { oldValue?: unknown; newValue?: unknown };
 type StorageAreaName = 'local' | 'sync' | 'managed' | 'session';

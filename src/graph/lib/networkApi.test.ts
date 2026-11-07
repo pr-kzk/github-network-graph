@@ -49,7 +49,7 @@ describe('createGithubNetworkClient', () => {
     const meta = await client.fetchMeta('owner', 'repo');
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0]!;
+    const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://github.com/owner/repo/network/meta');
     expect(init).toMatchObject({
       credentials: 'include',
@@ -65,7 +65,7 @@ describe('createGithubNetworkClient', () => {
     const chunk = await client.fetchChunk('owner', 'repo', 'hash', 0, 100);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0]!;
+    const [url] = fetchMock.mock.calls[0];
     expect(url).toBe('https://github.com/owner/repo/network/chunk?nethash=hash&start=0&end=100');
     expect(chunk.commits).toHaveLength(2);
     expect(chunk.commits[0]?.parents).toEqual([{ sha: 'sha2', space: 0 }]);
@@ -241,7 +241,7 @@ git push -u origin main</pre>
     fetchMock.mockResolvedValueOnce(jsonResponse(META_BODY));
     const client = createGithubNetworkClient();
     await client.fetchMeta('foo bar', 'repo+x');
-    const [url] = fetchMock.mock.calls[0]!;
+    const [url] = fetchMock.mock.calls[0];
     expect(url).toBe('https://github.com/foo%20bar/repo%2Bx/network/meta');
   });
 
@@ -254,7 +254,7 @@ git push -u origin main</pre>
     const result = await client.fetchInitialPage('owner', 'repo', { pageSize: 4 });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[1]![0]).toBe(
+    expect(fetchMock.mock.calls[1][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=6&end=9',
     );
     expect(result.totalCount).toBe(10);
@@ -276,7 +276,7 @@ git push -u origin main</pre>
     const client = createGithubNetworkClient();
     const result = await client.fetchInitialPage('owner', 'repo', { pageSize: 10 });
 
-    expect(fetchMock.mock.calls[1]![0]).toBe(
+    expect(fetchMock.mock.calls[1][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=2',
     );
     expect(result.nextEnd).toBe(0);
@@ -291,7 +291,7 @@ git push -u origin main</pre>
     const result = await client.fetchOlderPage('owner', 'repo', meta, 5, { pageSize: 10 });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]![0]).toBe(
+    expect(fetchMock.mock.calls[0][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=4',
     );
     expect(result.nextEnd).toBe(0);
@@ -318,7 +318,7 @@ git push -u origin main</pre>
     const client = createGithubNetworkClient();
     const result = await client.fetchOlderPage('owner', 'repo', meta, 100, { pageSize: 10 });
 
-    expect(fetchMock.mock.calls[0]![0]).toBe(
+    expect(fetchMock.mock.calls[0][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=90&end=99',
     );
     expect(result.nextEnd).toBe(90);
