@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { t } from '@/shared/i18n';
 import { type GraphMode, type Theme, localStore } from '@/shared/storage';
 import { isTelemetryConfigured, setTelemetryEnabled } from '@/shared/telemetry';
 import { useLocalValue } from '@/shared/useLocalValue';
+import { useRestartableTimeout } from '@/shared/useRestartableTimeout';
 import { useTheme } from '@/shared/useTheme';
 import { RadioSection, type RadioOption } from './RadioSection';
 
 const PRIVACY_URL = 'https://github.com/pr-kzk/github-network-graph/blob/main/PRIVACY.md';
+
+const SAVED_NOTICE_MS = 1500;
 
 const MODE_OPTIONS: ReadonlyArray<RadioOption<GraphMode>> = [
   {
@@ -42,38 +45,17 @@ const THEME_OPTIONS: ReadonlyArray<RadioOption<Theme>> = [
 export function Options() {
   useTheme();
   const prefs = useLocalValue('graphPrefs');
-  const mode = prefs.mode;
-  const theme = prefs.theme;
   const telemetry = useLocalValue('telemetry');
   const [saved, setSaved] = useState(false);
-  const savedTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (savedTimerRef.current !== null) {
-        window.clearTimeout(savedTimerRef.current);
-      }
-    };
-  }, []);
+  const restartTimeout = useRestartableTimeout();
 
   const markSaved = () => {
     setSaved(true);
-    if (savedTimerRef.current !== null) {
-      window.clearTimeout(savedTimerRef.current);
-    }
-    savedTimerRef.current = window.setTimeout(() => {
-      setSaved(false);
-      savedTimerRef.current = null;
-    }, 1500);
+    restartTimeout(() => setSaved(false), SAVED_NOTICE_MS);
   };
 
-  const handleModeChange = async (next: GraphMode) => {
-    await localStore.update('graphPrefs', { mode: next });
-    markSaved();
-  };
-
-  const handleThemeChange = async (next: Theme) => {
-    await localStore.update('graphPrefs', { theme: next });
+  const savePrefs = async (patch: Partial<typeof prefs>) => {
+    await localStore.update('graphPrefs', patch);
     markSaved();
   };
 
@@ -95,8 +77,8 @@ export function Options() {
         description={t('options_mode_description')}
         legend={t('options_mode_legend')}
         options={MODE_OPTIONS}
-        value={mode}
-        onChange={handleModeChange}
+        value={prefs.mode}
+        onChange={(mode) => savePrefs({ mode })}
       />
 
       <RadioSection
@@ -105,8 +87,8 @@ export function Options() {
         description={t('options_theme_description')}
         legend={t('options_theme_legend')}
         options={THEME_OPTIONS}
-        value={theme}
-        onChange={handleThemeChange}
+        value={prefs.theme}
+        onChange={(theme) => savePrefs({ theme })}
       />
 
       {isTelemetryConfigured() && (

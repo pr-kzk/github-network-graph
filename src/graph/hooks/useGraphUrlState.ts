@@ -13,7 +13,7 @@ type UseGraphUrlStateArgs = {
 export function useGraphUrlState({ owner, repo, initial }: UseGraphUrlStateArgs) {
   const prefs = useLocalValue('graphPrefs');
   const [selectedSha, setSelectedSha] = useState<string | null>(initial.sha);
-  // URL のモードを保存済み設定へ反映する方式は、共有リンクを開くだけで既定が書き換わるため採らない。
+  // Writing the URL mode back to saved settings is avoided: merely opening a shared link would overwrite the default.
   const [tabMode, setTabMode] = useState<GraphMode | null>(initial.mode);
   const mode = tabMode ?? prefs.mode;
 

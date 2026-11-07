@@ -2,6 +2,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEffect, useRef } from 'react';
 import { t } from '@/shared/i18n';
+import { OPTION_ACTIVE, OPTION_IDLE } from '@/shared/ui';
 import type { BranchRows } from '../lib/branchRows';
 
 const OPTION_HEIGHT = 28;
@@ -87,9 +88,7 @@ export function BranchList({
               className={[
                 'absolute top-0 left-0 flex w-full items-center gap-2 border-l-2 px-3 text-left font-mono text-xs',
                 branch.sha === selectedSha ? 'font-semibold' : '',
-                active
-                  ? 'border-indigo-600 bg-indigo-600/20 text-slate-900 dark:border-indigo-400 dark:bg-indigo-600/40 dark:text-slate-100'
-                  : 'border-transparent text-slate-700 dark:text-slate-300',
+                active ? OPTION_ACTIVE : OPTION_IDLE,
               ].join(' ')}
             >
               <span

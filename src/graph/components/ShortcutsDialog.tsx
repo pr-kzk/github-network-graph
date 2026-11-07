@@ -1,5 +1,7 @@
-import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
+import { useId, useRef, type KeyboardEvent } from 'react';
 import { t, type MessageKey } from '@/shared/i18n';
+import { BUTTON_SECONDARY, FOCUS_RING } from '@/shared/ui';
+import { useInitialFocus } from '../hooks/useInitialFocus';
 
 type Shortcut = { keys: readonly string[]; label: MessageKey };
 
@@ -30,13 +32,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
   const panelRef = useRef<HTMLDialogElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => {
-    const opener = document.activeElement;
-    closeRef.current?.focus();
-    return () => {
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
-    };
-  }, []);
+  useInitialFocus(() => closeRef.current);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDialogElement>) {
     if (event.key === 'Escape') {
@@ -83,7 +79,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="rounded-md bg-slate-200 px-2.5 py-1 text-xs text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            className={`px-2.5 py-1 text-xs ${BUTTON_SECONDARY} ${FOCUS_RING}`}
           >
             {t('graph_shortcuts_close')}
           </button>

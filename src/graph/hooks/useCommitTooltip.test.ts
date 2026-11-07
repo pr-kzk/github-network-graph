@@ -2,24 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useCommitTooltip } from './useCommitTooltip';
 import type { ViewCommit } from '../lib/transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(sha: string): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row: 0,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    isFocus: true,
-    message: '',
-    subject: '',
-    parents: [],
-    refs: [],
-  };
+  return makeCommit(sha);
 }
 
 const BY_SHA = new Map([

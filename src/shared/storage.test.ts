@@ -15,17 +15,16 @@ import {
 } from './storage';
 
 describe('localStore', () => {
-  it('returns the default graph prefs when unset', async () => {
+  it('starts every setting from its default, with the dark theme, when nothing is saved', async () => {
     expect(await localStore.get('graphPrefs')).toEqual(DEFAULT_GRAPH_PREFS);
+    expect((await localStore.get('graphPrefs')).theme).toBe('dark');
+    expect(await localStore.get('recentRepos')).toEqual(LOCAL_DEFAULTS.recentRepos);
+    expect(await localStore.get('telemetry')).toEqual(DEFAULT_TELEMETRY);
   });
 
   it('round-trips graph prefs', async () => {
     await localStore.set('graphPrefs', { mode: 'repo-only', theme: 'light' });
     expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'light' });
-  });
-
-  it('uses the dark theme for users with no saved preferences', async () => {
-    expect((await localStore.get('graphPrefs')).theme).toBe('dark');
   });
 
   it('keeps dark for legacy graphPrefs saved before themes existed', async () => {
@@ -72,14 +71,6 @@ describe('localStore', () => {
     await localStore.update('telemetry', { promptSeen: true });
 
     expect(await localStore.get('telemetry')).toEqual({ enabled: false, promptSeen: true });
-  });
-
-  it('returns the default recent repos when unset', async () => {
-    expect(await localStore.get('recentRepos')).toEqual(LOCAL_DEFAULTS.recentRepos);
-  });
-
-  it('defaults telemetry to enabled with the prompt unseen', async () => {
-    expect(await localStore.get('telemetry')).toEqual(DEFAULT_TELEMETRY);
   });
 
   it('round-trips telemetry prefs', async () => {

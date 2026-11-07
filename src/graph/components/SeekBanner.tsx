@@ -1,5 +1,6 @@
 import { t, tWith } from '@/shared/i18n';
 import { Spinner } from './Spinner';
+import { BUTTON_SECONDARY, FOCUS_RING } from '@/shared/ui';
 
 type SeekBannerProps = {
   target: string;
@@ -34,7 +35,7 @@ export function SeekBanner({ target, scanned, total, onCancel }: SeekBannerProps
           <button
             type="button"
             onClick={onCancel}
-            className="shrink-0 rounded-md bg-slate-200 px-3 py-1 text-xs font-medium text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+            className={`shrink-0 px-3 py-1 text-xs font-medium ${BUTTON_SECONDARY} ${FOCUS_RING}`}
           >
             {t('graph_status_seek_cancel')}
           </button>

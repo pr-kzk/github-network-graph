@@ -33,7 +33,7 @@ export function chooseVisibleLanes(
   return [...chosen].sort((a, b) => a - b);
 }
 
-export type EdgeEmphasis = { opacity: number; width: number };
+type EdgeEmphasis = { opacity: number; width: number };
 
 type EmphasisInput = {
   crowded: boolean;
@@ -65,8 +65,8 @@ export function collectPath(
   const path = new Set<string>([startSha]);
   const walk = (next: (sha: string) => readonly string[]) => {
     const stack = [startSha];
-    while (stack.length > 0) {
-      for (const sha of next(stack.pop()!)) {
+    for (let current = stack.pop(); current !== undefined; current = stack.pop()) {
+      for (const sha of next(current)) {
         if (path.has(sha)) continue;
         path.add(sha);
         stack.push(sha);

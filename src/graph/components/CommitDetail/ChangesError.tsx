@@ -1,6 +1,7 @@
 import type { CommitDetailError } from '../../lib/commitDetailTypes';
 import { formatClockTime } from '@/shared/format';
 import { t, tWith, type MessageKey } from '@/shared/i18n';
+import { BUTTON_SECONDARY, FOCUS_RING } from '@/shared/ui';
 
 type ChangesErrorProps = {
   error: CommitDetailError;
@@ -17,8 +18,7 @@ const MESSAGE_KEYS: Record<CommitDetailError['kind'], MessageKey> = {
   shape: 'commit_detail_changes_error_generic',
 };
 
-const ACTION_CLASS =
-  'rounded-md bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700';
+const ACTION_CLASS = `${BUTTON_SECONDARY} ${FOCUS_RING} px-2.5 py-1 text-xs font-medium`;
 
 function messageFor(error: CommitDetailError): string {
   if (error.kind === 'rateLimit' && error.resetAt !== undefined) {

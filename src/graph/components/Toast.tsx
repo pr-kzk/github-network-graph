@@ -4,7 +4,7 @@ type ToastProps = {
   toast: ToastModel | null;
 };
 
-// live region を表示のたびに生成する方式は、支援技術が読み上げを取りこぼすため採らない。
+// Creating the live region on each display is avoided: assistive tech can miss the announcement.
 export function Toast({ toast }: ToastProps) {
   return (
     <output

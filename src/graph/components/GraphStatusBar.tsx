@@ -1,5 +1,5 @@
 import { t, tWith } from '@/shared/i18n';
-import { useRetryMessage } from '../hooks/useRetryMessage';
+import { useStatusMessage } from '../hooks/useRetryMessage';
 import type { RetryNotice } from '../lib/networkApi.types';
 
 type GraphStatusBarProps = {
@@ -17,7 +17,7 @@ export function GraphStatusBar({
   pendingNotice,
   retry,
 }: GraphStatusBarProps) {
-  const retryMessage = useRetryMessage(retry);
+  const status = useStatusMessage(retry, pendingNotice, t('graph_status_refreshing'));
   const summary =
     loadedCount === 1
       ? t('graph_status_commits_one')
@@ -29,14 +29,13 @@ export function GraphStatusBar({
         {' · '}
         {hasMore ? t('graph_status_more_available') : t('graph_status_complete')}
       </span>
-      {refreshing || retryMessage ? (
+      {refreshing || status.retrying ? (
         <span className="flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-indigo-700 dark:text-indigo-300">
           <span
             aria-hidden="true"
             className="h-2 w-2 rounded-full motion-safe:animate-pulse bg-indigo-500 dark:bg-indigo-400"
           />
-          {retryMessage ??
-            (pendingNotice ? t('graph_status_pending') : t('graph_status_refreshing'))}
+          {status.text}
         </span>
       ) : null}
     </output>

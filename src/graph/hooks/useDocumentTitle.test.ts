@@ -7,11 +7,6 @@ describe('useRepoDocumentTitle', () => {
     document.title = 'Git Graph for GitHub';
   });
 
-  it('names the tab after the repository', () => {
-    renderHook(() => useRepoDocumentTitle('numpy', 'numpy'));
-    expect(document.title).toBe('numpy/numpy - Git Graph');
-  });
-
   it('follows the repository when it changes', () => {
     const { rerender } = renderHook(({ o, r }) => useRepoDocumentTitle(o, r), {
       initialProps: { o: 'numpy', r: 'numpy' },

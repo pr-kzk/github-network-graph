@@ -1,5 +1,6 @@
 import {
   errorFromResponse,
+  fetchOrNetworkError,
   makeError,
   summarize,
   type CommitDetailExtra,
@@ -8,9 +9,8 @@ import { parseUnifiedDiff } from './commitDiffParser';
 
 const MAX_DIFF_BYTES = 4 * 1024 * 1024;
 
-// api.github.com は Cookie を受け付けないため、ログイン済みセッションで private も読める
-// github.com 側の .diff を一次ソースにする。JSON 版 (Accept: application/json) は
-// 内部フロントエンド用で形が頻繁に変わるため採らない。
+// The JSON variant (Accept: application/json) is not used: it is internal to GitHub's frontend
+// and its shape changes often.
 export async function fetchCommitDetailViaWeb(
   owner: string,
   repo: string,
@@ -20,12 +20,7 @@ export async function fetchCommitDetailViaWeb(
     repo,
   )}/commit/${encodeURIComponent(sha)}.diff`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, { credentials: 'include', cache: 'no-store' });
-  } catch {
-    throw makeError('network');
-  }
+  const response = await fetchOrNetworkError(url, { credentials: 'include', cache: 'no-store' });
 
   if (response.redirected && new URL(response.url).pathname.startsWith('/login')) {
     throw makeError('auth', response.status);

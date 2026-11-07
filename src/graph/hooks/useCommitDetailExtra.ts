@@ -28,8 +28,8 @@ type UseCommitDetailExtraResult = {
   retry: () => void;
 };
 
-// props 変化時のリセットは render 中の派生 state 更新で行う。effect 内で
-// setState({status:'loading'}) する案は cascading render になるため採らない。
+// Resetting on prop change is done as a derived-state update during render; calling
+// setState({status:'loading'}) in an effect is avoided because it cascades into another render.
 export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): UseCommitDetailExtraResult {
   const { owner, repo, authorOwner, authorRepo, sha } = args;
 

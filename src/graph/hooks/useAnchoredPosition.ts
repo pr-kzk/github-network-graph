@@ -4,7 +4,7 @@ type Position = { left: number; top: number };
 type Size = { width: number; height: number };
 type Point = { x: number; y: number };
 
-export type Placement = (anchor: Point, size: Size, viewport: Size) => Position;
+type Placement = (anchor: Point, size: Size, viewport: Size) => Position;
 
 const VIEWPORT_MARGIN = 8;
 const TOOLTIP_OFFSET = 14;

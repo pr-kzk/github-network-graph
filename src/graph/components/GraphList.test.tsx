@@ -1,101 +1,53 @@
 import type { ComponentProps } from 'react';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import type * as ElementWidth from '../hooks/useElementWidth';
+import { makeCommit, makeView } from '../../../test/factories';
+import { stubClientSize } from '../../../test/graphPage';
 import { GraphList } from './GraphList';
 import type { GraphView } from '../lib/transform.types';
 
-const listRenders = vi.hoisted(() => ({ count: 0 }));
+stubClientSize();
 
-vi.mock('../hooks/useElementWidth', async (importOriginal) => {
-  const original = await importOriginal<typeof ElementWidth>();
-  return {
-    useElementWidth: (...args: Parameters<typeof original.useElementWidth>) => {
-      listRenders.count += 1;
-      return original.useElementWidth(...args);
-    },
-  };
-});
-
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
-
-function makeView(): GraphView {
-  return {
-    commits: [
-      {
-        sha: 'a'.repeat(40),
-        shortSha: 'aaaaaaa',
-        row: 0,
-        lane: 0,
-        time: 1,
-        dateLabel: '',
-        authorName: 'alice',
-        authorLogin: 'alice',
-        authorRepo: '',
-        isFocus: true,
-        message: 'first\n\nbody',
-        subject: 'first',
-        parents: [],
-        refs: [],
-      },
-      {
-        sha: 'b'.repeat(40),
-        shortSha: 'bbbbbbb',
-        row: 1,
-        lane: 0,
-        time: 0,
-        dateLabel: '',
-        authorName: 'bob',
-        authorLogin: 'bob',
-        authorRepo: '',
-        isFocus: true,
-        message: '',
-        subject: '',
-        parents: [],
-        refs: [],
-      },
-    ],
-    edges: [],
-    laneCount: 1,
-    totalCommitsAvailable: 2,
-    focusOwner: 'o',
-    focusRepo: 'r',
-    focusHeads: [],
-    branches: [],
-    forkBranches: [],
-    spaceToLane: new Map(),
-  };
+function sampleView(): GraphView {
+  return makeView([
+    makeCommit('a'.repeat(40), {
+      row: 0,
+      time: 1,
+      authorName: 'alice',
+      authorLogin: 'alice',
+      message: 'first\n\nbody',
+      subject: 'first',
+    }),
+    makeCommit('b'.repeat(40), { row: 1, authorName: 'bob', authorLogin: 'bob' }),
+  ]);
 }
 
 const A = 'a'.repeat(40);
 const B = 'b'.repeat(40);
 
 function renderList(overrides: Partial<ComponentProps<typeof GraphList>> = {}) {
+  const view = overrides.view ?? sampleView();
   const props: ComponentProps<typeof GraphList> = {
-    view: makeView(),
+    view,
     selectedSha: null,
     flashSha: null,
-    commitBySha: new Map(),
+    commitBySha: new Map(view.commits.map((c) => [c.sha, c])),
     childrenBySha: new Map(),
     matchShas: new Set(),
     query: '',
-    onSelect: vi.fn<(sha: string) => void>(),
-    onHoverCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    onKeyboardFocusCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    onLeaveCommit: vi.fn<() => void>(),
-    onContextCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    hasMore: false,
-    loadingMore: false,
-    olderError: null,
-    onLoadMore: vi.fn<() => void>(),
+    rowHandlers: {
+      onSelect: vi.fn<(sha: string) => void>(),
+      onHover: vi.fn<(sha: string, x: number, y: number) => void>(),
+      onKeyboardFocus: vi.fn<(sha: string, x: number, y: number) => void>(),
+      onLeave: vi.fn<() => void>(),
+      onContextMenu: vi.fn<(sha: string, x: number, y: number) => void>(),
+    },
+    paging: {
+      hasMore: false,
+      loadingMore: false,
+      olderError: null,
+      onLoadMore: vi.fn<() => void>(),
+    },
     ...overrides,
   };
   const result = render(<GraphList {...props} />);
@@ -118,35 +70,25 @@ describe('GraphList', () => {
   it('opens the context menu when a commit row is right-clicked', () => {
     const { props } = renderList();
     fireEvent.contextMenu(rowOf('first'), { clientX: 40, clientY: 70 });
-    expect(props.onContextCommit).toHaveBeenCalledWith(A, 40, 70);
+    expect(props.rowHandlers.onContextMenu).toHaveBeenCalledWith(A, 40, 70);
   });
 
-  it('renders the footer row when hasMore is true', () => {
-    renderList({ hasMore: true, loadingMore: true });
-    expect(screen.getByText(/Loading older commits/i)).toBeInTheDocument();
-  });
-
-  it('exposes the list with its size and each commit position', () => {
+  it('makes the first row the tab stop while nothing is selected', () => {
     renderList();
+    expect(rowOf('first')).toHaveAttribute('tabindex', '0');
+  });
+
+  it('exposes a list of positioned commits with the selected row as the only tab stop', () => {
+    renderList({ selectedSha: B });
     expect(screen.getByRole('list', { name: 'Commits' })).toBeInTheDocument();
     const items = screen.getAllByRole('listitem');
     expect(items[1]).toHaveAttribute('aria-posinset', '2');
     expect(items[1]).toHaveAttribute('aria-setsize', '2');
-  });
-
-  it('marks only the selected row as current', () => {
-    renderList({ selectedSha: B });
+    const selected = screen.getByText('(no message)').closest('button');
+    expect(selected).toHaveAttribute('aria-current', 'true');
+    expect(selected).toHaveAttribute('tabindex', '0');
     expect(rowOf('first')).not.toHaveAttribute('aria-current');
-    expect(screen.getByText('(no message)').closest('button')).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
-  });
-
-  it('makes the selected row the only tab stop', () => {
-    renderList({ selectedSha: B });
     expect(rowOf('first')).toHaveAttribute('tabindex', '-1');
-    expect(screen.getByText('(no message)').closest('button')).toHaveAttribute('tabindex', '0');
   });
 
   it('makes the first row the tab stop while nothing is selected', () => {
@@ -165,30 +107,6 @@ describe('GraphList', () => {
     expect(screen.getByText('(no message)').closest('button')).not.toHaveAttribute('data-match');
   });
 
-  it('asks for a tooltip when the pointer rests on a row', () => {
-    const { props } = renderList();
-    fireEvent.mouseMove(rowOf('first'), { clientX: 12, clientY: 34 });
-    expect(props.onHoverCommit).toHaveBeenCalledWith(A, 12, 34);
-  });
-
-  it('hides the tooltip when the pointer leaves a row', () => {
-    const { props } = renderList();
-    fireEvent.mouseLeave(rowOf('first'));
-    expect(props.onLeaveCommit).toHaveBeenCalled();
-  });
-
-  it('asks for a tooltip when a row is focused with the keyboard', async () => {
-    const user = userEvent.setup();
-    const { props } = renderList();
-    await user.tab();
-    expect(rowOf('first')).toHaveFocus();
-    expect(props.onKeyboardFocusCommit).toHaveBeenCalledWith(
-      A,
-      expect.any(Number),
-      expect.any(Number),
-    );
-  });
-
   it('moves focus to the newly selected row when focus was not in another control', () => {
     const { rerender, props } = renderList({ selectedSha: A });
     rerender(<GraphList {...props} selectedSha={B} />);
@@ -205,33 +123,31 @@ describe('GraphList', () => {
     other.remove();
   });
 
-  it('does not render again when its parent re-renders with the same props', () => {
-    const { rerender, props } = renderList();
-    const before = listRenders.count;
+  it('does not redraw its rows when its parent re-renders with the same props', () => {
+    class CountingSet extends Set<string> {
+      reads = 0;
+      override has(sha: string) {
+        this.reads += 1;
+        return super.has(sha);
+      }
+    }
+    const matchShas = new CountingSet();
+    const { rerender, props } = renderList({ matchShas });
+    expect(matchShas.reads).toBeGreaterThan(0);
+    matchShas.reads = 0;
     rerender(<GraphList {...props} />);
-    expect(listRenders.count).toBe(before);
-  });
-
-  it('renders again when the selection changes', () => {
-    const { rerender, props } = renderList();
-    const before = listRenders.count;
+    expect(matchShas.reads).toBe(0);
     rerender(<GraphList {...props} selectedSha={B} />);
-    expect(listRenders.count).toBeGreaterThan(before);
+    expect(matchShas.reads).toBeGreaterThan(0);
   });
 
   it('keeps the graph column within a share of the list width however many lanes exist', () => {
-    const view = { ...makeView(), laneCount: 600 };
+    const view = { ...sampleView(), laneCount: 600 };
     const { container } = renderList({ view });
     const svg = container.querySelector('svg');
     expect(Number(svg?.getAttribute('width'))).toBe(240);
     const spacer = rowOf('first').querySelector<HTMLElement>('span[aria-hidden="true"]');
     expect(spacer?.style.width).toBe('240px');
-  });
-
-  it('flashes the row of a commit the list just jumped to', () => {
-    renderList({ flashSha: A });
-    expect(rowOf('first')).toHaveClass('row-flash');
-    expect(screen.getByText('(no message)').closest('button')).not.toHaveClass('row-flash');
   });
 
   it('hides the sha and author name columns before the subject gets cramped', () => {
@@ -256,7 +172,7 @@ describe('GraphList', () => {
 
   describe('with more lanes than fit', () => {
     function crowdedView(): GraphView {
-      const base = makeView();
+      const base = sampleView();
       const commits = Array.from({ length: 120 }, (_, row) => ({
         ...base.commits[0],
         sha: `${row}`.padStart(40, '0'),

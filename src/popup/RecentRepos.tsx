@@ -4,6 +4,7 @@ import { formatRelativeFromMs } from '@/shared/format';
 import { useLocalValue } from '@/shared/useLocalValue';
 import { clearRecentRepos, removeRecentRepo } from '@/shared/storage';
 import { t, tWith } from '@/shared/i18n';
+import { FOCUS_RING_FLUSH } from '@/shared/ui';
 
 export function RecentRepos() {
   const items = useLocalValue('recentRepos');
@@ -23,7 +24,7 @@ export function RecentRepos() {
         <button
           type="button"
           onClick={() => void clearRecentRepos()}
-          className="rounded px-1.5 py-0.5 text-[11px] text-slate-500 hover:bg-slate-100 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-sky-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-rose-400"
+          className={`rounded px-1.5 py-0.5 text-[11px] text-slate-500 hover:bg-slate-100 hover:text-rose-600 ${FOCUS_RING_FLUSH} dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-rose-400`}
         >
           {t('popup_recent_clear')}
         </button>
@@ -39,7 +40,7 @@ export function RecentRepos() {
               <button
                 type="button"
                 onClick={() => void openGraphTab(entry.owner, entry.repo, 'recent')}
-                className="group flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left focus-visible:outline-2 focus-visible:outline-sky-500"
+                className={`group flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left ${FOCUS_RING_FLUSH}`}
               >
                 <span className="truncate font-mono text-xs text-slate-700 group-hover:text-indigo-600 dark:text-slate-200 dark:group-hover:text-indigo-300">
                   {name}
@@ -53,7 +54,7 @@ export function RecentRepos() {
                 aria-label={tWith('popup_recent_remove', { repo: name })}
                 title={tWith('popup_recent_remove', { repo: name })}
                 onClick={() => void removeRecentRepo(entry.owner, entry.repo)}
-                className="mr-1 shrink-0 rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-sky-500 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-rose-400"
+                className={`mr-1 shrink-0 rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-rose-600 ${FOCUS_RING_FLUSH} dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-rose-400`}
               >
                 <svg
                   aria-hidden="true"

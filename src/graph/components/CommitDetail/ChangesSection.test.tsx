@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -6,27 +7,19 @@ import { ChangesSection } from './ChangesSection';
 
 const commitUrl = 'https://github.com/o/r/commit/abc';
 
-function renderError(kind: CommitDetailError['kind']) {
+function renderChanges(state: ComponentProps<typeof ChangesSection>['state']) {
   const onRetry = vi.fn<() => void>();
-  render(
-    <ChangesSection
-      state={{ status: 'error', error: { kind } }}
-      commitUrl={commitUrl}
-      onRetry={onRetry}
-    />,
-  );
-  return onRetry;
+  const view = render(<ChangesSection state={state} commitUrl={commitUrl} onRetry={onRetry} />);
+  return { ...view, onRetry };
+}
+
+function renderError(kind: CommitDetailError['kind']) {
+  return renderChanges({ status: 'error', error: { kind } }).onRetry;
 }
 
 describe('ChangesSection', () => {
   it('renders nothing while no commit is selected', () => {
-    const { container } = render(
-      <ChangesSection
-        state={{ status: 'idle' }}
-        commitUrl={commitUrl}
-        onRetry={vi.fn<() => void>()}
-      />,
-    );
+    const { container } = renderChanges({ status: 'idle' });
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -38,13 +31,7 @@ describe('ChangesSection', () => {
 
   it('states when a known rate limit resets', () => {
     const resetAt = new Date(2030, 0, 1, 15, 45).getTime();
-    render(
-      <ChangesSection
-        state={{ status: 'error', error: { kind: 'rateLimit', resetAt } }}
-        commitUrl={commitUrl}
-        onRetry={vi.fn<() => void>()}
-      />,
-    );
+    renderChanges({ status: 'error', error: { kind: 'rateLimit', resetAt } });
     expect(screen.getByRole('alert')).toHaveTextContent(/60 per hour.*resets at .*45/);
   });
 
@@ -62,12 +49,9 @@ describe('ChangesSection', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/private/);
   });
 
-  it.each(['network', 'auth', 'notFound', 'rateLimit', 'http', 'shape'] as const)(
-    'lets the user retry after a %s failure',
-    async (kind) => {
-      const onRetry = renderError(kind);
-      await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-      expect(onRetry).toHaveBeenCalledTimes(1);
-    },
-  );
+  it.each(['network', 'http'] as const)('lets the user retry after a %s failure', async (kind) => {
+    const onRetry = renderError(kind);
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { chooseVisibleLanes, collectPath, edgeEmphasis, priorityLanes } from './laneBudget';
 import type { ViewCommit, ViewRef } from './transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(
   sha: string,
@@ -8,22 +9,7 @@ function commit(
   parents: string[] = [],
   refs: ViewRef[] = [],
 ): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row: 0,
-    lane,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    isFocus: false,
-    message: '',
-    subject: '',
-    parents,
-    refs,
-  };
+  return makeCommit(sha, { lane, parents, refs });
 }
 
 const focusRef: ViewRef = { name: 'main', isFocus: true, ownerName: 'o' };

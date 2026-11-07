@@ -2,14 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useCopyToClipboard } from './useCopyToClipboard';
 import { copyToClipboard } from '../lib/clipboard';
-import type { ToastKind } from './useToast';
+import type { Toast } from './useToast';
 
 vi.mock('../lib/clipboard', () => ({
   copyToClipboard: vi.fn<(text: string) => Promise<boolean>>(),
 }));
 
 describe('useCopyToClipboard', () => {
-  const showToast = vi.fn<(kind: ToastKind, message: string) => void>();
+  const showToast = vi.fn<(kind: Toast['kind'], message: string) => void>();
 
   beforeEach(() => {
     showToast.mockReset();

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { jsonResponse } from '../../../test/factories';
 import { fetchCommitDetail } from './commitDetailApi';
 import { resetCommitDetailMemoryCacheForTest } from './commitDetailCache';
 
@@ -11,10 +12,6 @@ const API_BODY = {
 
 function diffResponse(): Response {
   return new Response(DIFF, { status: 200, headers: { 'content-type': 'text/plain' } });
-}
-
-function jsonResponse(body: unknown): Response {
-  return new Response(JSON.stringify(body), { status: 200 });
 }
 
 function status(code: number, headers?: Record<string, string>): Response {

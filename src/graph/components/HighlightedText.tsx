@@ -9,7 +9,7 @@ export function HighlightedText({ text, query }: HighlightedTextProps) {
   return highlightSegments(text, query).map((segment) =>
     segment.match ? (
       <mark
-        // 断片の文字列を key にすると同じ語が複数回一致したとき重複するため採らない。
+        // Keying by the fragment text is avoided: a word matching several times would duplicate keys.
         key={segment.start}
         className="rounded-sm bg-amber-300/70 text-inherit dark:bg-amber-400/40"
       >

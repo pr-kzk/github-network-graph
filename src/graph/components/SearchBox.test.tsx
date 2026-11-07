@@ -54,19 +54,17 @@ describe('SearchBox', () => {
     expect(input()).not.toHaveFocus();
   });
 
-  it('shows how many of the loaded commits match', () => {
-    setup({ query: 'fix', matchCount: 3 });
-    expect(screen.getByText('3 of 120 loaded')).toBeInTheDocument();
-  });
-
-  it('says so when nothing matches', () => {
-    setup({ query: 'zzz', matchCount: 0 });
-    expect(screen.getByText('No matches in 120 loaded commits')).toBeInTheDocument();
+  it.each<[string, Partial<SearchBoxProps>, string]>([
+    ['how many of the loaded commits match', { query: 'fix', matchCount: 3 }, '3 of 120 loaded'],
+    ['that nothing matches', { query: 'zzz', matchCount: 0 }, 'No matches in 120 loaded commits'],
+  ])('shows %s', (_, overrides, text) => {
+    setup(overrides);
+    expect(screen.getByText(text)).toBeInTheDocument();
   });
 
   it('stays quiet until the user starts searching', () => {
     setup({ hasMore: true });
-    expect(screen.queryByText(/commits loaded/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/loaded/)).not.toBeInTheDocument();
   });
 
   it('warns that older commits are not searched and offers to load them', () => {

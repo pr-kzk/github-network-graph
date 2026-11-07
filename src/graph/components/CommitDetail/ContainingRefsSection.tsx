@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { t, tWith } from '@/shared/i18n';
 import type { ContainingRef } from '../../lib/containingRefs';
+import { FOCUS_RING_FLUSH } from '@/shared/ui';
 
 const COLLAPSED_REF_LIMIT = 40;
 
@@ -30,7 +31,7 @@ export function ContainingRefsSection({ refs, onClick }: ContainingRefsSectionPr
                   title={label}
                   onClick={() => onClick(ref.sha)}
                   className={[
-                    'max-w-48 truncate rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 focus-visible:outline-2 focus-visible:outline-sky-500',
+                    `max-w-48 truncate rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ${FOCUS_RING_FLUSH}`,
                     ref.isFocus
                       ? 'bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 hover:bg-emerald-500/25 dark:text-emerald-300'
                       : 'bg-slate-200 text-slate-700 ring-slate-300 hover:bg-slate-300 dark:bg-slate-700/40 dark:text-slate-300 dark:ring-slate-600/40 dark:hover:bg-slate-700/70',
@@ -46,7 +47,7 @@ export function ContainingRefsSection({ refs, onClick }: ContainingRefsSectionPr
               <button
                 type="button"
                 onClick={() => setExpanded(true)}
-                className="rounded-md px-1.5 py-0.5 text-[11px] font-medium text-indigo-600 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-sky-500 dark:text-indigo-300"
+                className={`rounded-md px-1.5 py-0.5 text-[11px] font-medium text-indigo-600 underline-offset-2 hover:underline ${FOCUS_RING_FLUSH} dark:text-indigo-300`}
               >
                 {tWith('commit_detail_branches_show_all', { count: String(refs.length) })}
               </button>

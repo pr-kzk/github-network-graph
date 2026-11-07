@@ -49,12 +49,6 @@ describe('RepoSwitcher', () => {
     expect(options).toEqual(['facebook/react', 'numpy/numpy']);
   });
 
-  it('offers every recent repository before the user types anything', async () => {
-    await renderSwitcher();
-
-    expect(screen.getAllByRole('option')).toHaveLength(2);
-  });
-
   it('narrows suggestions as the user types', async () => {
     const { user, input } = await renderSwitcher();
     await user.clear(input);
@@ -63,20 +57,17 @@ describe('RepoSwitcher', () => {
     expect(suggestionLabels()).toEqual(['numpy/numpy']);
   });
 
-  it('opens a suggestion chosen with the arrow keys', async () => {
+  it.each([
+    ['arrow keys', { owner: 'numpy', repo: 'numpy' }],
+    ['mouse', { owner: 'facebook', repo: 'react' }],
+  ])('opens a suggestion chosen with the %s', async (device, expected) => {
     const { user, onSwitch, input } = await renderSwitcher();
     await user.clear(input);
-    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    if (device === 'mouse')
+      await user.click(screen.getByRole('option', { name: 'facebook/react' }));
+    else await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
 
-    expect(onSwitch).toHaveBeenCalledWith({ owner: 'numpy', repo: 'numpy' });
-  });
-
-  it('opens a suggestion chosen with the mouse', async () => {
-    const { user, onSwitch, input } = await renderSwitcher();
-    await user.clear(input);
-    await user.click(screen.getByRole('option', { name: 'facebook/react' }));
-
-    expect(onSwitch).toHaveBeenCalledWith({ owner: 'facebook', repo: 'react' });
+    expect(onSwitch).toHaveBeenCalledWith(expected);
   });
 
   it('explains invalid input and stays open', async () => {

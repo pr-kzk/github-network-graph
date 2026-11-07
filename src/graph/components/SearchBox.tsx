@@ -1,5 +1,6 @@
 import type { KeyboardEvent, RefObject } from 'react';
 import { t, tWith } from '@/shared/i18n';
+import { BUTTON_SECONDARY, FOCUS_RING } from '@/shared/ui';
 
 export type SearchBoxProps = {
   query: string;
@@ -13,8 +14,7 @@ export type SearchBoxProps = {
   onLoadOlder: () => void;
 };
 
-const STEP_BUTTON_CLASS =
-  'flex size-6 items-center justify-center rounded text-slate-600 hover:bg-slate-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800';
+const STEP_BUTTON_CLASS = `flex size-6 items-center justify-center rounded text-slate-600 hover:bg-slate-200 ${FOCUS_RING} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent dark:text-slate-400 dark:hover:bg-slate-800`;
 
 export function SearchBox({
   query,
@@ -100,7 +100,7 @@ export function SearchBox({
                   type="button"
                   disabled={loadingMore}
                   onClick={onLoadOlder}
-                  className="rounded-md bg-slate-200 px-2 py-0.5 text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 disabled:cursor-wait disabled:opacity-60 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+                  className={`px-2 py-0.5 disabled:cursor-wait disabled:opacity-60 ${BUTTON_SECONDARY} ${FOCUS_RING}`}
                 >
                   {loadingMore ? t('graph_footer_loading_more') : t('graph_search_load_older')}
                 </button>

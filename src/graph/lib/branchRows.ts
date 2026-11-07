@@ -1,8 +1,8 @@
 import type { GraphBranch, GraphForkBranches } from './transform.types';
 
-export type BranchHeadingRow = { kind: 'heading'; key: string; label: string };
+type BranchHeadingRow = { kind: 'heading'; key: string; label: string };
 
-export type BranchOptionRow = {
+type BranchOptionRow = {
   kind: 'option';
   key: string;
   branch: GraphBranch;
@@ -10,7 +10,7 @@ export type BranchOptionRow = {
   optionIndex: number;
 };
 
-export type BranchRow = BranchHeadingRow | BranchOptionRow;
+type BranchRow = BranchHeadingRow | BranchOptionRow;
 
 export type BranchRows = {
   rows: BranchRow[];

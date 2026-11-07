@@ -2,7 +2,6 @@ import { asString, errorMessage, isObject } from '@/shared/errors';
 import { t, tWith } from '@/shared/i18n';
 import type {
   FetchedInitialPage,
-  FetchedNetwork,
   FetchedOlderPage,
   NetworkChunk,
   NetworkMeta,
@@ -47,8 +46,7 @@ export class NetworkApiError extends Error {
 }
 
 const GITHUB_ORIGIN = 'https://github.com';
-const CHUNK_PAGE_SIZE = 100;
-const DEFAULT_MAX_COMMITS = 500;
+export const CHUNK_PAGE_SIZE = 100;
 const PENDING_MAX_ATTEMPTS = 19;
 const PENDING_BASE_DELAY_MS = 400;
 const PENDING_MAX_DELAY_MS = 4000;
@@ -212,7 +210,7 @@ function looksLikeEmptyRepoPage(body: string): boolean {
 
 function parseMeta(body: unknown): NetworkMeta {
   if (!isObject(body)) throw new NetworkApiError('shape', t('error_shape_body'));
-  const { nethash, focus, dates, name, users } = body;
+  const { nethash, focus, dates, users } = body;
   if (typeof nethash !== 'string' || !nethash) {
     throw new NetworkApiError('shape', t('error_shape_body'));
   }
@@ -226,7 +224,6 @@ function parseMeta(body: unknown): NetworkMeta {
     nethash,
     focus,
     dates: dates.map((d) => String(d)),
-    name: asString(name),
     users: users.map((u) => parseUser(u)),
   };
 }
@@ -368,11 +365,6 @@ type GithubNetworkClient = {
     end: number,
     options?: RequestOptions,
   ): Promise<NetworkChunk>;
-  fetchAll(
-    owner: string,
-    repo: string,
-    opts?: { maxCommits?: number; pageSize?: number },
-  ): Promise<FetchedNetwork>;
   fetchInitialPage(
     owner: string,
     repo: string,
@@ -409,32 +401,6 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       return parseChunk(body);
     },
 
-    async fetchAll(owner, repo, opts) {
-      const maxCommits = opts?.maxCommits ?? DEFAULT_MAX_COMMITS;
-      const pageSize = opts?.pageSize ?? CHUNK_PAGE_SIZE;
-
-      const meta = await this.fetchMeta(owner, repo);
-
-      const totalCount = meta.dates.length || maxCommits;
-      const desiredEnd = totalCount;
-      const desiredStart = Math.max(0, desiredEnd - maxCommits);
-
-      const collected: NetworkRawCommit[] = [];
-      let start = desiredStart;
-      while (start < desiredEnd && collected.length < maxCommits) {
-        const end = Math.min(start + pageSize, desiredEnd);
-        const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1);
-        if (chunk.commits.length === 0) break;
-        collected.push(...chunk.commits);
-        if (chunk.commits.length < end - start) break;
-        start = end;
-      }
-
-      collected.reverse();
-
-      return { meta, commits: collected };
-    },
-
     async fetchInitialPage(owner, repo, opts) {
       const pageSize = opts?.pageSize ?? CHUNK_PAGE_SIZE;
       const meta = await this.fetchMeta(owner, repo, opts);
@@ -446,24 +412,24 @@ export function createGithubNetworkClient(): GithubNetworkClient {
           ? await this.fetchChunk(owner, repo, meta.nethash, start, end - 1, opts)
           : { commits: [] };
       const commits = [...chunk.commits].reverse();
-      return { meta, commits, nextEnd: start, totalCount };
+      return { meta, commits, nextEnd: start };
     },
 
     async fetchOlderPage(owner, repo, meta, nextEnd, opts) {
       const pageSize = opts?.pageSize ?? CHUNK_PAGE_SIZE;
       if (nextEnd <= 0) {
-        return { commits: [], nextEnd: 0, exhausted: true };
+        return { commits: [], nextEnd: 0 };
       }
       const end = nextEnd;
       const start = Math.max(0, end - pageSize);
       const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1, opts);
       const commits = [...chunk.commits].reverse();
-      return { commits, nextEnd: start, exhausted: start === 0 };
+      return { commits, nextEnd: start };
     },
   };
 }
 
-type GraphErrorInfo = { kind: GraphErrorKind; message: string };
+export type GraphErrorInfo = { kind: GraphErrorKind; message: string };
 
 export function toGraphError(err: unknown, fallbackMessage: string): GraphErrorInfo {
   if (err instanceof NetworkApiError) {

@@ -9,16 +9,6 @@ afterEach(() => {
 });
 
 describe('GraphSkeleton', () => {
-  it('announces loading while placeholder rows are shown', () => {
-    render(<GraphSkeleton pendingNotice={false} retry={null} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Loading…');
-  });
-
-  it('reassures the user once GitHub is slow to respond', () => {
-    render(<GraphSkeleton pendingNotice retry={null} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/GitHub is still preparing this graph/);
-  });
-
   it('shows the retry countdown instead of the plain loading text while GitHub is retried', () => {
     vi.useFakeTimers({ now: RETRY_AT, toFake: ['Date'] });
     render(

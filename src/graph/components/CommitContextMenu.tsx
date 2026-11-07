@@ -1,5 +1,9 @@
 import { useEffect, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { PANEL_SURFACE_TRANSLUCENT } from '@/shared/ui';
 import { clampToViewport, useAnchoredPosition } from '../hooks/useAnchoredPosition';
+import { useDismissOnOutsidePress } from '../hooks/useDismissOnOutsidePress';
+import { useKeyPress } from '../hooks/useKeyPress';
+import { useInitialFocus } from '../hooks/useInitialFocus';
 
 export type ContextMenuItem =
   | {
@@ -27,13 +31,9 @@ function enabledItems(menu: HTMLElement | null): HTMLButtonElement[] {
 export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuProps) {
   const { ref, position } = useAnchoredPosition<HTMLDivElement>(x, y, clampToViewport);
 
-  useEffect(() => {
-    const opener = document.activeElement;
-    enabledItems(ref.current)[0]?.focus();
-    return () => {
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
-    };
-  }, [ref]);
+  useInitialFocus(() => enabledItems(ref.current)[0]);
+  useDismissOnOutsidePress(ref, onClose);
+  useKeyPress('Escape', onClose);
 
   function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Tab') {
@@ -56,26 +56,14 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
   }
 
   useEffect(() => {
-    function handleDown(e: MouseEvent) {
-      if (ref.current && !(e.target instanceof Node && ref.current.contains(e.target))) onClose();
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
     function handleScroll(e: Event) {
       if (ref.current && e.target instanceof Node && ref.current.contains(e.target)) return;
       onClose();
     }
-    document.addEventListener('mousedown', handleDown, true);
-    document.addEventListener('contextmenu', handleDown, true);
-    document.addEventListener('keydown', handleKey);
     document.addEventListener('scroll', handleScroll, true);
     window.addEventListener('resize', onClose);
     window.addEventListener('blur', onClose);
     return () => {
-      document.removeEventListener('mousedown', handleDown, true);
-      document.removeEventListener('contextmenu', handleDown, true);
-      document.removeEventListener('keydown', handleKey);
       document.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', onClose);
       window.removeEventListener('blur', onClose);
@@ -87,7 +75,7 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
       ref={ref}
       role="menu"
       tabIndex={-1}
-      className="fixed z-50 min-w-[220px] overflow-hidden rounded-md border border-slate-300 bg-white/95 py-1 text-xs text-slate-900 shadow-xl ring-1 ring-black/10 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100 dark:ring-black/40"
+      className={`fixed z-50 min-w-[220px] overflow-hidden py-1 text-xs backdrop-blur ${PANEL_SURFACE_TRANSLUCENT}`}
       style={{ left: position.left, top: position.top }}
       onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}

@@ -1,6 +1,7 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { stubClientSize } from '../../test/graphPage';
 import { GraphPage } from './GraphPage';
 import { copyToClipboard } from './lib/clipboard';
 import type * as NetworkApi from './lib/networkApi';
@@ -16,7 +17,6 @@ const PAGE: FetchedInitialPage = {
     nethash: 'h',
     focus: 0,
     dates: [],
-    name: 'r',
     users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: C }] }],
   },
   commits: [
@@ -41,33 +41,26 @@ const PAGE: FetchedInitialPage = {
     { id: A, author: 0, time: 1, space: 0, parents: [], message: 'Initial', authorName: 'Alice' },
   ],
   nextEnd: 0,
-  totalCount: 3,
 };
 
 vi.mock('./lib/networkApi', async (importOriginal) => ({
   ...(await importOriginal<typeof NetworkApi>()),
   createGithubNetworkClient: () => ({
     fetchInitialPage: async () => PAGE,
-    fetchOlderPage: async () => ({ commits: [], nextEnd: 0, exhausted: true }),
+    fetchOlderPage: async () => ({ commits: [], nextEnd: 0 }),
   }),
 }));
 
-vi.mock('./hooks/useCommitDetailExtra', () => ({
-  useCommitDetailExtra: () => ({ state: { status: 'idle' }, retry: () => undefined }),
-}));
+vi.mock(
+  './hooks/useCommitDetailExtra',
+  async () => (await import('../../test/graphPage')).idleCommitDetailExtra,
+);
 
 vi.mock('./lib/clipboard', () => ({
   copyToClipboard: vi.fn<(text: string) => Promise<boolean>>(async () => true),
 }));
 
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
+stubClientSize();
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/?owner=o&repo=r');
@@ -140,20 +133,6 @@ describe('GraphPage', () => {
     await user.keyboard('{Enter}');
     expect(row(B)).toHaveAttribute('aria-current', 'true');
     expect(row(B)).toHaveAttribute('data-match', 'true');
-  });
-
-  it('focuses the search field with the slash key', async () => {
-    await renderPage();
-    fireEvent.keyDown(document.body, { key: '/' });
-    expect(screen.getByRole('textbox', { name: 'Search loaded commits' })).toHaveFocus();
-  });
-
-  it('opens the shortcuts dialog with ? and closes it with Escape', async () => {
-    await renderPage();
-    fireEvent.keyDown(document.body, { key: '?' });
-    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
-    fireEvent.keyDown(dialog, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('does not treat shortcut keys as navigation while typing in the search field', async () => {

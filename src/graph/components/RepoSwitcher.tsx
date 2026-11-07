@@ -2,7 +2,16 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { t } from '@/shared/i18n';
 import { isSameRepo } from '@/shared/storage';
+import {
+  FOCUS_RING,
+  FOCUS_RING_FLUSH,
+  OPTION_ACTIVE,
+  OPTION_IDLE,
+  PANEL_SURFACE,
+} from '@/shared/ui';
 import { useLocalValue } from '@/shared/useLocalValue';
+import { useActiveIndex } from '../hooks/useActiveIndex';
+import { useDismissOnOutsidePress } from '../hooks/useDismissOnOutsidePress';
 import { parseRepoFromInput, type RepoRef } from '../lib/parseUrl';
 
 type RepoSwitcherProps = {
@@ -18,7 +27,6 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
   const [edited, setEdited] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(NO_SUGGESTION);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const chipRef = useRef<HTMLButtonElement | null>(null);
@@ -36,6 +44,7 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
         `${entry.owner}/${entry.repo}`.toLowerCase().includes(needle),
     );
   }, [recent, value, edited, owner, repo]);
+  const { activeIndex, setActiveIndex, move } = useActiveIndex(suggestions.length, NO_SUGGESTION);
 
   useEffect(() => {
     if (editing || !returnFocus.current) return;
@@ -49,15 +58,7 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
     inputRef.current?.select();
   }, [editing]);
 
-  useEffect(() => {
-    if (!editing) return undefined;
-    function handleDown(e: MouseEvent) {
-      if (e.target instanceof Node && rootRef.current?.contains(e.target)) return;
-      setEditing(false);
-    }
-    document.addEventListener('mousedown', handleDown, true);
-    return () => document.removeEventListener('mousedown', handleDown, true);
-  }, [editing]);
+  useDismissOnOutsidePress(rootRef, () => setEditing(false), editing);
 
   function startEditing() {
     setValue(`${owner}/${repo}`);
@@ -100,10 +101,10 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
       submit();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, suggestions.length - 1));
+      move(1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveIndex((i) => Math.max(i - 1, NO_SUGGESTION));
+      move(-1);
     }
   }
 
@@ -134,7 +135,9 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
             onKeyDown={handleKeyDown}
             className="w-72 max-w-full rounded-md border border-slate-300 bg-white px-2 py-1 font-mono text-xs text-slate-900 outline-none focus:border-indigo-500 aria-invalid:border-rose-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-indigo-400"
           />
-          <div className="absolute top-full left-0 z-50 mt-1 w-72 max-w-[90vw] overflow-hidden rounded-md border border-slate-300 bg-white text-xs shadow-xl ring-1 ring-black/10 dark:border-slate-700 dark:bg-slate-900 dark:ring-black/40">
+          <div
+            className={`absolute top-full left-0 z-50 mt-1 w-72 max-w-[90vw] overflow-hidden text-xs ${PANEL_SURFACE}`}
+          >
             {error ? (
               <p id={errorId} role="alert" className="px-3 py-2 text-rose-600 dark:text-rose-400">
                 {t('graph_repoform_error')}
@@ -153,9 +156,7 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
                   onClick={() => choose({ owner: entry.owner, repo: entry.repo })}
                   className={[
                     'block w-full truncate border-l-2 px-3 py-1.5 text-left font-mono',
-                    i === activeIndex
-                      ? 'border-indigo-600 bg-indigo-600/20 font-semibold text-slate-900 dark:border-indigo-400 dark:bg-indigo-600/40 dark:text-slate-100'
-                      : 'border-transparent text-slate-700 dark:text-slate-300',
+                    i === activeIndex ? `${OPTION_ACTIVE} font-semibold` : OPTION_IDLE,
                   ].join(' ')}
                 >
                   {entry.owner}/{entry.repo}
@@ -175,7 +176,7 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
             aria-label={t('graph_repo_switch_label')}
             title={t('graph_repo_switch_label')}
             onClick={startEditing}
-            className="flex items-center gap-1 rounded-md bg-slate-200 px-2 py-0.5 font-mono text-xs text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            className={`flex items-center gap-1 rounded-md bg-slate-200 px-2 py-0.5 font-mono text-xs text-slate-800 hover:bg-slate-300 ${FOCUS_RING} dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700`}
           >
             {owner}/{repo}
             <span aria-hidden="true" className="text-[9px]">
@@ -188,7 +189,7 @@ export function RepoSwitcher({ owner, repo, onSwitch }: RepoSwitcherProps) {
             rel="noreferrer"
             aria-label={t('graph_repo_open_github')}
             title={t('graph_repo_open_github')}
-            className="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-sky-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+            className={`rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-800 ${FOCUS_RING_FLUSH} dark:hover:bg-slate-800 dark:hover:text-slate-100`}
           >
             <svg
               aria-hidden="true"
