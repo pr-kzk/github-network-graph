@@ -86,6 +86,14 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
     window.history.replaceState(null, '', url.toString());
   }, []);
 
+  const awaitingSelectedCommit =
+    state.status === 'ready' && selectedSha !== null && !commitBySha.has(selectedSha);
+  const canLoadOlder =
+    state.status === 'ready' && state.hasMore && !state.loadingMore && state.olderError === null;
+  useEffect(() => {
+    if (awaitingSelectedCommit && canLoadOlder) loadMore();
+  }, [awaitingSelectedCommit, canLoadOlder, loadMore]);
+
   const ctx = useCommitContextMenu({ commitBySha, owner, repo, onSelectSha: setSelectedSha });
 
   return (
@@ -97,6 +105,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
         branches={state.status === 'ready' ? state.view.branches : EMPTY_BRANCHES}
         onModeChange={handleModeChange}
         onRefresh={handleRefresh}
+        selectedSha={selectedSha}
         onSelectBranch={setSelectedSha}
       />
 

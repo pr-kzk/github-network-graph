@@ -152,6 +152,7 @@ export function GraphList({
                       commit={view.commits[vi.index]}
                       isSelected={view.commits[vi.index].sha === selectedSha}
                       onSelect={onSelect}
+                      onContextMenu={onContextCommit}
                       graphAreaWidth={gw}
                     />
                   )}

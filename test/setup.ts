@@ -167,6 +167,7 @@ class ResizeObserverStub {
   disconnect(): void {}
 }
 vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+Element.prototype.scrollIntoView = vi.fn<Element['scrollIntoView']>();
 
 afterEach(() => {
   cleanup();

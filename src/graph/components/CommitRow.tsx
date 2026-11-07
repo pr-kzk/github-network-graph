@@ -9,15 +9,26 @@ export type CommitRowProps = {
   commit: ViewCommit;
   isSelected: boolean;
   onSelect: (sha: string) => void;
+  onContextMenu: (sha: string, clientX: number, clientY: number) => void;
   graphAreaWidth: number;
 };
 
-export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: CommitRowProps) {
+export function CommitRow({
+  commit,
+  isSelected,
+  onSelect,
+  onContextMenu,
+  graphAreaWidth,
+}: CommitRowProps) {
   return (
     <button
       type="button"
       data-sha={commit.sha}
       onClick={() => onSelect(commit.sha)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu(commit.sha, e.clientX, e.clientY);
+      }}
       data-selected={isSelected ? 'true' : undefined}
       className={[
         'group flex w-full cursor-pointer items-center text-left text-xs',

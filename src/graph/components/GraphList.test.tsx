@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { GraphList } from './GraphList';
 import type { GraphView } from '../lib/transform.types';
 
@@ -96,6 +96,28 @@ describe('GraphList', () => {
     expect(screen.getByText('Subject')).toBeInTheDocument();
     // 第 2 コミットは subject が空なので「(no message)」が出る
     expect(screen.getByText('(no message)')).toBeInTheDocument();
+  });
+
+  it('opens the context menu when a commit row is right-clicked', () => {
+    const onContextCommit = vi.fn<(sha: string, x: number, y: number) => void>();
+    render(
+      <GraphList
+        view={makeView()}
+        selectedSha={null}
+        onSelect={vi.fn<(sha: string) => void>()}
+        onHoverCommit={vi.fn<(sha: string, x: number, y: number) => void>()}
+        onLeaveCommit={vi.fn<(sha: string) => void>()}
+        onContextCommit={onContextCommit}
+        hasMore={false}
+        loadingMore={false}
+        olderError={null}
+        onLoadMore={vi.fn<() => void>()}
+      />,
+    );
+    const row = screen.getByText('first').closest('button');
+    if (!row) throw new Error('commit row not found');
+    fireEvent.contextMenu(row, { clientX: 40, clientY: 70 });
+    expect(onContextCommit).toHaveBeenCalledWith('a'.repeat(40), 40, 70);
   });
 
   it('renders the footer row when hasMore is true', () => {

@@ -8,6 +8,7 @@ export type GraphHeaderProps = {
   repo: string;
   mode: GraphMode;
   branches: GraphBranch[];
+  selectedSha: string | null;
   onModeChange: (next: GraphMode) => void;
   onRefresh: () => void;
   onSelectBranch: (sha: string) => void;
@@ -18,6 +19,7 @@ export function GraphHeader({
   repo,
   mode,
   branches,
+  selectedSha,
   onModeChange,
   onRefresh,
   onSelectBranch,
@@ -38,7 +40,9 @@ export function GraphHeader({
         ) : null}
       </div>
       <div className="ml-auto flex items-center gap-3">
-        {branches.length > 0 ? <BranchMenu branches={branches} onSelect={onSelectBranch} /> : null}
+        {branches.length > 0 ? (
+          <BranchMenu branches={branches} selectedSha={selectedSha} onSelect={onSelectBranch} />
+        ) : null}
         <div className="flex items-center gap-1 rounded-md bg-slate-100 p-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
           <button
             type="button"
