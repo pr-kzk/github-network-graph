@@ -38,14 +38,15 @@ describe('buildBranchRows', () => {
     expect(rowIndexOfOption[2]).toBe(4);
   });
 
-  it('keeps every branch of a fork whose owner matches the query', () => {
-    const { rows } = buildBranchRows(OWN, FORKS, ' ALICE ', 'Repository');
-    expect(labels(rows)).toEqual(['# alice', 'experiment', 'main']);
-  });
-
-  it('drops groups with no matching branch', () => {
-    const { rows } = buildBranchRows(OWN, FORKS, 'hot', 'Repository');
-    expect(labels(rows)).toEqual(['# bob', 'hotfix']);
+  it.each([
+    [
+      'keeps every branch of a fork whose owner matches',
+      ' ALICE ',
+      ['# alice', 'experiment', 'main'],
+    ],
+    ['drops groups with no matching branch', 'hot', ['# bob', 'hotfix']],
+  ])('%s the query', (_, query, expected) => {
+    expect(labels(buildBranchRows(OWN, FORKS, query, 'Repository').rows)).toEqual(expected);
   });
 
   it('qualifies fork branch titles with their owner', () => {

@@ -204,13 +204,8 @@ export type MessageKey =
   | 'graph_status_cooldown';
 
 export function t(key: MessageKey, substitutions?: string | string[]): string {
-  const getMessage = (
-    globalThis as {
-      chrome?: { i18n?: { getMessage?: (key: string, subs?: string | string[]) => string } };
-    }
-  ).chrome?.i18n?.getMessage;
-  if (!getMessage) return key;
-  const value = getMessage(key, substitutions);
+  if (typeof chrome === 'undefined' || !chrome.i18n?.getMessage) return key;
+  const value = chrome.i18n.getMessage(key, substitutions);
   if (value === '') {
     if (import.meta.env.DEV) {
       throw new Error(`[i18n] missing message for key: ${key}`);

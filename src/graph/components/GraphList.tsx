@@ -1,20 +1,27 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { t, tWith } from '@/shared/i18n';
-import { CommitRow } from './CommitRow';
+import { CommitRow, type RowHandlers } from './CommitRow';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphListFooter } from './GraphListFooter';
-import type { OlderError } from '../hooks/useGraphData';
 import { useElementWidth } from '../hooks/useElementWidth';
 import { useFocusSelectedRow } from '../hooks/useFocusSelectedRow';
 import { useRevealSelectedRow } from '../hooks/useRevealSelectedRow';
+import type { GraphErrorInfo } from '../lib/networkApi';
 import { ROW_HEIGHT, createGraphLayout } from '../lib/graphMetrics';
 import { collectPath, priorityLanes } from '../lib/laneBudget';
-import { visibleColumns } from '../lib/listColumns';
+import { authorColumnWidth, DATE_WIDTH, SHA_WIDTH, visibleColumns } from '../lib/listColumns';
 import type { GraphView, ViewCommit } from '../lib/transform.types';
 
 const LOAD_MORE_THRESHOLD = 20;
 const VIRTUAL_OVERSCAN = 20;
+
+export type GraphPaging = {
+  hasMore: boolean;
+  loadingMore: boolean;
+  olderError: GraphErrorInfo | null;
+  onLoadMore: () => void;
+};
 
 type GraphListProps = {
   view: GraphView;
@@ -24,15 +31,8 @@ type GraphListProps = {
   childrenBySha: ReadonlyMap<string, readonly string[]>;
   matchShas: ReadonlySet<string>;
   query: string;
-  onSelect: (sha: string) => void;
-  onHoverCommit: (sha: string, x: number, y: number) => void;
-  onKeyboardFocusCommit: (sha: string, x: number, y: number) => void;
-  onLeaveCommit: () => void;
-  onContextCommit: (sha: string, x: number, y: number) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  olderError: OlderError | null;
-  onLoadMore: () => void;
+  rowHandlers: RowHandlers;
+  paging: GraphPaging;
 };
 
 function GraphListImpl({
@@ -43,15 +43,8 @@ function GraphListImpl({
   childrenBySha,
   matchShas,
   query,
-  onSelect,
-  onHoverCommit,
-  onKeyboardFocusCommit,
-  onLeaveCommit,
-  onContextCommit,
-  hasMore,
-  loadingMore,
-  olderError,
-  onLoadMore,
+  rowHandlers,
+  paging: { hasMore, loadingMore, olderError, onLoadMore },
 }: GraphListProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const listWidth = useElementWidth(scrollRef);
@@ -85,13 +78,13 @@ function GraphListImpl({
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
 
-  const commitVirtualItems = virtualItems.filter((vi) => vi.index < view.commits.length);
-  const rangeStart = commitVirtualItems[0]?.index ?? 0;
-  const lastVisibleIndex =
-    commitVirtualItems.length > 0 ? commitVirtualItems[commitVirtualItems.length - 1].index : -1;
-  const rangeEnd = lastVisibleIndex >= 0 ? lastVisibleIndex + 1 : 0;
+  const lastVisibleIndex = Math.min(
+    virtualItems[virtualItems.length - 1]?.index ?? -1,
+    view.commits.length - 1,
+  );
+  const rangeStart = lastVisibleIndex >= 0 ? virtualItems[0].index : 0;
+  const rangeEnd = lastVisibleIndex + 1;
 
-  // commitVirtualItems は毎 render 新配列になるため deps に取らず、末尾 index の number で判定する。
   useEffect(() => {
     if (!hasMore || loadingMore || olderError) return;
     if (view.commits.length === 0 || lastVisibleIndex < 0) return;
@@ -100,11 +93,7 @@ function GraphListImpl({
     }
   }, [lastVisibleIndex, hasMore, loadingMore, olderError, onLoadMore, view.commits.length]);
 
-  const selectedRow = useMemo(() => {
-    if (!selectedSha) return null;
-    const idx = view.commits.findIndex((c) => c.sha === selectedSha);
-    return idx >= 0 ? idx : null;
-  }, [selectedSha, view.commits]);
+  const selectedRow = selectedSha ? (commitBySha.get(selectedSha)?.row ?? null) : null;
 
   useRevealSelectedRow(virtualizer, scrollRef, selectedRow);
   useFocusSelectedRow(scrollRef, selectedSha);
@@ -131,15 +120,19 @@ function GraphListImpl({
             </abbr>
           ) : null}
         </div>
-        {columns.authorName ? (
-          <div className="w-32 shrink-0 pr-3">{t('graph_column_author')}</div>
-        ) : (
-          <div className="w-8 shrink-0" />
-        )}
+        <div style={{ width: authorColumnWidth(columns.authorName) }} className="shrink-0 pr-3">
+          {columns.authorName ? t('graph_column_author') : null}
+        </div>
         <div className="min-w-0 flex-1 truncate pr-3">{t('graph_column_subject')}</div>
-        {columns.sha ? <div className="w-16 shrink-0 pr-3">{t('graph_column_sha')}</div> : null}
+        {columns.sha ? (
+          <div style={{ width: SHA_WIDTH }} className="shrink-0 pr-3">
+            {t('graph_column_sha')}
+          </div>
+        ) : null}
         {columns.date ? (
-          <div className="w-16 shrink-0 pr-3 text-right">{t('graph_column_date')}</div>
+          <div style={{ width: DATE_WIDTH }} className="shrink-0 pr-3 text-right">
+            {t('graph_column_date')}
+          </div>
         ) : null}
       </div>
       <div ref={scrollRef} className="relative flex-1 overflow-auto">
@@ -156,6 +149,7 @@ function GraphListImpl({
             {virtualItems.map((vi) => {
               const commit = vi.index < view.commits.length ? view.commits[vi.index] : null;
               const key = commit ? commit.sha : '__footer__';
+              const isMatch = commit !== null && matchShas.has(commit.sha);
               return (
                 <li
                   key={key}
@@ -181,16 +175,12 @@ function GraphListImpl({
                     <CommitRow
                       commit={commit}
                       isSelected={commit.sha === selectedSha}
-                      isMatch={matchShas.has(commit.sha)}
-                      query={matchShas.has(commit.sha) ? query : ''}
+                      isMatch={isMatch}
+                      query={isMatch ? query : ''}
                       isTabStop={commit.sha === tabStopSha}
                       isFlashing={commit.sha === flashSha}
                       columns={columns}
-                      onSelect={onSelect}
-                      onContextMenu={onContextCommit}
-                      onHover={onHoverCommit}
-                      onKeyboardFocus={onKeyboardFocusCommit}
-                      onLeave={onLeaveCommit}
+                      handlers={rowHandlers}
                       graphAreaWidth={gw}
                     />
                   )}

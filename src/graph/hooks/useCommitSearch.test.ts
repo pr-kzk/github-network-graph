@@ -2,24 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useCommitSearch } from './useCommitSearch';
 import type { ViewCommit } from '../lib/transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(sha: string, row: number, subject: string): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    isFocus: true,
-    message: subject,
-    subject,
-    parents: [],
-    refs: [],
-  };
+  return makeCommit(sha, { row, subject, message: subject });
 }
 
 const COMMITS = [

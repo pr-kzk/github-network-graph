@@ -8,6 +8,7 @@ import {
 } from './commitDetailCache';
 import {
   errorFromResponse,
+  fetchOrNetworkError,
   isCommitDetailError,
   makeError,
   MAX_LISTED_FILES,
@@ -16,6 +17,7 @@ import {
   type CommitDetailFile,
 } from './commitDetailTypes';
 import { fetchCommitDetailViaWeb } from './commitDetailWeb';
+import type { RepoRef } from './parseUrl';
 
 type FetchCommitDetailArgs = {
   owner: string;
@@ -27,12 +29,10 @@ type FetchCommitDetailArgs = {
   skipMissingCache?: boolean;
 };
 
-type RepoRef = { owner: string; repo: string };
-
 const API_ORIGIN = 'https://api.github.com';
 
-// フォーク網は git オブジェクトを共有するため、フォークのコミットも本家 URL で引ける。
-// author のフォークを先に試す案は、ほぼ毎回 404 を 1 回余分に消費するので採らない。
+// Trying the author's fork first is avoided: fork networks share git objects, so it would
+// spend an extra 404 almost every time.
 function candidateRepos(args: FetchCommitDetailArgs): RepoRef[] {
   const primary = { owner: args.owner, repo: args.repo };
   if (!args.authorOwner || !args.authorRepo) return [primary];
@@ -51,7 +51,8 @@ async function fetchFromRepo({ owner, repo }: RepoRef, sha: string): Promise<Com
   try {
     return await fetchCommitDetailViaWeb(owner, repo, sha);
   } catch (err) {
-    // notFound / auth を API で再試行しないのは、結果が変わらず無認証枠 (60/h) を浪費するだけのため。
+    // notFound and auth are not retried via the API: the answer would not change and it would
+    // only spend the unauthenticated quota (60/h).
     if (!isCommitDetailError(err) || !FALLBACK_KINDS.has(err.kind)) throw err;
     return fetchViaApi(owner, repo, sha);
   }
@@ -59,8 +60,8 @@ async function fetchFromRepo({ owner, repo }: RepoRef, sha: string): Promise<Com
 
 const inFlight = new Map<string, Promise<CommitDetailExtra>>();
 
-// 共有する取得はどの呼び出し元の signal にも結びつけない。片方の中断で、同じ SHA を
-// 待つ他方まで失敗させないため。中断した呼び出し元は結果を受け取らないだけにする。
+// The shared fetch is not bound to any caller's signal, so one caller aborting cannot fail
+// another waiting on the same SHA.
 export function fetchCommitDetail(args: FetchCommitDetailArgs): Promise<CommitDetailExtra> {
   const { signal } = args;
   if (signal?.aborted) return Promise.reject(abortError());
@@ -116,16 +117,11 @@ async function fetchViaApi(owner: string, repo: string, sha: string): Promise<Co
     repo,
   )}/commits/${encodeURIComponent(sha)}`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      credentials: 'omit',
-      headers: { Accept: 'application/vnd.github+json' },
-      cache: 'no-store',
-    });
-  } catch {
-    throw makeError('network');
-  }
+  const response = await fetchOrNetworkError(url, {
+    credentials: 'omit',
+    headers: { Accept: 'application/vnd.github+json' },
+    cache: 'no-store',
+  });
 
   const failure = errorFromResponse(response);
   if (failure) throw failure;

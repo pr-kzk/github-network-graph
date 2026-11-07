@@ -14,12 +14,6 @@ export default defineManifest({
   options_page: 'src/options/index.html',
   permissions: ['storage', 'activeTab'],
   host_permissions: ['https://github.com/*', 'https://api.github.com/*'],
-  web_accessible_resources: [
-    {
-      resources: ['src/graph/index.html'],
-      matches: ['https://github.com/*'],
-    },
-  ],
   icons: {
     16: 'icons/icon-16.png',
     32: 'icons/icon-32.png',

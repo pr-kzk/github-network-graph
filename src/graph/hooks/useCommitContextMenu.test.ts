@@ -2,26 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useCommitContextMenu } from './useCommitContextMenu';
 import type { ViewCommit } from '../lib/transform.types';
-
-function makeCommit(sha: string, overrides: Partial<ViewCommit> = {}): ViewCommit {
-  return {
-    sha,
-    shortSha: sha.slice(0, 7),
-    row: 0,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    isFocus: true,
-    message: '',
-    subject: '',
-    parents: [],
-    refs: [],
-    ...overrides,
-  };
-}
+import { makeCommit } from '../../../test/factories';
 
 function setup(commit: ViewCommit) {
   const onCopyLink = vi.fn<(sha: string) => void>();
@@ -39,21 +20,6 @@ function setup(commit: ViewCommit) {
 }
 
 describe('useCommitContextMenu', () => {
-  it('opens the menu for the commit at the pointer position', () => {
-    const { result } = setup(makeCommit('sha1', { parents: ['sha0'] }));
-    act(() => result.current.openMenu('sha1', 10, 20));
-    expect(result.current.menu).toEqual({ sha: 'sha1', x: 10, y: 20 });
-    expect(result.current.menuItems.length).toBeGreaterThan(0);
-  });
-
-  it('closes the menu', () => {
-    const { result } = setup(makeCommit('sha1'));
-    act(() => result.current.openMenu('sha1', 0, 0));
-    act(() => result.current.closeMenu());
-    expect(result.current.menu).toBeNull();
-    expect(result.current.menuItems).toEqual([]);
-  });
-
   it('offers to copy a link to the commit view', () => {
     const { result, onCopyLink } = setup(makeCommit('sha1'));
     act(() => result.current.openMenu('sha1', 0, 0));

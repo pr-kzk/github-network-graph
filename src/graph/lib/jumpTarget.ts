@@ -1,6 +1,5 @@
+import { shortSha } from './shortSha';
 import type { GraphView } from './transform.types';
-
-const SHORT_SHA_LENGTH = 7;
 
 type NamedHeads = Pick<GraphView, 'branches' | 'forkBranches'>;
 
@@ -11,5 +10,5 @@ export function describeJumpTarget(view: NamedHeads, sha: string): string {
     const match = fork.branches.find((branch) => branch.sha === sha);
     if (match) return `${fork.owner}:${match.name}`;
   }
-  return sha.slice(0, SHORT_SHA_LENGTH);
+  return shortSha(sha);
 }

@@ -1,6 +1,6 @@
 import type { ViewEdge } from './transform.types';
 
-export type EdgeIndex = {
+type EdgeIndex = {
   edges: readonly ViewEdge[];
   topRows: Int32Array;
   reachedRows: Int32Array;

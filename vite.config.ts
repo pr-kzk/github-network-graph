@@ -25,9 +25,6 @@ export default defineConfig({
     sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,
     target: 'esnext',
     rollupOptions: {
-      // graph/index.html は manifest の web_accessible_resources からしか参照されないため
-      // crxjs に静的コピーされて <script src="./main.tsx"> のまま残ってしまう。
-      // 明示的に input に追加して通常の HTML エントリとしてビルドさせる。
       input: {
         graph: resolve(__dirname, 'src/graph/index.html'),
       },

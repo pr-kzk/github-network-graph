@@ -6,7 +6,7 @@ const SELF_HANDLED =
   'input, textarea, select, [contenteditable="true"], [role="menu"], [role="dialog"], dialog';
 const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'Home', 'End']);
 
-export type UseGraphKeyboardArgs = NavigationContext & {
+type UseGraphKeyboardArgs = NavigationContext & {
   onSelect: (sha: string) => void;
   onFocusDetail: () => void;
   onFocusSearch: () => void;

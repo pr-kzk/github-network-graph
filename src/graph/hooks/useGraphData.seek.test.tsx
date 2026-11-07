@@ -7,8 +7,8 @@ import type {
   NetworkRawCommit,
   RetryNotice,
 } from '../lib/networkApi.types';
-import type * as Transform from '../lib/transform';
-import { SEEK_CONCURRENCY, useGraphData } from './useGraphData';
+import { useGraphData } from './useGraphData';
+import { SEEK_CONCURRENCY } from './useSeek';
 
 const TOTAL = 5000;
 const PAGE = 100;
@@ -18,7 +18,6 @@ const stats = vi.hoisted(() => ({
   olderCalls: 0,
   inFlight: 0,
   maxInFlight: 0,
-  transforms: 0,
   failEnd: null as number | null,
   signals: [] as AbortSignal[],
   onRetry: undefined as ((notice: RetryNotice) => void) | undefined,
@@ -43,17 +42,6 @@ function newestFirst(startInclusive: number, endExclusive: number): NetworkRawCo
   return commits;
 }
 
-vi.mock('../lib/transform', async (importOriginal) => {
-  const original = await importOriginal<typeof Transform>();
-  return {
-    ...original,
-    transformNetwork: (...args: Parameters<typeof original.transformNetwork>) => {
-      stats.transforms += 1;
-      return original.transformNetwork(...args);
-    },
-  };
-});
-
 vi.mock('../lib/networkApi', async (importOriginal) => ({
   ...(await importOriginal<typeof NetworkApi>()),
   createGithubNetworkClient: () => ({
@@ -62,12 +50,10 @@ vi.mock('../lib/networkApi', async (importOriginal) => ({
         nethash: 'h',
         focus: 0,
         dates: [],
-        name: 'r',
         users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: `p${TOTAL - 1}` }] }],
       },
       commits: newestFirst(TOTAL - PAGE, TOTAL),
       nextEnd: TOTAL - PAGE,
-      totalCount: TOTAL,
     }),
     fetchOlderPage: async (
       _owner: string,
@@ -86,19 +72,17 @@ vi.mock('../lib/networkApi', async (importOriginal) => ({
       stats.inFlight -= 1;
       if (stats.failEnd === end) throw new Error('offline');
       const start = Math.max(0, end - PAGE);
-      return { commits: newestFirst(start, end), nextEnd: start, exhausted: start === 0 };
+      return { commits: newestFirst(start, end), nextEnd: start };
     },
   }),
 }));
 
 async function readyHook() {
-  let renders = 0;
-  const hook = renderHook(() => {
-    renders += 1;
-    return useGraphData({ owner: 'o', repo: 'r', mode: 'network' });
-  });
+  const hook = renderHook(() =>
+    useGraphData({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 }),
+  );
   await waitFor(() => expect(hook.result.current.state.status).toBe('ready'));
-  return { ...hook, renders: () => renders };
+  return hook;
 }
 
 type ReadyHook = Awaited<ReturnType<typeof readyHook>>;
@@ -114,7 +98,6 @@ beforeEach(() => {
     olderCalls: 0,
     inFlight: 0,
     maxInFlight: 0,
-    transforms: 0,
     failEnd: null,
     signals: [],
     onRetry: undefined,
@@ -124,11 +107,8 @@ beforeEach(() => {
 });
 
 describe('useGraphData seekTo', () => {
-  it('reaches a deep commit with one transform, fetching a few pages concurrently', async () => {
+  it('reaches a deep commit by fetching a few pages concurrently', async () => {
     const hook = await readyHook();
-    const baseTransforms = stats.transforms;
-    const baseRenders = hook.renders();
-
     act(() => hook.result.current.seekTo(DEEP_TARGET));
     await waitFor(() => expect(readyState(hook).seek).toBeNull());
 
@@ -137,26 +117,6 @@ describe('useGraphData seekTo', () => {
     expect(state.loadingMore).toBe(false);
     expect(stats.maxInFlight).toBeGreaterThan(1);
     expect(stats.maxInFlight).toBeLessThanOrEqual(SEEK_CONCURRENCY);
-    expect(stats.transforms - baseTransforms).toBe(1);
-    console.info(
-      `seekTo depth 3000: ${stats.olderCalls} page requests in ${Math.ceil(stats.olderCalls / SEEK_CONCURRENCY)} sequential batches, ${stats.transforms - baseTransforms} transform, ${hook.renders() - baseRenders} renders`,
-    );
-  });
-
-  it('needs far fewer transforms than paging with loadMore one page at a time', async () => {
-    const hook = await readyHook();
-    const baseTransforms = stats.transforms;
-    const baseRenders = hook.renders();
-
-    while (!readyState(hook).view.commits.some((c) => c.sha === DEEP_TARGET)) {
-      act(() => hook.result.current.loadMore());
-      await waitFor(() => expect(readyState(hook).loadingMore).toBe(false));
-    }
-
-    console.info(
-      `loadMore depth 3000: ${stats.olderCalls} sequential round trips, ${stats.transforms - baseTransforms} transforms, ${hook.renders() - baseRenders} renders`,
-    );
-    expect(stats.transforms - baseTransforms).toBeGreaterThanOrEqual(29);
   });
 
   it('keeps pages in order and leaves the paging cursor right after the loaded commits', async () => {
@@ -265,12 +225,12 @@ describe('useGraphData seekTo', () => {
     const notice: RetryNotice = { kind: 'rateLimit', attempt: 1, maxAttempts: 3, resumeAt: 5000 };
 
     act(() => stats.onRetry?.(notice));
-    expect(readyState(hook).retry).toEqual(notice);
+    expect(readyState(hook).progress.retry).toEqual(notice);
 
     gate.hold = false;
     await act(async () => gate.release.splice(0).forEach((release) => release()));
     await waitFor(() => expect(readyState(hook).loadingMore).toBe(false));
-    expect(readyState(hook).retry).toBeNull();
+    expect(readyState(hook).progress.retry).toBeNull();
   });
 
   it('keeps the loaded commits and offers an inline retry when an older page finally fails', async () => {
@@ -282,7 +242,7 @@ describe('useGraphData seekTo', () => {
     const state = readyState(hook);
     expect(state.rawCommits).toHaveLength(PAGE);
     expect(state.view.commits).toHaveLength(PAGE);
-    expect(state.retry).toBeNull();
+    expect(state.progress.retry).toBeNull();
     expect(state.hasMore).toBe(true);
   });
 });

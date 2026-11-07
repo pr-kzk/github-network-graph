@@ -13,9 +13,6 @@
   --color-slate-300: #c0c0c0;
   --color-slate-200: #d8d8d8;
   --color-slate-100: #f0f0f0;
-}
-
-.theme-dark {
   color-scheme: dark;
   --graph-node-stroke: #0b0f1a;
   --graph-node-stroke-selected: #ffffff;

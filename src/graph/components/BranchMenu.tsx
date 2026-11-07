@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { t, tWith } from '@/shared/i18n';
+import { PANEL_SURFACE } from '@/shared/ui';
+import { useActiveIndex } from '../hooks/useActiveIndex';
+import { useDismissOnOutsidePress } from '../hooks/useDismissOnOutsidePress';
 import { buildBranchRows } from '../lib/branchRows';
 import type { GraphBranch, GraphForkBranches } from '../lib/transform.types';
 import { BranchList } from './BranchList';
 import { Spinner } from './Spinner';
 
-type BranchMenuProps = {
+export type BranchMenuProps = {
   branches: GraphBranch[];
   forkBranches: GraphForkBranches[];
   selectedSha: string | null;
-  busy?: boolean;
+  busy: boolean;
   onSelect: (sha: string) => void;
 };
 
@@ -19,12 +22,11 @@ export function BranchMenu({
   branches,
   forkBranches,
   selectedSha,
-  busy = false,
+  busy,
   onSelect,
 }: BranchMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -36,13 +38,14 @@ export function BranchMenu({
     [branches, forkBranches, query],
   );
   const { options } = model;
+  const { activeIndex, setActiveIndex, move, reset } = useActiveIndex(options.length, 0);
   const totalCount = branches.length + forkBranches.reduce((n, f) => n + f.branches.length, 0);
 
-  const close = useCallback(() => {
+  function close() {
     setOpen(false);
     setQuery('');
-    setActiveIndex(0);
-  }, []);
+    reset();
+  }
 
   function openMenu() {
     setActiveIndex(
@@ -58,16 +61,7 @@ export function BranchMenu({
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return undefined;
-    function handleDown(e: MouseEvent) {
-      if (rootRef.current && !(e.target instanceof Node && rootRef.current.contains(e.target))) {
-        close();
-      }
-    }
-    document.addEventListener('mousedown', handleDown, true);
-    return () => document.removeEventListener('mousedown', handleDown, true);
-  }, [open, close]);
+  useDismissOnOutsidePress(rootRef, close, open);
 
   function closeAndRestoreFocus() {
     close();
@@ -78,10 +72,6 @@ export function BranchMenu({
     onSelect(sha);
     closeAndRestoreFocus();
   };
-
-  function moveActive(delta: number) {
-    setActiveIndex((i) => Math.min(Math.max(i + delta, 0), options.length - 1));
-  }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') {
@@ -95,7 +85,7 @@ export function BranchMenu({
     const step = { ArrowDown: 1, ArrowUp: -1, PageDown: PAGE_STEP, PageUp: -PAGE_STEP }[e.key];
     if (step !== undefined) {
       e.preventDefault();
-      moveActive(step);
+      move(step);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const target = options[activeIndex];
@@ -125,7 +115,7 @@ export function BranchMenu({
         </span>
       </button>
       {open ? (
-        <div className="absolute right-0 z-50 mt-1 w-80 overflow-hidden rounded-md border border-slate-300 bg-white shadow-xl ring-1 ring-black/10 dark:border-slate-700 dark:bg-slate-900 dark:ring-black/40">
+        <div className={`absolute right-0 z-50 mt-1 w-80 overflow-hidden ${PANEL_SURFACE}`}>
           <div className="border-b border-slate-200 p-2 dark:border-slate-800">
             <input
               ref={inputRef}
@@ -139,7 +129,7 @@ export function BranchMenu({
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
-                setActiveIndex(0);
+                reset();
               }}
               onKeyDown={handleKeyDown}
               placeholder={t('graph_branch_search_placeholder')}

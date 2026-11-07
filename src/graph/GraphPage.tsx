@@ -3,44 +3,37 @@ import { t, tWith } from '@/shared/i18n';
 import { recordRecentRepo } from '@/shared/storage';
 import { trackEvent } from '@/shared/telemetry';
 import { useTheme } from '@/shared/useTheme';
-import { CommitContextMenu } from './components/CommitContextMenu';
+import type { BranchMenuProps } from './components/BranchMenu';
 import { CommitDetail } from './components/CommitDetail';
-import { CommitTooltip } from './components/CommitTooltip';
 import { DetailPanel } from './components/DetailPanel';
 import { ErrorState } from './components/ErrorState';
 import { GraphHeader } from './components/GraphHeader';
-import { GraphList } from './components/GraphList';
+import { GraphList, type GraphPaging } from './components/GraphList';
+import { GraphPopups } from './components/GraphPopups';
 import { GraphSkeleton } from './components/GraphSkeleton';
 import { GraphStatusBar } from './components/GraphStatusBar';
 import { RepoPrompt } from './components/RepoPrompt';
 import { SeekBanner } from './components/SeekBanner';
-import { ShortcutsDialog } from './components/ShortcutsDialog';
 import { Toast } from './components/Toast';
-import { useChildrenIndex } from './hooks/useChildrenIndex';
-import { useCommitContextMenu } from './hooks/useCommitContextMenu';
 import { useCommitSearch } from './hooks/useCommitSearch';
-import { useCommitTooltip } from './hooks/useCommitTooltip';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { useDetailLayout } from './hooks/useDetailLayout';
 import { useRepoDocumentTitle } from './hooks/useDocumentTitle';
 import { useFocusRequests } from './hooks/useFocusRequests';
 import { useGraphData } from './hooks/useGraphData';
 import { useGraphKeyboard } from './hooks/useGraphKeyboard';
+import { useGraphPopups } from './hooks/useGraphPopups';
+import { useGraphSelection } from './hooks/useGraphSelection';
 import { useGraphUrlState } from './hooks/useGraphUrlState';
 import { useJumpFeedback } from './hooks/useJumpFeedback';
-import { useResolveSelectedCommit } from './hooks/useResolveSelectedCommit';
 import { useToast } from './hooks/useToast';
-import { findContainingRefs } from './lib/containingRefs';
+import { selectGraphScreen } from './lib/graphScreen';
 import type { GraphUrlState } from './lib/graphUrlState';
 import { describeJumpTarget } from './lib/jumpTarget';
 import type { RepoRef } from './lib/parseUrl';
-import type { GraphBranch, GraphForkBranches, ViewCommit } from './lib/transform.types';
+import type { ViewCommit } from './lib/transform.types';
 
 const EMPTY_COMMITS: ViewCommit[] = [];
-const EMPTY_SHAS: string[] = [];
-const EMPTY_BRANCHES: GraphBranch[] = [];
-const EMPTY_FORK_BRANCHES: GraphForkBranches[] = [];
-const PENDING_NOTICE_ATTEMPTS = 3;
 const NO_URL_STATE: GraphUrlState = { sha: null, mode: null };
 
 type GraphPageProps = {
@@ -67,7 +60,6 @@ export function GraphPage({
     initial: initialUrlState,
   });
   const [refreshKey, setRefreshKey] = useState(0);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const detailRef = useRef<HTMLElement | null>(null);
 
@@ -88,16 +80,16 @@ export function GraphPage({
   });
 
   const viewCommits = state.status === 'ready' ? state.view.commits : EMPTY_COMMITS;
-
-  const commitBySha = useMemo(() => {
-    const map = new Map<string, ViewCommit>();
-    for (const c of viewCommits) map.set(c.sha, c);
-    return map;
-  }, [viewCommits]);
-
-  const childrenBySha = useChildrenIndex(viewCommits);
-
-  const selectedCommit = selectedSha ? (commitBySha.get(selectedSha) ?? null) : null;
+  const { commitBySha, childrenBySha, selectedCommit, selectedChildren, containingRefs } =
+    useGraphSelection({
+      state,
+      viewCommits,
+      selectedSha,
+      setSelectedSha,
+      seekTo,
+      cancelSeek,
+      showToast,
+    });
 
   const handleRefresh = useCallback(() => {
     trackEvent('graph_refresh');
@@ -129,35 +121,6 @@ export function GraphPage({
     [switchRepo],
   );
 
-  const selectedChildren = useMemo(
-    () => (selectedCommit ? (childrenBySha.get(selectedCommit.sha) ?? EMPTY_SHAS) : EMPTY_SHAS),
-    [selectedCommit, childrenBySha],
-  );
-
-  const containingRefs = useMemo(
-    () =>
-      selectedCommit ? findContainingRefs(selectedCommit.sha, commitBySha, childrenBySha) : [],
-    [selectedCommit, commitBySha, childrenBySha],
-  );
-
-  const handleSelectedCommitNotFound = useCallback(() => {
-    setSelectedSha(null);
-    showToast('error', t('toast_commit_not_found'));
-  }, [setSelectedSha, showToast]);
-  const handleSelectedCommitHiddenByMode = useCallback(() => {
-    setSelectedSha(null);
-    showToast('error', t('toast_commit_hidden_by_mode'));
-  }, [setSelectedSha, showToast]);
-  useResolveSelectedCommit({
-    state,
-    isLoaded: selectedSha !== null && commitBySha.has(selectedSha),
-    selectedSha,
-    seekTo,
-    cancelSeek,
-    onNotFound: handleSelectedCommitNotFound,
-    onHiddenByMode: handleSelectedCommitHiddenByMode,
-  });
-
   const handleCancelSeek = useCallback(() => {
     cancelSeek();
     setSelectedSha(null);
@@ -188,24 +151,16 @@ export function GraphPage({
     [copy, linkTo],
   );
 
-  const ctx = useCommitContextMenu({
+  const popups = useGraphPopups({
     commitBySha,
     owner,
     repo,
     onSelectSha: setSelectedSha,
     onCopy: copy,
     onCopyLink: copyLink,
+    onSelectRow: handleSelectCommit,
   });
-  const tooltip = useCommitTooltip(commitBySha, ctx.menu !== null);
-  const { onLeave: hideTooltip } = tooltip;
-  const { openMenu } = ctx;
-  const handleContextCommit = useCallback(
-    (sha: string, x: number, y: number) => {
-      hideTooltip();
-      openMenu(sha, x, y);
-    },
-    [hideTooltip, openMenu],
-  );
+  const { showShortcuts } = popups;
 
   const search = useCommitSearch({
     scope: `${owner}/${repo}`,
@@ -214,12 +169,6 @@ export function GraphPage({
     selectedSha,
     onSelect: setSelectedSha,
   });
-
-  const showShortcuts = useCallback(() => {
-    trackEvent('shortcuts_open');
-    setShortcutsOpen(true);
-  }, []);
-  const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
 
   useGraphKeyboard({
     commits: viewCommits,
@@ -238,12 +187,27 @@ export function GraphPage({
     onShowShortcuts: showShortcuts,
   });
 
-  const ready = state.status === 'ready' ? state : null;
-  const loading = state.status === 'loading' || state.status === 'idle';
-  const pendingAttempts =
-    state.status === 'loading' || state.status === 'ready' ? state.pendingAttempts : 0;
-  const pendingNotice = pendingAttempts >= PENDING_NOTICE_ATTEMPTS;
-  const retry = state.status === 'loading' || state.status === 'ready' ? state.retry : null;
+  const { ready, loading, retry, pendingNotice } = selectGraphScreen(state);
+  const hasMore = ready?.hasMore ?? false;
+  const loadingMore = ready?.loadingMore ?? false;
+  const olderError = ready?.olderError ?? null;
+  const paging = useMemo<GraphPaging>(
+    () => ({ hasMore, loadingMore, olderError, onLoadMore: loadMore }),
+    [hasMore, loadingMore, olderError, loadMore],
+  );
+  const branchMenu = useMemo<BranchMenuProps | null>(
+    () =>
+      ready && ready.view.branches.length + ready.view.forkBranches.length > 0
+        ? {
+            branches: ready.view.branches,
+            forkBranches: ready.view.forkBranches,
+            selectedSha,
+            busy: seek !== null,
+            onSelect: setSelectedSha,
+          }
+        : null,
+    [ready, selectedSha, seek, setSelectedSha],
+  );
 
   return (
     <div className="flex h-screen flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -251,16 +215,12 @@ export function GraphPage({
         owner={owner}
         repo={repo}
         mode={mode}
-        branches={ready ? ready.view.branches : EMPTY_BRANCHES}
-        forkBranches={ready ? ready.view.forkBranches : EMPTY_FORK_BRANCHES}
         refreshing={loading || (ready?.refreshing ?? false)}
-        seeking={seek !== null}
         onSwitchRepo={handleSwitchRepo}
         onModeChange={changeMode}
         onRefresh={handleRefresh}
-        selectedSha={selectedSha}
-        onSelectBranch={setSelectedSha}
         onShowShortcuts={showShortcuts}
+        branchMenu={branchMenu}
         search={
           ready
             ? {
@@ -284,6 +244,35 @@ export function GraphPage({
             <RepoPrompt onSubmit={switchRepo} />
           ) : loading ? (
             <GraphSkeleton pendingNotice={pendingNotice} retry={retry} />
+          ) : ready ? (
+            <>
+              <GraphList
+                view={ready.view}
+                selectedSha={selectedSha}
+                flashSha={flashSha}
+                commitBySha={commitBySha}
+                childrenBySha={childrenBySha}
+                matchShas={search.result.shas}
+                query={search.query}
+                rowHandlers={popups.rowHandlers}
+                paging={paging}
+              />
+              <GraphStatusBar
+                loadedCount={viewCommits.length + (seek?.buffer.length ?? 0)}
+                hasMore={ready.hasMore}
+                refreshing={ready.refreshing}
+                pendingNotice={pendingNotice}
+                retry={retry}
+              />
+              {seek && selectedSha ? (
+                <SeekBanner
+                  target={describeJumpTarget(ready.view, selectedSha)}
+                  scanned={ready.rawCommits.length + seek.buffer.length}
+                  total={ready.meta.dates.length}
+                  onCancel={handleCancelSeek}
+                />
+              ) : null}
+            </>
           ) : state.status === 'error' ? (
             <ErrorState
               kind={state.kind}
@@ -292,43 +281,7 @@ export function GraphPage({
               repo={repo}
               onRetry={handleRefresh}
             />
-          ) : (
-            <>
-              <GraphList
-                view={state.view}
-                selectedSha={selectedSha}
-                flashSha={flashSha}
-                commitBySha={commitBySha}
-                childrenBySha={childrenBySha}
-                matchShas={search.result.shas}
-                query={search.query}
-                onSelect={handleSelectCommit}
-                onHoverCommit={tooltip.onHover}
-                onKeyboardFocusCommit={tooltip.onFocus}
-                onLeaveCommit={tooltip.onLeave}
-                onContextCommit={handleContextCommit}
-                hasMore={state.hasMore}
-                loadingMore={state.loadingMore}
-                olderError={state.olderError}
-                onLoadMore={loadMore}
-              />
-              <GraphStatusBar
-                loadedCount={viewCommits.length + (seek?.buffer.length ?? 0)}
-                hasMore={state.hasMore}
-                refreshing={state.refreshing}
-                pendingNotice={pendingNotice}
-                retry={retry}
-              />
-              {seek && selectedSha ? (
-                <SeekBanner
-                  target={describeJumpTarget(state.view, selectedSha)}
-                  scanned={state.rawCommits.length + seek.buffer.length}
-                  total={state.meta.dates.length}
-                  onCancel={handleCancelSeek}
-                />
-              ) : null}
-            </>
-          )}
+          ) : null}
         </div>
         <DetailPanel layout={detailLayout} panelRef={detailRef} hasSelection={selectedSha !== null}>
           <CommitDetail
@@ -339,24 +292,13 @@ export function GraphPage({
             containingRefs={containingRefs}
             onCopy={copy}
             onCopyLink={copyLink}
-            onParentClick={setSelectedSha}
-            onChildClick={setSelectedSha}
-            onRefClick={setSelectedSha}
+            onSelectSha={setSelectedSha}
           />
         </DetailPanel>
       </div>
 
       <Toast toast={toast} />
-      {tooltip.commit ? <CommitTooltip commit={tooltip.commit} pointer={tooltip.pointer} /> : null}
-      {ctx.menu && ctx.menuItems.length > 0 ? (
-        <CommitContextMenu
-          x={ctx.menu.x}
-          y={ctx.menu.y}
-          items={ctx.menuItems}
-          onClose={ctx.closeMenu}
-        />
-      ) : null}
-      {shortcutsOpen ? <ShortcutsDialog onClose={closeShortcuts} /> : null}
+      <GraphPopups popups={popups} />
     </div>
   );
 }

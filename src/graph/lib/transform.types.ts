@@ -8,7 +8,6 @@ export type ViewCommit = {
   authorName: string;
   authorLogin: string;
   authorRepo: string;
-  isFocus: boolean;
   message: string;
   subject: string;
   parents: string[];
@@ -45,11 +44,6 @@ export type GraphView = {
   commits: ViewCommit[];
   edges: ViewEdge[];
   laneCount: number;
-  totalCommitsAvailable: number;
-  focusOwner: string;
-  focusRepo: string;
-  focusHeads: ViewRef[];
   branches: GraphBranch[];
   forkBranches: GraphForkBranches[];
-  spaceToLane: ReadonlyMap<number, number>;
 };

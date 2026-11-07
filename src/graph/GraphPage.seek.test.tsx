@@ -1,6 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { stubClientSize } from '../../test/graphPage';
 import { GraphPage } from './GraphPage';
 import type * as NetworkApi from './lib/networkApi';
 import type { FetchedInitialPage, FetchedOlderPage } from './lib/networkApi.types';
@@ -14,7 +15,6 @@ const initialPage: FetchedInitialPage = {
     nethash: 'h',
     focus: 0,
     dates: Array.from({ length: 8 }, () => '2024-01-01T00:00:00Z'),
-    name: 'r',
     users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: NEWEST }] }],
   },
   commits: [
@@ -29,13 +29,11 @@ const initialPage: FetchedInitialPage = {
     { id: OLDER, author: 0, time: 3, space: 0, parents: [], message: 'Older change' },
   ],
   nextEnd: 4,
-  totalCount: 8,
 };
 
 const olderPage: FetchedOlderPage = {
   commits: [{ id: TARGET, author: 0, time: 1, space: 0, parents: [], message: 'Deep history' }],
   nextEnd: 0,
-  exhausted: true,
 };
 
 const fetchOlderPage = vi.hoisted(() => vi.fn<() => Promise<unknown>>());
@@ -48,18 +46,12 @@ vi.mock('./lib/networkApi', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('./hooks/useCommitDetailExtra', () => ({
-  useCommitDetailExtra: () => ({ state: { status: 'idle' }, retry: () => undefined }),
-}));
+vi.mock(
+  './hooks/useCommitDetailExtra',
+  async () => (await import('../../test/graphPage')).idleCommitDetailExtra,
+);
 
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
+stubClientSize();
 
 let finishSearch: (page: FetchedOlderPage) => void = () => undefined;
 
@@ -129,9 +121,7 @@ describe('GraphPage seeking an older commit', () => {
     await renderSeekingPage();
     await screen.findByText(/Looking for/);
 
-    await act(async () =>
-      finishSearch({ commits: [], nextEnd: 0, exhausted: true } satisfies FetchedOlderPage),
-    );
+    await act(async () => finishSearch({ commits: [], nextEnd: 0 } satisfies FetchedOlderPage));
 
     expect(await screen.findByText(/Try Refresh, or pick a branch/)).toBeInTheDocument();
   });

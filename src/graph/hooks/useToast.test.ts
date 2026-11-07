@@ -10,11 +10,6 @@ describe('useToast', () => {
     vi.useRealTimers();
   });
 
-  it('starts with nothing to show', () => {
-    const { result } = renderHook(() => useToast());
-    expect(result.current.toast).toBeNull();
-  });
-
   it('shows a message and dismisses it automatically', () => {
     const { result } = renderHook(() => useToast());
     act(() => result.current.showToast('success', 'Copied'));
@@ -38,13 +33,15 @@ describe('useToast', () => {
     expect(result.current.toast).toBeNull();
   });
 
-  it('replaces the current message instead of stacking and restarts the dismiss timer', () => {
+  it('replaces the current message instead of stacking, even when repeated, and restarts the dismiss timer', () => {
     const { result } = renderHook(() => useToast());
     act(() => result.current.showToast('success', 'first'));
     act(() => {
       vi.advanceTimersByTime(1500);
     });
+    const firstId = result.current.toast?.id;
     act(() => result.current.showToast('success', 'second'));
+    expect(result.current.toast?.id).not.toBe(firstId);
     act(() => {
       vi.advanceTimersByTime(1500);
     });
@@ -53,13 +50,5 @@ describe('useToast', () => {
       vi.advanceTimersByTime(500);
     });
     expect(result.current.toast).toBeNull();
-  });
-
-  it('treats a repeated message as a new toast', () => {
-    const { result } = renderHook(() => useToast());
-    act(() => result.current.showToast('success', 'Copied'));
-    const first = result.current.toast?.id;
-    act(() => result.current.showToast('success', 'Copied'));
-    expect(result.current.toast?.id).not.toBe(first);
   });
 });

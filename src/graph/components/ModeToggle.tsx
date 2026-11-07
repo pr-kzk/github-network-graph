@@ -1,6 +1,9 @@
-import { useEffect, useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { t, type MessageKey } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
+import { FOCUS_RING } from '@/shared/ui';
+import { useDismissOnOutsidePress } from '../hooks/useDismissOnOutsidePress';
+import { useKeyPress } from '../hooks/useKeyPress';
 
 type ModeToggleProps = {
   mode: GraphMode;
@@ -20,17 +23,15 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   const helpId = useId();
 
-  useEffect(() => {
-    if (!helpOpen) return undefined;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setHelpOpen(false);
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [helpOpen]);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  const closeHelp = () => setHelpOpen(false);
+  useKeyPress('Escape', closeHelp, helpOpen);
+  useKeyPress('Tab', closeHelp, helpOpen);
+  useDismissOnOutsidePress(rootRef, closeHelp, helpOpen);
 
   return (
-    <div className="relative flex items-center gap-1.5">
+    <div ref={rootRef} className="relative flex items-center gap-1.5">
       <fieldset
         aria-label={t('graph_mode_group_label')}
         className="m-0 flex min-w-0 items-center gap-1 rounded-md border-0 bg-slate-100 p-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
@@ -43,7 +44,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
             title={t(option.hint)}
             onClick={() => onChange(option.value)}
             className={[
-              'rounded px-2.5 py-1 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500',
+              `rounded px-2.5 py-1 text-xs ${FOCUS_RING}`,
               mode === option.value
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-700 dark:text-slate-300',
@@ -59,7 +60,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         aria-expanded={helpOpen}
         aria-controls={helpId}
         onClick={() => setHelpOpen((open) => !open)}
-        className="flex size-5 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+        className={`flex size-5 items-center justify-center rounded-full bg-slate-200 text-[11px] font-semibold text-slate-700 hover:bg-slate-300 ${FOCUS_RING} dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700`}
       >
         ?
       </button>

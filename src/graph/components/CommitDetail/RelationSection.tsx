@@ -1,3 +1,5 @@
+import { shortSha } from '../../lib/shortSha';
+
 type RelationSectionProps = {
   title: string;
   shas: string[];
@@ -20,7 +22,7 @@ export function RelationSection({ title, shas, emptyLabel, onClick }: RelationSe
                 onClick={() => onClick(p)}
                 className="font-mono text-xs text-indigo-600 hover:text-indigo-500 hover:underline dark:text-indigo-300 dark:hover:text-indigo-200"
               >
-                {p.slice(0, 7)}
+                {shortSha(p)}
               </button>
             </li>
           ))}

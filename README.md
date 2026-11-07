@@ -96,7 +96,7 @@ Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`, linted w
 src/
 ├── popup/        Popup UI (toolbar button)
 ├── options/      Options page
-├── graph/        Commit graph viewer (web_accessible_resource)
+├── graph/        Commit graph viewer (opened in its own tab)
 │   ├── components/  React components
 │   ├── hooks/       Reducer-based data hook + UI state hooks
 │   └── lib/         GitHub network API parsing & transform

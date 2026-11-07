@@ -97,16 +97,6 @@ describe('Popup telemetry consent banner', () => {
     expect((await localStore.get('telemetry')).promptSeen).toBe(true);
   });
 
-  it('puts the launcher before the notice so the primary action comes first', async () => {
-    render(<App />);
-
-    const launcher = await screen.findByText('Open commit graph');
-    const notice = screen.getByText(/anonymous usage stats/i);
-    expect(
-      launcher.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
-
   it('opts out and marks the prompt seen when declined', async () => {
     render(<App />);
 

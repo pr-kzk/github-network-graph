@@ -26,8 +26,8 @@ export function getCachedCommitDetail(key: CommitDetailCacheKey): CommitDetailEx
   return memory.get(toKey(key)) ?? null;
 }
 
-// sessionStorage ではなく chrome.storage.session を使うのは、グラフページが開き直されても
-// 引き継げ、かつ既存の "storage" 権限だけで足りるため。
+// sessionStorage is not used: chrome.storage.session survives reopening the graph page and needs
+// only the existing "storage" permission.
 export async function loadCachedCommitDetail(
   key: CommitDetailCacheKey,
 ): Promise<CommitDetailExtra | null> {
@@ -44,8 +44,8 @@ export async function loadCachedCommitDetail(
   }
 }
 
-// 容量超過などの保存失敗を投げ直さないのは、取得自体は成功しており
-// キャッシュ都合でユーザーの表示を失敗扱いにしたくないため。
+// Write failures such as quota overflow are not rethrown: the fetch itself succeeded, and a cache
+// problem must not turn the user's view into a failure.
 export async function storeCommitDetail(
   key: CommitDetailCacheKey,
   value: CommitDetailExtra,

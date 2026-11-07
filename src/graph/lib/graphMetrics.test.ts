@@ -8,18 +8,15 @@ describe('createGraphLayout', () => {
     expect(layout.laneX(2) - layout.laneX(1)).toBe(14);
   });
 
-  it('never grows beyond a share of the list width however many lanes exist', () => {
-    expect(createGraphLayout(500, 1000).width).toBe(300);
-    expect(createGraphLayout(500, 600).width).toBe(180);
-  });
-
-  it('caps the width at an absolute maximum on very wide lists', () => {
-    expect(createGraphLayout(500, 5000).width).toBe(360);
-  });
-
-  it('keeps a minimum width on narrow lists', () => {
-    expect(createGraphLayout(500, 40).width).toBe(36);
-    expect(createGraphLayout(1, 1000).width).toBe(36);
+  it.each([
+    ['a share of the list width however many lanes exist', 500, 1000, 300],
+    ['a share of a narrower list', 500, 600, 180],
+    ['an absolute maximum on very wide lists', 500, 5000, 360],
+    ['an absolute maximum while the list width is unknown', 500, 0, 360],
+    ['a minimum width on narrow lists', 500, 40, 36],
+    ['a minimum width for a single lane', 1, 1000, 36],
+  ])('limits the width to %s', (_, lanes, listWidth, expected) => {
+    expect(createGraphLayout(lanes, listWidth).width).toBe(expected);
   });
 
   it('compresses the lane spacing so every lane stays inside the column', () => {
@@ -28,10 +25,6 @@ describe('createGraphLayout', () => {
     expect(layout.crowded).toBe(false);
     expect(layout.laneX(1) - layout.laneX(0)).toBeLessThan(14);
     expect(layout.laneX(29)).toBeLessThanOrEqual(layout.width - 12);
-  });
-
-  it('falls back to the absolute cap while the list width is unknown', () => {
-    expect(createGraphLayout(500, 0).width).toBe(360);
   });
 
   describe('with more lanes than fit', () => {

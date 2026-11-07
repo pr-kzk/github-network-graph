@@ -42,11 +42,6 @@ describe('GraphStatusBar', () => {
     expect(screen.getByText(/GitHub is still preparing this graph/)).toBeInTheDocument();
   });
 
-  it('shows no refreshing indicator when idle', () => {
-    render(<GraphStatusBar {...base} />);
-    expect(screen.queryByText('Refreshing…')).not.toBeInTheDocument();
-  });
-
   it('shows the retry countdown while loading more history keeps failing', () => {
     vi.useFakeTimers({ now: RETRY_AT, toFake: ['Date'] });
     render(

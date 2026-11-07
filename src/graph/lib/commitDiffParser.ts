@@ -81,7 +81,7 @@ export function parseUnifiedDiff(diff: string): CommitDetailFile[] {
   return files;
 }
 
-// 貪欲な正規表現で ` b/` を探す案は、パス自体に ` b/` を含むと誤分割するため採らない。
+// Searching for ` b/` with a greedy regex is avoided: a path that itself contains ` b/` would be split wrongly.
 function pathFromHeader(rest: string): string {
   if (rest.startsWith('"')) {
     const bSide = rest.slice(quotedEnd(rest) + 1);
