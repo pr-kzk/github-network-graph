@@ -1,16 +1,18 @@
 import type { GraphMode } from '@/shared/storage';
 import type { FetchedNetwork, NetworkRawCommit } from './networkApi.types';
-import type { GraphBranch, GraphView, ViewCommit, ViewEdge, ViewRef } from './transform.types';
+import type {
+  GraphBranch,
+  GraphForkBranches,
+  GraphView,
+  ViewCommit,
+  ViewEdge,
+  ViewRef,
+} from './transform.types';
 
-export type TransformOptions = {
+type TransformOptions = {
   mode: GraphMode;
-  // 拡張機能 popup で指定された対象リポジトリ。`meta.users` の中から focus を特定するために使う。
-  // `meta.focus` の値は users[] の index ではない (実フォーマット観察より) ため、
-  // owner/repo マッチで本家を探し、見つからなければ users[0] にフォールバックする。
   inputOwner?: string;
   inputRepo?: string;
-  // 直前 transform の space → lane を渡すと、既存 lane 番号を維持して新規 space のみ
-  // 末尾 lane に追加する (loadMore でレーンが左右にずれてちらつくのを防ぐため)。
   previousSpaceToLane?: ReadonlyMap<number, number>;
 };
 
@@ -25,15 +27,25 @@ function shortSha(sha: string): string {
   return sha.slice(0, 7);
 }
 
-// `repo-only` モードでは、本家コミットの parent が「フォーク commit」を指している
-// 場合があるため、フォーク commit を transparent に辿って、最初に出会う本家 commit を
-// 親として採用する。これで「同じ lane なのに線が繋がらない」現象を解消する。
 function resolveToVisibleAncestor(
   startSha: string,
   commitsBySha: Map<string, NetworkRawCommit>,
   visibleShaSet: Set<string>,
+  resolvedCache: Map<string, string | null>,
 ): string | null {
   if (visibleShaSet.has(startSha)) return startSha;
+  const cached = resolvedCache.get(startSha);
+  if (cached !== undefined) return cached;
+  const resolved = searchVisibleAncestor(startSha, commitsBySha, visibleShaSet);
+  resolvedCache.set(startSha, resolved);
+  return resolved;
+}
+
+function searchVisibleAncestor(
+  startSha: string,
+  commitsBySha: Map<string, NetworkRawCommit>,
+  visibleShaSet: Set<string>,
+): string | null {
   const seen = new Set<string>();
   const stack: Array<{ sha: string; depth: number }> = [{ sha: startSha, depth: 0 }];
   while (stack.length > 0) {
@@ -51,9 +63,6 @@ function resolveToVisibleAncestor(
   return null;
 }
 
-// focus owner の heads (ブランチ先端) から parent 方向に到達できる commit 集合を返す。
-// `commits[].author` の意味/値はリポジトリにより揺れる (数値 index でない場合あり) ため、
-// Git の意味的な「本家リポジトリのコミット」を到達可能性で定義する。
 function computeFocusReachable(
   focusHeadShas: string[],
   commitsBySha: Map<string, NetworkRawCommit>,
@@ -74,10 +83,6 @@ function computeFocusReachable(
 export function transformNetwork(data: FetchedNetwork, options: TransformOptions): GraphView {
   const { meta, commits } = data;
 
-  // focus user 解決の戦略 (3 段):
-  //   1) owner/repo マッチで users から本家を探す (実フォーマットで最も信頼できる)
-  //   2) meta.users[meta.focus] を試す (旧仮定との互換)
-  //   3) users[0] にフォールバック (慣例として root リポジトリが先頭)
   const focusUser =
     (options.inputOwner && options.inputRepo
       ? meta.users.find((u) => u.name === options.inputOwner && u.repo === options.inputRepo)
@@ -92,10 +97,6 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
   const focusHeadShas = (focusUser?.heads ?? []).map((h) => h.id);
   const focusReachable = computeFocusReachable(focusHeadShas, commitsBySha);
 
-  // 「本家のみ」の判定:
-  //   1) focus user の heads が取れていれば、ヘッドから到達可能な commit を本家とみなす。
-  //   2) heads が空 / 到達 0 (= heads SHA が今回のチャンクに含まれない) の場合は、
-  //      到達ベースでは判定できないため、`author` インデックスでの判定にフォールバック。
   const useReachability = focusReachable.size > 0;
   const isVisible: (c: NetworkRawCommit) => boolean =
     options.mode === 'network'
@@ -107,7 +108,6 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
   const visibleShaSet = new Set<string>();
   for (const c of commits) if (isVisible(c)) visibleShaSet.add(c.id);
 
-  // refs: focus と非 focus を両方とも refsByCommit に積む (isFocus フラグで区別)
   const refsByCommit = new Map<string, ViewRef[]>();
   for (const user of meta.users) {
     const isFocusOwner = user === focusUser;
@@ -123,16 +123,8 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
     }
   }
 
-  // 表示する commit を行順に並べる (元の順序を尊重)
   const visibleCommits: NetworkRawCommit[] = commits.filter(isVisible);
 
-  // GitHub の space は飛び飛びの値 (大規模リポジトリだと 0,1,3,5,12,47 など) になりうる。
-  // 「使われている space」だけ昇順で集約し 0..N-1 に詰め直す。
-  // → 空き lane は消えて幅が現実的なサイズに収まる。
-  // → 使われている space は順序が保たれるので、分岐の左右関係 (斜め線の向き) は保たれる。
-  //
-  // previousSpaceToLane が渡された場合は、既存割当を優先継承し、新規 space のみ
-  // 末尾 lane に追加する (loadMore でレーンが左右にずれないようにするため)。
   const usedSpaces = new Set<number>();
   for (const c of visibleCommits) usedSpaces.add(c.space);
   const spaceToLane = new Map<number, number>();
@@ -144,14 +136,12 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
       if (lane >= nextLane) nextLane = lane + 1;
     }
   }
-  const newSpaces: number[] = [];
-  for (const s of usedSpaces) {
-    if (!spaceToLane.has(s)) newSpaces.push(s);
+  for (const c of visibleCommits) {
+    if (!spaceToLane.has(c.space)) spaceToLane.set(c.space, nextLane++);
   }
-  newSpaces.sort((a, b) => a - b);
-  for (const s of newSpaces) spaceToLane.set(s, nextLane++);
   const laneCount = nextLane;
 
+  const resolvedCache = new Map<string, string | null>();
   const viewCommits: ViewCommit[] = visibleCommits.map((c, row) => {
     const user = meta.users[c.author];
     const lane = spaceToLane.get(c.space) ?? 0;
@@ -160,7 +150,7 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
     const resolvedParents: string[] = [];
     const seenParent = new Set<string>();
     for (const p of c.parents) {
-      const resolved = resolveToVisibleAncestor(p.sha, commitsBySha, visibleShaSet);
+      const resolved = resolveToVisibleAncestor(p.sha, commitsBySha, visibleShaSet, resolvedCache);
       if (resolved && !seenParent.has(resolved) && resolved !== c.id) {
         resolvedParents.push(resolved);
         seenParent.add(resolved);
@@ -215,6 +205,19 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
     .map((h) => ({ name: h.name, sha: h.id }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const forkBranches: GraphForkBranches[] =
+    options.mode === 'network'
+      ? meta.users
+          .filter((user) => user !== focusUser && user.heads.length > 0)
+          .map((user) => ({
+            owner: user.name,
+            branches: user.heads
+              .map((h) => ({ name: h.name, sha: h.id }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          }))
+          .sort((a, b) => a.owner.localeCompare(b.owner))
+      : [];
+
   return {
     commits: viewCommits,
     edges,
@@ -224,6 +227,7 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
     focusRepo: focusUser?.repo ?? '',
     focusHeads,
     branches,
+    forkBranches,
     spaceToLane,
   };
 }

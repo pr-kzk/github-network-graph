@@ -16,8 +16,6 @@ describe('isObject', () => {
     expect(isObject({ a: 1 })).toBe(true);
   });
   it('returns true for arrays (narrowed to Record)', () => {
-    // Array は typeof 'object' を満たすため、現状の isObject では true になる。
-    // 呼び出し側が「配列を除外したい」場合は追加で Array.isArray チェックすること。
     expect(isObject([])).toBe(true);
   });
 });
@@ -44,7 +42,6 @@ describe('asNumber', () => {
   it('returns the value itself when number', () => {
     expect(asNumber(3.14)).toBe(3.14);
     expect(asNumber(0)).toBe(0);
-    // NaN も typeof 'number' なので素通しする (呼び出し側が必要なら Number.isFinite で弾く)
     expect(Number.isNaN(asNumber(Number.NaN))).toBe(true);
   });
 });
@@ -57,7 +54,6 @@ describe('errorMessage', () => {
     expect(errorMessage('plain string', 'fb')).toBe('fb');
   });
   it('returns fallback for objects shaped like { message }', () => {
-    // "Error 以外は吸収しない" 方針: duck typing は許可しない。
     expect(errorMessage({ message: 'fake' }, 'fb')).toBe('fb');
   });
   it('returns fallback for null / undefined', () => {

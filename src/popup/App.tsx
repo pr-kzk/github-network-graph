@@ -24,32 +24,35 @@ export function App() {
         </div>
       </header>
 
+      <GraphLauncher />
+      <RecentRepos />
+
       {showConsentBanner && (
-        <section className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-900 dark:bg-indigo-950/40">
-          <p className="text-xs text-slate-700 dark:text-slate-200">
+        <section
+          aria-label={t('popup_telemetry_banner_label')}
+          className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/40"
+        >
+          <p className="text-[11px] text-slate-600 dark:text-slate-300">
             {t('popup_telemetry_banner_text')}
           </p>
           <div className="mt-2 flex gap-2">
             <button
               type="button"
-              onClick={() => void markTelemetryPromptSeen(telemetry)}
-              className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-500"
+              onClick={() => void markTelemetryPromptSeen()}
+              className="rounded-md bg-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"
             >
               {t('popup_telemetry_banner_dismiss')}
             </button>
             <button
               type="button"
-              onClick={() => void declineTelemetry(telemetry)}
-              className="rounded-md px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              onClick={() => void declineTelemetry()}
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-700"
             >
               {t('popup_telemetry_banner_opt_out')}
             </button>
           </div>
         </section>
       )}
-
-      <GraphLauncher />
-      <RecentRepos />
 
       <button
         type="button"

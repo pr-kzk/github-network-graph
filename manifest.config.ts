@@ -3,8 +3,6 @@ import pkg from './package.json' with { type: 'json' };
 
 export default defineManifest({
   manifest_version: 3,
-  // 表示名/説明/タイトルは _locales/<locale>/messages.json から取得される。
-  // Chrome は default_locale をベースに、ユーザーの UI 言語に応じて切り替える。
   name: '__MSG_ext_name__',
   description: '__MSG_ext_description__',
   default_locale: 'en',
@@ -14,10 +12,6 @@ export default defineManifest({
     default_title: '__MSG_action_default_title__',
   },
   options_page: 'src/options/index.html',
-  background: {
-    service_worker: 'src/background/index.ts',
-    type: 'module',
-  },
   permissions: ['storage', 'activeTab'],
   host_permissions: ['https://github.com/*', 'https://api.github.com/*'],
   web_accessible_resources: [

@@ -3,13 +3,6 @@ import { transformNetwork } from './transform';
 import type { FetchedNetwork } from './networkApi.types';
 
 function makeFixture(): FetchedNetwork {
-  // ユーザー 0 (本家): owner/repo, head "main" = sha-merge
-  // ユーザー 1 (フォーク): fork/repo, head "feature" = sha-fork
-  // history:
-  //   sha-merge (本家, space 0) parents = [sha2 (本家), sha-fork (フォーク)]
-  //   sha2     (本家, space 0) parents = [sha1]
-  //   sha-fork (フォーク, space 1) parents = [sha1]
-  //   sha1     (本家, space 0) parents = []
   return {
     meta: {
       nethash: 'h',
@@ -56,7 +49,6 @@ function makeFixture(): FetchedNetwork {
 
 describe('transformNetwork - repo-only', () => {
   it('keeps commits reachable from focus heads (including merged-in fork commits)', () => {
-    // focus head = sha-merge から parent をたどると sha-fork も到達可能 = 「本家ブランチに含まれる」
     const view = transformNetwork(makeFixture(), {
       mode: 'repo-only',
       inputOwner: 'owner',
@@ -99,19 +91,18 @@ describe('transformNetwork - repo-only', () => {
 
   it('falls back to author-index when focus heads are missing or unreachable', () => {
     const fixture = makeFixture();
-    fixture.meta.users[0].heads = []; // 本家ヘッドを消す
+    fixture.meta.users[0].heads = [];
     const view = transformNetwork(fixture, {
       mode: 'repo-only',
       inputOwner: 'owner',
       inputRepo: 'repo',
     });
-    // フォールバックで author=0 のコミットのみ可視
     expect(view.commits.map((c) => c.sha)).toEqual(['sha-merge', 'sha2', 'sha1']);
   });
 
   it('uses inputOwner/inputRepo to locate focus user even when meta.focus is invalid', () => {
     const fixture = makeFixture();
-    fixture.meta.focus = 9999; // 不正な focus
+    fixture.meta.focus = 9999;
     const view = transformNetwork(fixture, {
       mode: 'repo-only',
       inputOwner: 'owner',
@@ -157,9 +148,36 @@ describe('transformNetwork - network mode', () => {
   });
 });
 
+describe('transformNetwork - lane order', () => {
+  const meta = {
+    nethash: 'h',
+    focus: 0,
+    dates: [],
+    name: 'r',
+    users: [{ name: 'o', repo: 'r', heads: [] }],
+  };
+  const newer = [
+    { id: 'a', author: 0, time: 4, space: 7, parents: [{ sha: 'b', space: 7 }], message: 'a' },
+    { id: 'b', author: 0, time: 3, space: 2, parents: [], message: 'b' },
+  ];
+  const older = [{ id: 'c', author: 0, time: 1, space: 0, parents: [], message: 'c' }];
+
+  it('numbers lanes by first appearance so loading older commits never renumbers a lane', () => {
+    const first = transformNetwork({ meta, commits: newer }, { mode: 'network' });
+    const second = transformNetwork({ meta, commits: [...newer, ...older] }, { mode: 'network' });
+
+    expect([...first.spaceToLane]).toEqual([
+      [7, 0],
+      [2, 1],
+    ]);
+    expect(second.spaceToLane.get(7)).toBe(0);
+    expect(second.spaceToLane.get(2)).toBe(1);
+    expect(second.spaceToLane.get(0)).toBe(2);
+  });
+});
+
 describe('transformNetwork - previousSpaceToLane', () => {
   it('preserves existing lane numbers for spaces already seen', () => {
-    // 初回 transform で space 0,1 → lane 0,1 になることを確認
     const view1 = transformNetwork(makeFixture(), {
       mode: 'network',
       inputOwner: 'owner',
@@ -168,7 +186,6 @@ describe('transformNetwork - previousSpaceToLane', () => {
     expect(view1.spaceToLane.get(0)).toBe(0);
     expect(view1.spaceToLane.get(1)).toBe(1);
 
-    // 同じデータを previousSpaceToLane を渡して再 transform → 同じ lane
     const view2 = transformNetwork(makeFixture(), {
       mode: 'network',
       inputOwner: 'owner',
@@ -181,12 +198,10 @@ describe('transformNetwork - previousSpaceToLane', () => {
   });
 
   it('assigns new space values to lanes after the previously used max lane', () => {
-    // 既存: space 5 → lane 0, space 1 → lane 1 (飛び飛びだが採番済み)
     const prev = new Map<number, number>([
       [5, 0],
       [1, 1],
     ]);
-    // 新規 commit を追加: space 0 と 3 が新出現
     const fixture: FetchedNetwork = {
       meta: {
         nethash: 'h',
@@ -206,19 +221,14 @@ describe('transformNetwork - previousSpaceToLane', () => {
       mode: 'network',
       previousSpaceToLane: prev,
     });
-    // 既存 lane は維持
     expect(view.spaceToLane.get(5)).toBe(0);
     expect(view.spaceToLane.get(1)).toBe(1);
-    // 新規 space は max(0,1) + 1 = 2 以降に昇順割当: 0 → 2, 3 → 3
     expect(view.spaceToLane.get(0)).toBe(2);
     expect(view.spaceToLane.get(3)).toBe(3);
     expect(view.laneCount).toBe(4);
   });
 
   it('drops previous spaces that are no longer present (no orphan lane reservation)', () => {
-    // 既存: space 99 → lane 0 だが、今回の view にその space は無い。
-    // この場合、孤立した lane を残してもメモリ的に膨らむだけで意味がないので
-    // 完全に捨てて新規 space を 0 から採番し直す。
     const prev = new Map<number, number>([[99, 0]]);
     const fixture: FetchedNetwork = {
       meta: {
@@ -260,5 +270,45 @@ describe('transformNetwork - linear history', () => {
     expect(view.laneCount).toBe(1);
     expect(view.edges).toHaveLength(2);
     expect(view.edges.every((e) => !e.isMerge)).toBe(true);
+  });
+});
+
+describe('transformNetwork - fork branches', () => {
+  it('lists fork branches grouped by owner in network mode', () => {
+    const data = makeFixture();
+    data.meta.users.push({
+      name: 'alpha',
+      repo: 'repo',
+      heads: [
+        { name: 'z-branch', id: 'sha-fork' },
+        { name: 'a-branch', id: 'sha-fork' },
+      ],
+    });
+    const view = transformNetwork(data, {
+      mode: 'network',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
+
+    expect(view.forkBranches).toEqual([
+      {
+        owner: 'alpha',
+        branches: [
+          { name: 'a-branch', sha: 'sha-fork' },
+          { name: 'z-branch', sha: 'sha-fork' },
+        ],
+      },
+      { owner: 'fork', branches: [{ name: 'feature', sha: 'sha-fork' }] },
+    ]);
+  });
+
+  it('omits fork branches in repo-only mode', () => {
+    const view = transformNetwork(makeFixture(), {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
+
+    expect(view.forkBranches).toEqual([]);
   });
 });

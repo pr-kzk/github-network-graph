@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { errorMessage } from '@/shared/errors';
+import { useCallback, useEffect, useState } from 'react';
 import { trackEvent } from '@/shared/telemetry';
+import { fetchCommitDetail } from '../lib/commitDetailApi';
+import { getCachedCommitDetail } from '../lib/commitDetailCache';
 import {
+  isCommitDetailError,
+  makeError,
   type CommitDetailError,
   type CommitDetailExtra,
-  fetchCommitDetail,
-  getCachedCommitDetail,
-  isCommitDetailError,
-} from '../lib/commitDetailApi';
+} from '../lib/commitDetailTypes';
 
 export type CommitDetailExtraState =
   | { status: 'idle' }
@@ -15,7 +15,7 @@ export type CommitDetailExtraState =
   | { status: 'ready'; data: CommitDetailExtra }
   | { status: 'error'; error: CommitDetailError };
 
-export type UseCommitDetailExtraArgs = {
+type UseCommitDetailExtraArgs = {
   owner: string;
   repo: string;
   authorOwner?: string;
@@ -23,40 +23,29 @@ export type UseCommitDetailExtraArgs = {
   sha: string | null;
 };
 
-// 選択コミットが変わるたびに stats / files を遅延 fetch する。
-// SHA でキャッシュ済みなら同期的に ready を返し、再 fetch しない。
-//
-// 設計メモ:
-// - sha 変更時のリセットは「render 中の派生 state 更新」(React 公式の
-//   Adjusting-state-when-props-change パターン) で行う。useEffect 内で
-//   setState({status:'idle'/'loading'}) すると cascading render 警告になるため。
-// - fetch 自体は副作用なので useEffect 内で起動し、Promise の then 内で
-//   setState する (非同期パスは set-state-in-effect の対象外)。
-export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): CommitDetailExtraState {
+type UseCommitDetailExtraResult = {
+  state: CommitDetailExtraState;
+  retry: () => void;
+};
+
+// props 変化時のリセットは render 中の派生 state 更新で行う。effect 内で
+// setState({status:'loading'}) する案は cascading render になるため採らない。
+export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): UseCommitDetailExtraResult {
   const { owner, repo, authorOwner, authorRepo, sha } = args;
 
-  // 初期 state / key 計算は useState の lazy initial で 1 度きりに抑える。
-  const [state, setState] = useState<CommitDetailExtraState>(() =>
-    computeInitial({ owner, repo, authorOwner, authorRepo, sha }),
-  );
-  // 「最後に処理した引数の組」を覚えておき、props 変化を検出して同期リセット。
+  const [state, setState] = useState<CommitDetailExtraState>(() => computeInitial(args));
+  const [attempt, setAttempt] = useState(0);
   const [trackedKey, setTrackedKey] = useState(() => makeKey(args));
   const currentKey = makeKey(args);
   if (trackedKey !== currentKey) {
     setTrackedKey(currentKey);
-    setState(computeInitial({ owner, repo, authorOwner, authorRepo, sha }));
+    setAttempt(0);
+    setState(computeInitial(args));
   }
 
   useEffect(() => {
     if (!sha) return undefined;
-    // 既にキャッシュ済み (= 上で ready がセットされる) なら fetch 不要。
-    const cached =
-      getCachedCommitDetail({
-        owner: authorOwner || owner,
-        repo: authorRepo || repo,
-        sha,
-      }) ?? getCachedCommitDetail({ owner, repo, sha });
-    if (cached) return undefined;
+    if (getCachedCommitDetail({ owner, repo, sha })) return undefined;
 
     const controller = new AbortController();
     fetchCommitDetail({
@@ -66,41 +55,35 @@ export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): CommitDeta
       authorRepo,
       sha,
       signal: controller.signal,
+      skipMissingCache: attempt > 0,
     })
       .then((data) => {
-        if (controller.signal.aborted) return;
-        setState({ status: 'ready', data });
+        if (!controller.signal.aborted) setState({ status: 'ready', data });
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (controller.signal.aborted) return;
-        const error = toError(err);
+        const error = isCommitDetailError(err) ? err : makeError('network');
         trackEvent('commit_detail_error', { kind: error.kind });
         setState({ status: 'error', error });
       });
 
     return () => controller.abort();
-  }, [owner, repo, authorOwner, authorRepo, sha]);
+  }, [owner, repo, authorOwner, authorRepo, sha, attempt]);
 
-  return state;
+  const retry = useCallback(() => {
+    setState({ status: 'loading' });
+    setAttempt((n) => n + 1);
+  }, []);
+
+  return { state, retry };
 }
 
 function makeKey(args: UseCommitDetailExtraArgs): string {
   return `${args.owner} ${args.repo} ${args.authorOwner ?? ''} ${args.authorRepo ?? ''} ${args.sha ?? ''}`;
 }
 
-function computeInitial(args: UseCommitDetailExtraArgs): CommitDetailExtraState {
-  const { owner, repo, authorOwner, authorRepo, sha } = args;
+function computeInitial({ owner, repo, sha }: UseCommitDetailExtraArgs): CommitDetailExtraState {
   if (!sha) return { status: 'idle' };
-  const cached =
-    getCachedCommitDetail({
-      owner: authorOwner || owner,
-      repo: authorRepo || repo,
-      sha,
-    }) ?? getCachedCommitDetail({ owner, repo, sha });
+  const cached = getCachedCommitDetail({ owner, repo, sha });
   return cached ? { status: 'ready', data: cached } : { status: 'loading' };
-}
-
-function toError(err: unknown): CommitDetailError {
-  if (isCommitDetailError(err)) return err;
-  return { kind: 'network', message: errorMessage(err, 'unknown') };
 }

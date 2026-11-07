@@ -8,16 +8,32 @@ import type {
   NetworkMeta,
   NetworkParent,
   NetworkRawCommit,
+  RequestOptions,
+  RetryKind,
 } from './networkApi.types';
+import {
+  RETRY_AFTER_MAX_MS,
+  RETRY_MAX_ATTEMPTS,
+  backoffDelayMs,
+  createCooldown,
+  isTransientStatus,
+  parseRetryAfterMs,
+  sleep,
+  type Cooldown,
+} from './requestRetry';
 
-export type NetworkApiErrorKind =
+type NetworkApiErrorKind =
   | 'network'
   | 'auth'
   | 'notFound'
+  | 'rateLimit'
+  | 'server'
   | 'empty'
   | 'shape'
   | 'http'
   | 'pending';
+
+export type GraphErrorKind = NetworkApiErrorKind | 'unknown';
 
 export class NetworkApiError extends Error {
   readonly kind: NetworkApiErrorKind;
@@ -33,7 +49,7 @@ export class NetworkApiError extends Error {
 const GITHUB_ORIGIN = 'https://github.com';
 const CHUNK_PAGE_SIZE = 100;
 const DEFAULT_MAX_COMMITS = 500;
-const PENDING_MAX_ATTEMPTS = 8;
+const PENDING_MAX_ATTEMPTS = 19;
 const PENDING_BASE_DELAY_MS = 400;
 const PENDING_MAX_DELAY_MS = 4000;
 
@@ -45,35 +61,111 @@ function pendingDelayMs(attempt: number): number {
   return Math.min(PENDING_BASE_DELAY_MS * 2 ** attempt, PENDING_MAX_DELAY_MS);
 }
 
-async function fetchJson(url: string): Promise<unknown> {
-  let attempt = 0;
-  // GitHub の /network/* は、データが未計算のとき 202 + 空ボディを返してバックグラウンド
-  // 計算をキューする。生成完了 (200) までバックオフでリトライ。
+type Failure = { kind: RetryKind; error: NetworkApiError; retryAfterMs: number | null };
+
+function rateLimitError(retryAfterMs: number | null, status?: number): NetworkApiError {
+  const message =
+    retryAfterMs === null
+      ? t('error_ratelimit_body')
+      : tWith('error_ratelimit_body_wait', {
+          minutes: String(Math.max(1, Math.ceil(retryAfterMs / 60_000))),
+        });
+  return new NetworkApiError('rateLimit', message, status);
+}
+
+function serverError(status: number): NetworkApiError {
+  return new NetworkApiError(
+    'server',
+    tWith('error_server_body', { status: String(status) }),
+    status,
+  );
+}
+
+function networkFailure(cause: unknown): Failure {
+  return {
+    kind: 'network',
+    error: new NetworkApiError(
+      'network',
+      tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
+    ),
+    retryAfterMs: null,
+  };
+}
+
+function statusFailure(response: Response): Failure {
+  const retryAfterMs = parseRetryAfterMs(response.headers.get('retry-after'), Date.now());
+  if (response.status === 429 || retryAfterMs !== null) {
+    return {
+      kind: 'rateLimit',
+      error: rateLimitError(retryAfterMs, response.status),
+      retryAfterMs,
+    };
+  }
+  return { kind: 'server', error: serverError(response.status), retryAfterMs: null };
+}
+
+async function request(url: string, signal?: AbortSignal): Promise<Response | Failure> {
+  try {
+    return await fetch(url, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      signal,
+    });
+  } catch (cause) {
+    if (signal?.aborted) throw signal.reason;
+    return networkFailure(cause);
+  }
+}
+
+async function waitOutCooldown(
+  cooldown: Cooldown,
+  attempt: number,
+  { signal, onRetry }: RequestOptions,
+): Promise<void> {
+  for (let remaining = cooldown.remainingMs(); remaining > 0; remaining = cooldown.remainingMs()) {
+    if (remaining > RETRY_AFTER_MAX_MS) throw rateLimitError(remaining);
+    onRetry?.({
+      kind: cooldown.kind(),
+      attempt,
+      maxAttempts: RETRY_MAX_ATTEMPTS,
+      resumeAt: Date.now() + remaining,
+    });
+    await sleep(remaining, signal);
+  }
+}
+
+async function fetchJson(
+  url: string,
+  cooldown: Cooldown,
+  options: RequestOptions = {},
+): Promise<unknown> {
+  const { signal, onPending } = options;
+  let pendingAttempts = 0;
+  let retries = 0;
   for (;;) {
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        credentials: 'include',
-        headers: { Accept: 'application/json' },
-        cache: 'no-store',
-      });
-    } catch (cause) {
-      throw new NetworkApiError(
-        'network',
-        tWith('error_network_body', { cause: errorMessage(cause, 'unknown') }),
-      );
-    }
+    await waitOutCooldown(cooldown, retries, options);
+    const outcome = await request(url, signal);
 
-    if (response.status === 202) {
-      attempt += 1;
-      if (attempt >= PENDING_MAX_ATTEMPTS) {
-        throw new NetworkApiError('pending', t('error_pending_body'), 202);
+    if (outcome instanceof Response) {
+      if (outcome.status === 202) {
+        pendingAttempts += 1;
+        if (pendingAttempts >= PENDING_MAX_ATTEMPTS) {
+          throw new NetworkApiError('pending', t('error_pending_body'), 202);
+        }
+        onPending?.(pendingAttempts);
+        await sleep(pendingDelayMs(pendingAttempts - 1), signal);
+        continue;
       }
-      await new Promise((resolve) => setTimeout(resolve, pendingDelayMs(attempt - 1)));
-      continue;
+      if (!isTransientStatus(outcome.status)) return handleFinalResponse(outcome);
     }
 
-    return handleFinalResponse(response);
+    const failure = outcome instanceof Response ? statusFailure(outcome) : outcome;
+    retries += 1;
+    const delay = Math.max(backoffDelayMs(retries), failure.retryAfterMs ?? 0);
+    const giveUp = retries > RETRY_MAX_ATTEMPTS || delay > RETRY_AFTER_MAX_MS;
+    if (failure.kind === 'rateLimit' || !giveUp) cooldown.extend(delay, failure.kind);
+    if (giveUp) throw failure.error;
   }
 }
 
@@ -84,6 +176,7 @@ async function handleFinalResponse(response: Response): Promise<unknown> {
   if (response.status === 404) {
     throw new NetworkApiError('notFound', t('error_notfound_body'), response.status);
   }
+  if (response.status >= 500) throw serverError(response.status);
   if (!response.ok) {
     throw new NetworkApiError(
       'http',
@@ -95,15 +188,7 @@ async function handleFinalResponse(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type') ?? '';
 
   if (!contentType.includes('application/json')) {
-    // GitHub がコミットグラフ用 JSON ではなく HTML を返したケース。
-    // 一番多い原因は「まだ 1 件もコミットが無いリポジトリ」で、その場合は
-    // セットアップ手順のページが返ってくる。body を読んでその目印を確認する。
-    let bodyText = '';
-    try {
-      bodyText = await response.text();
-    } catch {
-      // 読めなくても致命ではない。汎用エラーに落とす。
-    }
+    const bodyText = await response.text().catch(() => '');
     if (looksLikeEmptyRepoPage(bodyText)) {
       throw new NetworkApiError('empty', t('error_empty_body'));
     }
@@ -120,26 +205,22 @@ async function handleFinalResponse(response: Response): Promise<unknown> {
   }
 }
 
-// 空リポジトリのプレースホルダ HTML を見分ける。GitHub のセットアップ手順は
-// `git remote add origin` と `git push -u origin` を必ず案内するため、両方が
-// 揃っているケースに限ってマッチさせる (誤検知を避ける)。
 function looksLikeEmptyRepoPage(body: string): boolean {
   if (!body) return false;
   return body.includes('git remote add origin') && body.includes('git push -u origin');
 }
 
 function parseMeta(body: unknown): NetworkMeta {
-  if (!isObject(body))
-    throw new NetworkApiError('shape', 'meta レスポンスがオブジェクトではありません。');
+  if (!isObject(body)) throw new NetworkApiError('shape', t('error_shape_body'));
   const { nethash, focus, dates, name, users } = body;
   if (typeof nethash !== 'string' || !nethash) {
-    throw new NetworkApiError('shape', 'meta.nethash が見つかりません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   if (typeof focus !== 'number') {
-    throw new NetworkApiError('shape', 'meta.focus が数値ではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   if (!Array.isArray(dates) || !Array.isArray(users)) {
-    throw new NetworkApiError('shape', 'meta.dates / meta.users が配列ではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   return {
     nethash,
@@ -152,7 +233,7 @@ function parseMeta(body: unknown): NetworkMeta {
 
 function parseUser(value: unknown): NetworkMeta['users'][number] {
   if (!isObject(value)) {
-    throw new NetworkApiError('shape', 'users[] の要素がオブジェクトではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   const { name, repo, heads } = value;
   return {
@@ -183,11 +264,10 @@ type IntermediateCommit = {
 };
 
 function parseChunk(body: unknown): NetworkChunk {
-  if (!isObject(body))
-    throw new NetworkApiError('shape', 'chunk レスポンスがオブジェクトではありません。');
+  if (!isObject(body)) throw new NetworkApiError('shape', t('error_shape_body'));
   const { commits } = body;
   if (!Array.isArray(commits)) {
-    throw new NetworkApiError('shape', 'chunk.commits が配列ではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   const intermediate = commits.map((c) => parseCommitIntermediate(c));
   const resolved: NetworkRawCommit[] = intermediate.map((c) => ({
@@ -204,10 +284,6 @@ function parseChunk(body: unknown): NetworkChunk {
   return { commits: resolved };
 }
 
-// GitHub の chunk レスポンスでは、commit ごとの「レーン位置」がリポジトリの版や
-// 状況によって `space` / `x` / `lane` / `column` のいずれかで来る可能性がある。
-// `author` も数値インデックス / `{ id: number }` / `{ name: string }` の可能性がある。
-// 既知のキーを横断して値を拾い、無ければ 0 fallback とする。
 function pickNumber(value: Record<string, unknown>, keys: string[]): number | null {
   for (const k of keys) {
     const v = value[k];
@@ -227,14 +303,12 @@ function pickAuthorIndex(raw: unknown): number {
 
 function parseCommitIntermediate(value: unknown): IntermediateCommit {
   if (!isObject(value)) {
-    throw new NetworkApiError('shape', 'commits[] の要素がオブジェクトではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   if (typeof value.id !== 'string' || !value.id) {
-    throw new NetworkApiError('shape', 'commit.id が文字列ではありません。');
+    throw new NetworkApiError('shape', t('error_shape_body'));
   }
   const space = pickNumber(value, ['space', 'x', 'lane', 'column']) ?? 0;
-  // GitHub の time は「リポジトリ全体での順序番号」(0, 1, 2, ...) であって UNIX 秒ではない。
-  // 実際の日付は別途 `date` 文字列フィールドで来る。
   const time = pickNumber(value, ['time']) ?? 0;
   return {
     id: value.id,
@@ -249,13 +323,6 @@ function parseCommitIntermediate(value: unknown): IntermediateCommit {
   };
 }
 
-// GitHub の chunk レスポンスにおける parents の形式は版によって揺れる可能性があるため、
-// 既知の派生形を吸収して `{sha, space}` に正規化する。
-//  - "sha"                         (文字列のみ)
-//  - ["sha", space]                ([SHA, space])
-//  - [commitIndex, space]          ([参照 index, space])
-//  - { id: "sha", space }          (オブジェクト)
-//  - { sha: "sha", space }
 function normalizeParents(raw: unknown, commits: IntermediateCommit[]): NetworkParent[] {
   if (!Array.isArray(raw)) return [];
   const out: NetworkParent[] = [];
@@ -266,10 +333,6 @@ function normalizeParents(raw: unknown, commits: IntermediateCommit[]): NetworkP
     }
     if (Array.isArray(p) && p.length >= 1) {
       const head = p[0];
-      // 既知の派生形:
-      //   [sha, space]                       (2 要素)
-      //   [sha, globalCommitIndex, space]    (3 要素 - GitHub の現行 numpy 等)
-      //   [commitIndex, space]               (2 要素 / index 形式)
       const space =
         p.length >= 3 && typeof p[2] === 'number' ? p[2] : typeof p[1] === 'number' ? p[1] : 0;
       if (typeof head === 'string' && head) {
@@ -295,14 +358,15 @@ function normalizeParents(raw: unknown, commits: IntermediateCommit[]): NetworkP
   return out;
 }
 
-export type GithubNetworkClient = {
-  fetchMeta(owner: string, repo: string): Promise<NetworkMeta>;
+type GithubNetworkClient = {
+  fetchMeta(owner: string, repo: string, options?: RequestOptions): Promise<NetworkMeta>;
   fetchChunk(
     owner: string,
     repo: string,
     nethash: string,
     start: number,
     end: number,
+    options?: RequestOptions,
   ): Promise<NetworkChunk>;
   fetchAll(
     owner: string,
@@ -312,29 +376,27 @@ export type GithubNetworkClient = {
   fetchInitialPage(
     owner: string,
     repo: string,
-    opts?: { pageSize?: number },
+    opts?: RequestOptions & { pageSize?: number },
   ): Promise<FetchedInitialPage>;
   fetchOlderPage(
     owner: string,
     repo: string,
     meta: NetworkMeta,
     nextEnd: number,
-    opts?: { pageSize?: number },
+    opts?: RequestOptions & { pageSize?: number },
   ): Promise<FetchedOlderPage>;
 };
 
 export function createGithubNetworkClient(): GithubNetworkClient {
+  const cooldown = createCooldown();
   return {
-    async fetchMeta(owner, repo) {
+    async fetchMeta(owner, repo, options) {
       const url = `${GITHUB_ORIGIN}/${encodePath(owner)}/${encodePath(repo)}/network/meta`;
-      const body = await fetchJson(url);
+      const body = await fetchJson(url, cooldown, options);
       return parseMeta(body);
     },
 
-    // 注意: GitHub の /network/chunk は end が inclusive で、index [start, end] の
-    // (end - start + 1) 件を返す。半開区間 [start, end) が欲しい呼び出し側は
-    // end - 1 を渡すこと (隣接ページが境界 commit を二重取得しないようにするため)。
-    async fetchChunk(owner, repo, nethash, start, end) {
+    async fetchChunk(owner, repo, nethash, start, end, options) {
       const params = new URLSearchParams({
         nethash,
         start: String(start),
@@ -343,7 +405,7 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       const url = `${GITHUB_ORIGIN}/${encodePath(owner)}/${encodePath(
         repo,
       )}/network/chunk?${params.toString()}`;
-      const body = await fetchJson(url);
+      const body = await fetchJson(url, cooldown, options);
       return parseChunk(body);
     },
 
@@ -353,10 +415,6 @@ export function createGithubNetworkClient(): GithubNetworkClient {
 
       const meta = await this.fetchMeta(owner, repo);
 
-      // GitHub の time は「リポジトリ全体での順序番号 (0 = 最古)」。
-      // start/end は同じ index 空間で、start=0 だと最古から取れる。
-      // ユーザーは「最新」を見たいので、meta.dates.length を total count とみなして
-      // 後ろから取得する。
       const totalCount = meta.dates.length || maxCommits;
       const desiredEnd = totalCount;
       const desiredStart = Math.max(0, desiredEnd - maxCommits);
@@ -372,7 +430,6 @@ export function createGithubNetworkClient(): GithubNetworkClient {
         start = end;
       }
 
-      // チャンクは time 昇順 (古い順) で返ってくる。最新を上段に表示するため逆順にする。
       collected.reverse();
 
       return { meta, commits: collected };
@@ -380,15 +437,14 @@ export function createGithubNetworkClient(): GithubNetworkClient {
 
     async fetchInitialPage(owner, repo, opts) {
       const pageSize = opts?.pageSize ?? CHUNK_PAGE_SIZE;
-      const meta = await this.fetchMeta(owner, repo);
+      const meta = await this.fetchMeta(owner, repo, opts);
       const totalCount = meta.dates.length;
       const end = totalCount;
       const start = Math.max(0, end - pageSize);
       const chunk =
         end > start
-          ? await this.fetchChunk(owner, repo, meta.nethash, start, end - 1)
+          ? await this.fetchChunk(owner, repo, meta.nethash, start, end - 1, opts)
           : { commits: [] };
-      // チャンクは time 昇順 (古→新) で来るので、画面表示順 (新→古) に逆順化。
       const commits = [...chunk.commits].reverse();
       return { meta, commits, nextEnd: start, totalCount };
     },
@@ -400,17 +456,14 @@ export function createGithubNetworkClient(): GithubNetworkClient {
       }
       const end = nextEnd;
       const start = Math.max(0, end - pageSize);
-      const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1);
+      const chunk = await this.fetchChunk(owner, repo, meta.nethash, start, end - 1, opts);
       const commits = [...chunk.commits].reverse();
       return { commits, nextEnd: start, exhausted: start === 0 };
     },
   };
 }
 
-// useGraphData などの呼び出し側で `(err as Error)?.message ?? '不明...'` 形を
-// 散らかさないための小ヘルパ。NetworkApiError なら kind/message をそのまま、
-// それ以外は kind: 'unknown' + fallback メッセージに揃える。
-export type GraphErrorInfo = { kind: NetworkApiErrorKind | 'unknown'; message: string };
+type GraphErrorInfo = { kind: GraphErrorKind; message: string };
 
 export function toGraphError(err: unknown, fallbackMessage: string): GraphErrorInfo {
   if (err instanceof NetworkApiError) {

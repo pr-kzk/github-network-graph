@@ -9,7 +9,7 @@ describe('Options', () => {
     await localStore.set('graphPrefs', { ...DEFAULT_GRAPH_PREFS, mode: 'repo-only' });
     render(<Options />);
 
-    const repoOnly = await screen.findByLabelText(/Main repository only/i);
+    const repoOnly = await screen.findByLabelText(/Main only/i);
     expect(repoOnly).toBeChecked();
   });
 
@@ -19,7 +19,7 @@ describe('Options', () => {
     const network = await screen.findByLabelText(/Include forks/i);
     expect(network).toBeChecked();
 
-    await userEvent.click(screen.getByLabelText(/Main repository only/i));
+    await userEvent.click(screen.getByLabelText(/Main only/i));
 
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     expect(await localStore.get('graphPrefs')).toEqual({
@@ -30,21 +30,31 @@ describe('Options', () => {
 
   it('falls back to default when storage is empty', async () => {
     render(<Options />);
-    const defaultLabel =
-      DEFAULT_GRAPH_PREFS.mode === 'network' ? /Include forks/i : /Main repository only/i;
+    const defaultLabel = DEFAULT_GRAPH_PREFS.mode === 'network' ? /Include forks/i : /Main only/i;
     expect(await screen.findByLabelText(defaultLabel)).toBeChecked();
   });
 
   it('persists the selected theme on change', async () => {
     render(<Options />);
 
-    const dark = await screen.findByLabelText(/Mid-grey background/i);
-    expect(dark).toBeChecked();
+    expect(await screen.findByLabelText(/Mid-grey background/i)).toBeChecked();
 
     await userEvent.click(screen.getByLabelText(/White background with high contrast/i));
 
     expect(await screen.findByText('Saved')).toBeInTheDocument();
     expect((await localStore.get('graphPrefs')).theme).toBe('light');
+  });
+});
+
+describe('Options theme', () => {
+  it('lets the user choose to follow the system theme again', async () => {
+    await localStore.set('graphPrefs', { ...DEFAULT_GRAPH_PREFS, theme: 'dark' });
+    render(<Options />);
+
+    expect(await screen.findByLabelText(/Mid-grey background/i)).toBeChecked();
+    await userEvent.click(screen.getByLabelText(/Follow your operating system/i));
+
+    expect((await localStore.get('graphPrefs')).theme).toBe('system');
   });
 });
 

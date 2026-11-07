@@ -11,7 +11,7 @@ describe('FileStatusBadge', () => {
     ['copied', 'C'],
     ['changed', '·'],
     ['unchanged', '='],
-  ])('renders %s as "%s"', (status, label) => {
+  ])('labels %s and renders it as "%s"', (status, label) => {
     render(<FileStatusBadge status={status} />);
     const badge = screen.getByLabelText(status);
     expect(badge).toBeInTheDocument();
@@ -20,7 +20,7 @@ describe('FileStatusBadge', () => {
 
   it('falls back to the changed badge for unknown status', () => {
     render(<FileStatusBadge status="anything-else" />);
-    const badge = screen.getByLabelText('anything-else');
+    const badge = screen.getByLabelText('changed');
     expect(badge).toHaveTextContent('·');
   });
 });

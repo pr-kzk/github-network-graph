@@ -1,4 +1,4 @@
-export type RelationSectionProps = {
+type RelationSectionProps = {
   title: string;
   shas: string[];
   emptyLabel: string;

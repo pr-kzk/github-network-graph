@@ -1,5 +1,5 @@
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
-import { type TelemetryPrefs, localStore, parseLocalValue } from './storage';
+import { localStore, parseLocalValue } from './storage';
 
 type EventProps = Record<string, string | number | boolean>;
 
@@ -36,21 +36,20 @@ export function trackEvent(name: string, props?: EventProps): void {
   void aptabaseTrackEvent(name, props).catch(() => {});
 }
 
-export function setTelemetryEnabled(prefs: TelemetryPrefs, value: boolean): Promise<void> {
+export function setTelemetryEnabled(value: boolean): Promise<void> {
   enabled = value;
-  return localStore.set('telemetry', { ...prefs, enabled: value });
+  return localStore.update('telemetry', { enabled: value });
 }
 
-export function markTelemetryPromptSeen(prefs: TelemetryPrefs): Promise<void> {
-  return localStore.set('telemetry', { ...prefs, promptSeen: true });
+export function markTelemetryPromptSeen(): Promise<void> {
+  return localStore.update('telemetry', { promptSeen: true });
 }
 
-export function declineTelemetry(prefs: TelemetryPrefs): Promise<void> {
+export function declineTelemetry(): Promise<void> {
   enabled = false;
-  return localStore.set('telemetry', { ...prefs, enabled: false, promptSeen: true });
+  return localStore.update('telemetry', { enabled: false, promptSeen: true });
 }
 
-// テスト環境でモジュール状態を初期化する。プロダクションコードからは呼ばないこと。
 export function resetTelemetryForTest(): void {
   enabled = false;
   initialized = false;

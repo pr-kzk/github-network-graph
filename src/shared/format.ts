@@ -1,8 +1,3 @@
-// 相対時間と絶対日時の整形ヘルパ。
-//   - 'short': CommitRow など、グラフセルで使うコンパクト表記 ('now', '5m', '3h', ...)
-//   - 'long' : RecentRepos など、自然言語表記 (ロケール依存)。chrome.i18n 経由で
-//             en では "5 min ago"、ja では "5 分前" を返す。
-
 import { t, tWith } from './i18n';
 
 const ONE_MINUTE = 60_000;
@@ -11,9 +6,9 @@ const ONE_DAY = 24 * ONE_HOUR;
 const ONE_MONTH = 30 * ONE_DAY;
 const ONE_YEAR = 365 * ONE_DAY;
 
-export type RelativeStyle = 'short' | 'long';
+type RelativeStyle = 'short' | 'long';
 
-export type RelativeOptions = {
+type RelativeOptions = {
   now?: number;
   style?: RelativeStyle;
 };
@@ -23,16 +18,13 @@ export function formatRelativeFromMs(ms: number, opts: RelativeOptions = {}): st
   const style = opts.style ?? 'short';
   const diff = Math.max(0, now - ms);
   if (style === 'short') {
-    if (diff < ONE_MINUTE) return 'now';
+    if (diff < ONE_MINUTE) return t('relative_now_short');
     if (diff < ONE_HOUR) return `${Math.floor(diff / ONE_MINUTE)}m`;
     if (diff < ONE_DAY) return `${Math.floor(diff / ONE_HOUR)}h`;
     if (diff < ONE_MONTH) return `${Math.floor(diff / ONE_DAY)}d`;
     if (diff < ONE_YEAR) return `${Math.floor(diff / ONE_MONTH)}mo`;
     return `${Math.floor(diff / ONE_YEAR)}y`;
   }
-  // style === 'long'
-  // 既存 RecentRepos.tsx の境界を完全踏襲: 月境界は持たず、4 週間以上は toLocaleDateString
-  // に fallback。文言は chrome.i18n の relative_* キーで提供される。
   const min = Math.floor(diff / ONE_MINUTE);
   if (min < 1) return t('relative_now');
   if (min < 60) return tWith('relative_minutes', { n: String(min) });
@@ -52,11 +44,13 @@ export function formatRelativeFromDateString(
   if (!value) return '';
   const ms = Date.parse(value);
   if (Number.isNaN(ms)) {
-    // CommitRow の既存挙動: parse 失敗時は ISO 文字列の先頭 7 文字を返す
-    // (e.g. "2024-01" のような大雑把なヒント)。
     return value.slice(0, 7);
   }
   return formatRelativeFromMs(ms, opts);
+}
+
+export function formatClockTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 export function formatFullDate(value: string | undefined | null): string {

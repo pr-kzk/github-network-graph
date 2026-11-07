@@ -1,8 +1,7 @@
 import { useState } from 'react';
 
-export type AuthorAvatarProps = {
+type AuthorAvatarProps = {
   login: string;
-  // 表示する CSS ピクセルサイズ。実画像は Retina 用に 2 倍解像度を取得する。
   size?: number;
   alt?: string;
   className?: string;

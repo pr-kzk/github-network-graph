@@ -4,14 +4,11 @@ import { type GraphMode, type Theme, localStore } from '@/shared/storage';
 import { isTelemetryConfigured, setTelemetryEnabled } from '@/shared/telemetry';
 import { useLocalValue } from '@/shared/useLocalValue';
 import { useTheme } from '@/shared/useTheme';
+import { RadioSection, type RadioOption } from './RadioSection';
 
 const PRIVACY_URL = 'https://github.com/pr-kzk/github-network-graph/blob/main/PRIVACY.md';
 
-const MODE_OPTIONS: ReadonlyArray<{
-  value: GraphMode;
-  label: string;
-  description: string;
-}> = [
+const MODE_OPTIONS: ReadonlyArray<RadioOption<GraphMode>> = [
   {
     value: 'network',
     label: t('options_mode_network_label'),
@@ -24,11 +21,12 @@ const MODE_OPTIONS: ReadonlyArray<{
   },
 ];
 
-const THEME_OPTIONS: ReadonlyArray<{
-  value: Theme;
-  label: string;
-  description: string;
-}> = [
+const THEME_OPTIONS: ReadonlyArray<RadioOption<Theme>> = [
+  {
+    value: 'system',
+    label: t('options_theme_system_label'),
+    description: t('options_theme_system_desc'),
+  },
   {
     value: 'dark',
     label: t('options_theme_dark_label'),
@@ -69,18 +67,18 @@ export function Options() {
     }, 1500);
   };
 
-  const handleChange = async (next: GraphMode) => {
-    await localStore.set('graphPrefs', { ...prefs, mode: next });
+  const handleModeChange = async (next: GraphMode) => {
+    await localStore.update('graphPrefs', { mode: next });
     markSaved();
   };
 
   const handleThemeChange = async (next: Theme) => {
-    await localStore.set('graphPrefs', { ...prefs, theme: next });
+    await localStore.update('graphPrefs', { theme: next });
     markSaved();
   };
 
   const handleTelemetryChange = async (next: boolean) => {
-    await setTelemetryEnabled(telemetry, next);
+    await setTelemetryEnabled(next);
     markSaved();
   };
 
@@ -91,75 +89,25 @@ export function Options() {
         {saved && <span className="text-sm text-emerald-600">{t('options_saved')}</span>}
       </header>
 
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">{t('options_mode_heading')}</h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('options_mode_description')}
-          </p>
-        </div>
+      <RadioSection
+        name="graph-mode"
+        heading={t('options_mode_heading')}
+        description={t('options_mode_description')}
+        legend={t('options_mode_legend')}
+        options={MODE_OPTIONS}
+        value={mode}
+        onChange={handleModeChange}
+      />
 
-        <fieldset className="flex flex-col gap-2">
-          <legend className="sr-only">{t('options_mode_legend')}</legend>
-          {MODE_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              className={[
-                'grid cursor-pointer grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg border p-3 transition',
-                mode === opt.value
-                  ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40'
-                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
-              ].join(' ')}
-            >
-              <input
-                type="radio"
-                name="graph-mode"
-                value={opt.value}
-                checked={mode === opt.value}
-                onChange={() => handleChange(opt.value)}
-                className="mt-0.5 row-span-2 h-4 w-4 accent-indigo-600"
-              />
-              <span className="text-sm font-medium">{opt.label}</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</span>
-            </label>
-          ))}
-        </fieldset>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">{t('options_theme_heading')}</h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('options_theme_description')}
-          </p>
-        </div>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className="sr-only">{t('options_theme_legend')}</legend>
-          {THEME_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              className={[
-                'grid cursor-pointer grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg border p-3 transition',
-                theme === opt.value
-                  ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40'
-                  : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
-              ].join(' ')}
-            >
-              <input
-                type="radio"
-                name="graph-theme"
-                value={opt.value}
-                checked={theme === opt.value}
-                onChange={() => handleThemeChange(opt.value)}
-                className="mt-0.5 row-span-2 h-4 w-4 accent-indigo-600"
-              />
-              <span className="text-sm font-medium">{opt.label}</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</span>
-            </label>
-          ))}
-        </fieldset>
-      </section>
+      <RadioSection
+        name="graph-theme"
+        heading={t('options_theme_heading')}
+        description={t('options_theme_description')}
+        legend={t('options_theme_legend')}
+        options={THEME_OPTIONS}
+        value={theme}
+        onChange={handleThemeChange}
+      />
 
       {isTelemetryConfigured() && (
         <section className="flex flex-col gap-3">
