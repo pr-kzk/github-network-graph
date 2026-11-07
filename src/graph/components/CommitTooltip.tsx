@@ -25,18 +25,24 @@ export function CommitTooltip({ commit, x, y }: CommitTooltipProps) {
   // 実サイズ計測 → ビューポート外にはみ出す場合は反対側にフリップする。
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = x + OFFSET;
-    let top = y + OFFSET;
-    if (left + rect.width + VIEWPORT_MARGIN > vw) left = x - OFFSET - rect.width;
-    if (top + rect.height + VIEWPORT_MARGIN > vh) top = y - OFFSET - rect.height;
-    if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
-    if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
-    setPos({ left, top });
-  }, [commit.sha, x, y]);
+    if (!el) return undefined;
+    function place(target: HTMLElement) {
+      const rect = target.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let left = x + OFFSET;
+      let top = y + OFFSET;
+      if (left + rect.width + VIEWPORT_MARGIN > vw) left = x - OFFSET - rect.width;
+      if (top + rect.height + VIEWPORT_MARGIN > vh) top = y - OFFSET - rect.height;
+      if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+      if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
+      setPos((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+    }
+    place(el);
+    const observer = new ResizeObserver(() => place(el));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [x, y]);
 
   const date = formatFullDate(commit.dateLabel);
 

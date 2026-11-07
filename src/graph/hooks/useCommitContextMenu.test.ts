@@ -27,7 +27,12 @@ describe('useCommitContextMenu', () => {
   it('opens the menu with the commit and hides the tooltip', () => {
     const commitBySha = new Map([['sha1', makeCommit('sha1', { parents: ['sha0'] })]]);
     const { result } = renderHook(() =>
-      useCommitContextMenu({ commitBySha, owner: 'o', repo: 'r', onSelectSha: vi.fn() }),
+      useCommitContextMenu({
+        commitBySha,
+        owner: 'o',
+        repo: 'r',
+        onSelectSha: vi.fn<(sha: string) => void>(),
+      }),
     );
     act(() => result.current.handlers.onContextCommit('sha1', 10, 20));
     expect(result.current.menu).toEqual({ sha: 'sha1', x: 10, y: 20 });
@@ -38,7 +43,12 @@ describe('useCommitContextMenu', () => {
   it('closes the menu via closeMenu', () => {
     const commitBySha = new Map([['sha1', makeCommit('sha1')]]);
     const { result } = renderHook(() =>
-      useCommitContextMenu({ commitBySha, owner: 'o', repo: 'r', onSelectSha: vi.fn() }),
+      useCommitContextMenu({
+        commitBySha,
+        owner: 'o',
+        repo: 'r',
+        onSelectSha: vi.fn<(sha: string) => void>(),
+      }),
     );
     act(() => result.current.handlers.onContextCommit('sha1', 0, 0));
     act(() => result.current.handlers.closeMenu());

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { assertNever } from '@/shared/errors';
 import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
 import { trackEvent } from '@/shared/telemetry';
@@ -116,6 +117,8 @@ function reducer(state: RawState, action: Action): RawState {
         loadingMore: false,
         olderError: { kind: action.kind, message: action.message },
       };
+    default:
+      return assertNever(action);
   }
 }
 
@@ -154,15 +157,21 @@ export function useGraphData({
   }, [meta, rawCommits, mode, owner, repo]);
 
   // initial fetch: owner/repo/refreshKey/pageSize 変更で発火。mode は deps から除外。
+  const initialRequest = useMemo(
+    () => ({ owner, repo, pageSize, refreshKey }),
+    [owner, repo, pageSize, refreshKey],
+  );
   useEffect(() => {
-    if (!owner || !repo) {
+    if (!initialRequest.owner || !initialRequest.repo) {
       dispatch({ type: 'reset' });
-      return;
+      return undefined;
     }
     let cancelled = false;
     dispatch({ type: 'init/start' });
     client
-      .fetchInitialPage(owner, repo, { pageSize })
+      .fetchInitialPage(initialRequest.owner, initialRequest.repo, {
+        pageSize: initialRequest.pageSize,
+      })
       .then(({ meta: loadedMeta, commits, nextEnd }) => {
         if (cancelled) return;
         dispatch({ type: 'init/success', meta: loadedMeta, rawCommits: commits, nextEnd });
@@ -176,7 +185,7 @@ export function useGraphData({
     return () => {
       cancelled = true;
     };
-  }, [client, owner, repo, refreshKey, pageSize]);
+  }, [client, initialRequest]);
 
   const loadMore = useCallback(() => {
     const r = rawRef.current;
@@ -194,11 +203,9 @@ export function useGraphData({
       });
   }, [client, owner, repo, pageSize]);
 
-  const state: GraphDataState = useMemo(() => {
-    if (raw.status === 'ready' && view !== null) {
-      return { ...raw, view };
-    }
-    return raw as GraphDataState;
+  const state = useMemo<GraphDataState>(() => {
+    if (raw.status !== 'ready') return raw;
+    return view ? { ...raw, view } : { status: 'loading' };
   }, [raw, view]);
 
   return { state, loadMore };

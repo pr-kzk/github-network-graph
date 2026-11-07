@@ -8,6 +8,10 @@ export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+export function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${JSON.stringify(value)}`);
+}
+
 export function asString(value: unknown, fallback: string = ''): string {
   return typeof value === 'string' ? value : fallback;
 }

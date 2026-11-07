@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { NetworkApiError, createGithubNetworkClient } from './networkApi';
 
 const META_BODY = {
@@ -31,10 +31,10 @@ function jsonResponse(body: unknown, init?: { status?: number; contentType?: str
   });
 }
 
-let fetchMock: ReturnType<typeof vi.fn>;
+let fetchMock: Mock<typeof fetch>;
 
 beforeEach(() => {
-  fetchMock = vi.fn();
+  fetchMock = vi.fn<typeof fetch>();
   vi.stubGlobal('fetch', fetchMock);
 });
 
@@ -328,8 +328,8 @@ git push -u origin main</pre>
   it('does not double-fetch the boundary commit across initial + older pages (end is inclusive)', async () => {
     // GitHub の chunk は end inclusive: index [start, end] を返す。
     // URL の start/end をパースして inclusive レンジを再現するモック。
-    const inclusiveChunk = (url: string) => {
-      const u = new URL(url);
+    const inclusiveChunk = (input: Parameters<typeof fetch>[0]) => {
+      const u = new URL(new Request(input).url);
       if (u.pathname.endsWith('/network/meta')) {
         return jsonResponse({ ...META_BODY, dates: Array.from({ length: 4 }, () => 'd') });
       }
@@ -341,7 +341,7 @@ git push -u origin main</pre>
       }
       return jsonResponse({ commits });
     };
-    fetchMock.mockImplementation((url: string) => Promise.resolve(inclusiveChunk(url)));
+    fetchMock.mockImplementation((url) => Promise.resolve(inclusiveChunk(url)));
 
     const client = createGithubNetworkClient();
     const initial = await client.fetchInitialPage('owner', 'repo', { pageSize: 2 });

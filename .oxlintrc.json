@@ -80,7 +80,6 @@
     "prefer-spread": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-explicit-any": "error",
-    "typescript/no-non-null-assertion": "off",
     "typescript/consistent-type-imports": "error",
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
@@ -91,24 +90,6 @@
         "allowConstantExport": true
       }
     ],
-    "no-underscore-dangle": "off",
-    "no-array-index-key": "off",
-    "react/exhaustive-effect-dependencies": "off",
-    "jsx-a11y/prefer-tag-over-role": "off",
-    "jsx-a11y/label-has-associated-control": [
-      "error",
-      {
-        "depth": 3
-      }
-    ],
-    "jsx-a11y/no-noninteractive-element-to-interactive-role": [
-      "error",
-      {
-        "ul": ["listbox", "menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
-        "li": ["menuitem", "option", "row", "tab", "treeitem"]
-      }
-    ],
-    "no-await-in-loop": "off",
     "react/static-components": "error",
     "react/use-memo": "error",
     "react/preserve-manual-memoization": "error",
@@ -120,25 +101,10 @@
     "react/purity": "error",
     "react/set-state-in-render": "error",
     "react/unsupported-syntax": "warn",
-    "react/incompatible-library": "warn",
-    "typescript/consistent-return": "off",
-    "typescript/no-unsafe-type-assertion": "off",
-    "typescript/no-unnecessary-type-parameters": "off",
-    "typescript/no-unnecessary-boolean-literal-compare": "off"
+    "react/incompatible-library": "off",
+    "no-await-in-loop": "off"
   },
   "overrides": [
-    {
-      "files": ["src/graph/components/GraphList.tsx"],
-      "rules": {
-        "react/incompatible-library": "off"
-      }
-    },
-    {
-      "files": ["**/*.test.{ts,tsx}", "test/**"],
-      "rules": {
-        "vitest/require-mock-type-parameters": "off"
-      }
-    },
     {
       "files": ["scripts/**", "*.config.{js,ts,mjs}"],
       "env": {

@@ -1,10 +1,10 @@
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
-import { type TelemetryPrefs, localStore } from './storage';
+import { type TelemetryPrefs, localStore, parseLocalValue } from './storage';
 
 type EventProps = Record<string, string | number | boolean>;
 
 function appKey(): string | undefined {
-  return import.meta.env.VITE_APTABASE_APP_KEY as string | undefined;
+  return import.meta.env.VITE_APTABASE_APP_KEY;
 }
 
 let enabled = false;
@@ -19,7 +19,7 @@ export async function initTelemetry(): Promise<void> {
   const key = appKey();
   if (!key) return;
   const prefs = await localStore.get('telemetry');
-  enabled = prefs.enabled === true;
+  enabled = prefs.enabled;
   if (initialized) return;
   initialized = true;
   init(key, { isDebug: import.meta.env.DEV });
@@ -27,8 +27,7 @@ export async function initTelemetry(): Promise<void> {
     if (area !== 'local') return;
     const change = changes.telemetry;
     if (!change) return;
-    const next = change.newValue as Partial<TelemetryPrefs> | undefined;
-    enabled = next?.enabled === true;
+    enabled = parseLocalValue('telemetry', change.newValue).enabled;
   });
 }
 
@@ -38,7 +37,7 @@ export function trackEvent(name: string, props?: EventProps): void {
 }
 
 export function setTelemetryEnabled(prefs: TelemetryPrefs, value: boolean): Promise<void> {
-  enabled = value === true;
+  enabled = value;
   return localStore.set('telemetry', { ...prefs, enabled: value });
 }
 
@@ -52,7 +51,7 @@ export function declineTelemetry(prefs: TelemetryPrefs): Promise<void> {
 }
 
 // テスト環境でモジュール状態を初期化する。プロダクションコードからは呼ばないこと。
-export function __resetTelemetryForTest(): void {
+export function resetTelemetryForTest(): void {
   enabled = false;
   initialized = false;
 }

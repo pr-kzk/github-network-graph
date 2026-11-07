@@ -124,12 +124,12 @@ export function GraphList({
             onLeaveCommit={onLeaveCommit}
             onContextMenu={onContextCommit}
           />
-          <div role="list" className="relative z-0">
+          <ul className="relative z-0">
             {virtualItems.map((vi) => {
               const isFooter = vi.index >= view.commits.length;
               const key = isFooter ? '__footer__' : view.commits[vi.index].sha;
               return (
-                <div
+                <li
                   key={key}
                   style={{
                     position: 'absolute',
@@ -152,13 +152,14 @@ export function GraphList({
                       commit={view.commits[vi.index]}
                       isSelected={view.commits[vi.index].sha === selectedSha}
                       onSelect={onSelect}
+                      onContextMenu={onContextCommit}
                       graphAreaWidth={gw}
                     />
                   )}
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
         {view.commits.length === 0 ? (
           <div className="p-6 text-sm text-slate-500">{t('graph_empty_commits')}</div>

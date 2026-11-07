@@ -4,10 +4,11 @@ import type { GraphBranch } from '../lib/transform.types';
 
 export type BranchMenuProps = {
   branches: GraphBranch[];
+  selectedSha: string | null;
   onSelect: (sha: string) => void;
 };
 
-export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
+export function BranchMenu({ branches, selectedSha, onSelect }: BranchMenuProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -27,6 +28,16 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
     setActiveIndex(0);
   }, []);
 
+  function openMenu() {
+    setActiveIndex(
+      Math.max(
+        0,
+        branches.findIndex((b) => b.sha === selectedSha),
+      ),
+    );
+    setOpen(true);
+  }
+
   // 開いたら検索欄へフォーカス (DOM 副作用のみ)。
   useEffect(() => {
     if (open) inputRef.current?.focus();
@@ -34,9 +45,11 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
 
   // 外側クリックで閉じる。
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     function handleDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close();
+      if (rootRef.current && !(e.target instanceof Node && rootRef.current.contains(e.target))) {
+        close();
+      }
     }
     document.addEventListener('mousedown', handleDown, true);
     return () => document.removeEventListener('mousedown', handleDown, true);
@@ -45,9 +58,7 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
   // ハイライト行を可視域へスクロール。
   useEffect(() => {
     if (!open) return;
-    const list = listRef.current;
-    const el = list?.children[activeIndex] as HTMLElement | undefined;
-    el?.scrollIntoView({ block: 'nearest' });
+    listRef.current?.children.item(activeIndex)?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex, open]);
 
   function jump(sha: string) {
@@ -77,9 +88,8 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => (open ? close() : openMenu())}
         className="flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800 dark:hover:bg-slate-800"
       >
         {tWith('graph_branch_button', { count: String(branches.length) })}
@@ -106,22 +116,30 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
           {filtered.length === 0 ? (
             <div className="px-3 py-3 text-xs text-slate-500">{t('graph_branch_no_match')}</div>
           ) : (
-            <ul ref={listRef} role="listbox" className="max-h-64 overflow-auto py-1">
+            <ul ref={listRef} className="max-h-64 overflow-auto py-1">
               {filtered.map((b, i) => (
-                <li key={`${b.sha}:${b.name}`} role="option" aria-selected={i === activeIndex}>
+                <li key={`${b.sha}:${b.name}`}>
                   <button
                     type="button"
+                    aria-current={b.sha === selectedSha ? 'true' : undefined}
                     onClick={() => jump(b.sha)}
                     onMouseEnter={() => setActiveIndex(i)}
                     className={[
-                      'block w-full truncate px-3 py-1.5 text-left font-mono text-xs',
+                      'flex w-full items-center gap-2 px-3 py-1.5 text-left font-mono text-xs',
+                      b.sha === selectedSha ? 'font-semibold' : '',
                       i === activeIndex
                         ? 'bg-indigo-600/20 text-slate-900 dark:bg-indigo-600/40 dark:text-slate-100'
                         : 'text-slate-700 dark:text-slate-300',
                     ].join(' ')}
                     title={b.name}
                   >
-                    {b.name}
+                    <span
+                      aria-hidden="true"
+                      className="w-3 shrink-0 text-indigo-600 dark:text-indigo-400"
+                    >
+                      {b.sha === selectedSha ? '✓' : ''}
+                    </span>
+                    <span className="min-w-0 truncate">{b.name}</span>
                   </button>
                 </li>
               ))}

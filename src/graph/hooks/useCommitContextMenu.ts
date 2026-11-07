@@ -65,29 +65,34 @@ export function useCommitContextMenu({
     return [
       {
         kind: 'item',
+        id: 'open-github',
         label: t('commit_detail_action_open_github'),
         onClick: () => window.open(commitUrl, '_blank', 'noopener'),
       },
-      { kind: 'separator' },
+      { kind: 'separator', id: 'separator-open' },
       {
         kind: 'item',
+        id: 'copy-sha',
         label: t('commit_detail_action_copy_sha'),
         onClick: () => void copyToClipboard(commit.sha),
       },
       {
         kind: 'item',
+        id: 'copy-short-sha',
         label: t('commit_detail_action_copy_short_sha'),
         onClick: () => void copyToClipboard(commit.shortSha),
       },
       {
         kind: 'item',
+        id: 'copy-subject',
         label: t('commit_detail_action_copy_subject'),
         onClick: () => void copyToClipboard(commit.subject),
         disabled: !commit.subject,
       },
-      { kind: 'separator' },
+      { kind: 'separator', id: 'separator-copy' },
       {
         kind: 'item',
+        id: 'jump-parent',
         label: t('commit_detail_action_jump_parent'),
         onClick: () => onSelectSha(commit.parents[0] ?? commit.sha),
         disabled: commit.parents.length === 0,
