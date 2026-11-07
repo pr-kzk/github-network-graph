@@ -1,5 +1,5 @@
 import type { GraphMode } from '@/shared/storage';
-import type { FetchedNetwork, NetworkRawCommit } from './networkApi.types';
+import type { FetchedNetwork, NetworkMeta, NetworkRawCommit } from './networkApi.types';
 import { shortSha } from './shortSha';
 import type {
   GraphBranch,
@@ -10,7 +10,7 @@ import type {
   ViewRef,
 } from './transform.types';
 
-type TransformOptions = {
+export type TransformOptions = {
   mode: GraphMode;
   inputOwner?: string;
   inputRepo?: string;
@@ -75,16 +75,104 @@ function computeFocusReachable(
   return reached;
 }
 
-export function transformNetwork(data: FetchedNetwork, options: TransformOptions): GraphView {
-  const { meta, commits } = data;
+type NetworkUser = NetworkMeta['users'][number];
 
+export function resolveFocus(
+  meta: NetworkMeta,
+  options: TransformOptions,
+): { focusUser: NetworkUser | undefined; focusIndex: number } {
   const focusUser =
     (options.inputOwner && options.inputRepo
       ? meta.users.find((u) => u.name === options.inputOwner && u.repo === options.inputRepo)
       : undefined) ??
     meta.users[meta.focus] ??
     meta.users[0];
-  const focusIndex = focusUser ? meta.users.indexOf(focusUser) : -1;
+  return { focusUser, focusIndex: focusUser ? meta.users.indexOf(focusUser) : -1 };
+}
+
+export function buildRefsByCommit(
+  meta: NetworkMeta,
+  focusUser: NetworkUser | undefined,
+  mode: GraphMode,
+): Map<string, ViewRef[]> {
+  const refsByCommit = new Map<string, ViewRef[]>();
+  for (const user of meta.users) {
+    const isFocusOwner = user === focusUser;
+    if (mode === 'repo-only' && !isFocusOwner) continue;
+    for (const head of user.heads) {
+      const list = refsByCommit.get(head.id) ?? [];
+      list.push({ name: head.name, isFocus: isFocusOwner, ownerName: user.name });
+      refsByCommit.set(head.id, list);
+    }
+  }
+  return refsByCommit;
+}
+
+export function toViewCommit(
+  c: NetworkRawCommit,
+  row: number,
+  lane: number,
+  parents: string[],
+  meta: NetworkMeta,
+  refsByCommit: ReadonlyMap<string, ViewRef[]>,
+): ViewCommit {
+  const user = meta.users[c.author];
+  return {
+    sha: c.id,
+    shortSha: shortSha(c.id),
+    row,
+    lane,
+    time: c.time,
+    dateLabel: c.date ?? '',
+    authorName: c.authorName || c.login || user?.name || '',
+    authorLogin: c.login || user?.name || '',
+    authorRepo: user?.repo ?? '',
+    message: c.message,
+    subject: firstLine(c.message),
+    parents,
+    refs: refsByCommit.get(c.id) ?? [],
+  };
+}
+
+export function toViewEdge(vc: ViewCommit, parent: ViewCommit, parentIdx: number): ViewEdge {
+  return {
+    fromSha: vc.sha,
+    toSha: parent.sha,
+    fromRow: vc.row,
+    toRow: parent.row,
+    fromLane: vc.lane,
+    toLane: parent.lane,
+    isMerge: parentIdx > 0,
+  };
+}
+
+export function viewBranches(
+  meta: NetworkMeta,
+  focusUser: NetworkUser | undefined,
+  mode: GraphMode,
+): { branches: GraphBranch[]; forkBranches: GraphForkBranches[] } {
+  const branches: GraphBranch[] = (focusUser?.heads ?? [])
+    .map((h) => ({ name: h.name, sha: h.id }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const forkBranches: GraphForkBranches[] =
+    mode === 'network'
+      ? meta.users
+          .filter((user) => user !== focusUser && user.heads.length > 0)
+          .map((user) => ({
+            owner: user.name,
+            branches: user.heads
+              .map((h) => ({ name: h.name, sha: h.id }))
+              .sort((a, b) => a.name.localeCompare(b.name)),
+          }))
+          .sort((a, b) => a.owner.localeCompare(b.owner))
+      : [];
+  return { branches, forkBranches };
+}
+
+export function transformNetwork(data: FetchedNetwork, options: TransformOptions): GraphView {
+  const { meta, commits } = data;
+  const { focusUser, focusIndex } = resolveFocus(meta, options);
 
   const commitsBySha = new Map<string, NetworkRawCommit>();
   for (const c of commits) commitsBySha.set(c.id, c);
@@ -103,21 +191,7 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
   const visibleShaSet = new Set<string>();
   for (const c of commits) if (isVisible(c)) visibleShaSet.add(c.id);
 
-  const refsByCommit = new Map<string, ViewRef[]>();
-  for (const user of meta.users) {
-    const isFocusOwner = user === focusUser;
-    if (options.mode === 'repo-only' && !isFocusOwner) continue;
-    for (const head of user.heads) {
-      const list = refsByCommit.get(head.id) ?? [];
-      list.push({
-        name: head.name,
-        isFocus: isFocusOwner,
-        ownerName: user.name,
-      });
-      refsByCommit.set(head.id, list);
-    }
-  }
-
+  const refsByCommit = buildRefsByCommit(meta, focusUser, options.mode);
   const visibleCommits: NetworkRawCommit[] = commits.filter(isVisible);
 
   const spaceToLane = new Map<number, number>();
@@ -127,10 +201,6 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
 
   const resolvedCache = new Map<string, string | null>();
   const viewCommits: ViewCommit[] = visibleCommits.map((c, row) => {
-    const user = meta.users[c.author];
-    const lane = spaceToLane.get(c.space) ?? 0;
-    const authorDisplay = c.authorName || c.login || user?.name || '';
-
     const resolvedParents: string[] = [];
     const seenParent = new Set<string>();
     for (const p of c.parents) {
@@ -140,22 +210,7 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
         seenParent.add(resolved);
       }
     }
-
-    return {
-      sha: c.id,
-      shortSha: shortSha(c.id),
-      row,
-      lane,
-      time: c.time,
-      dateLabel: c.date ?? '',
-      authorName: authorDisplay,
-      authorLogin: c.login || user?.name || '',
-      authorRepo: user?.repo ?? '',
-      message: c.message,
-      subject: firstLine(c.message),
-      parents: resolvedParents,
-      refs: refsByCommit.get(c.id) ?? [],
-    };
+    return toViewCommit(c, row, spaceToLane.get(c.space) ?? 0, resolvedParents, meta, refsByCommit);
   });
 
   const shaToRow = new Map<string, ViewCommit>();
@@ -165,41 +220,14 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
   for (const vc of viewCommits) {
     vc.parents.forEach((parentSha, parentIdx) => {
       const parent = shaToRow.get(parentSha);
-      if (!parent) return;
-      edges.push({
-        fromSha: vc.sha,
-        toSha: parent.sha,
-        fromRow: vc.row,
-        toRow: parent.row,
-        fromLane: vc.lane,
-        toLane: parent.lane,
-        isMerge: parentIdx > 0,
-      });
+      if (parent) edges.push(toViewEdge(vc, parent, parentIdx));
     });
   }
-
-  const branches: GraphBranch[] = (focusUser?.heads ?? [])
-    .map((h) => ({ name: h.name, sha: h.id }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const forkBranches: GraphForkBranches[] =
-    options.mode === 'network'
-      ? meta.users
-          .filter((user) => user !== focusUser && user.heads.length > 0)
-          .map((user) => ({
-            owner: user.name,
-            branches: user.heads
-              .map((h) => ({ name: h.name, sha: h.id }))
-              .sort((a, b) => a.name.localeCompare(b.name)),
-          }))
-          .sort((a, b) => a.owner.localeCompare(b.owner))
-      : [];
 
   return {
     commits: viewCommits,
     edges,
     laneCount: spaceToLane.size,
-    branches,
-    forkBranches,
+    ...viewBranches(meta, focusUser, options.mode),
   };
 }

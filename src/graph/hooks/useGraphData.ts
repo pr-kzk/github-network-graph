@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import type { GraphMode } from '@/shared/storage';
 import { createGithubNetworkClient } from '../lib/networkApi';
-import { transformNetwork } from '../lib/transform';
+import { createGraphTransformer } from '../lib/graphTransformer';
 import type { GraphView } from '../lib/transform.types';
 import { graphDataReducer, IDLE, LOADING, type GraphDataState } from './graphDataReducer';
 import { pageOptions, reportGraphError, retryDispatcher } from './graphDataRequests';
@@ -48,15 +48,13 @@ export function useGraphData({
   const loadedFor = useRef<string | null>(null);
   const session = usePageSession();
 
+  const transform = useMemo(() => createGraphTransformer(), []);
   const meta = raw.status === 'ready' ? raw.meta : null;
   const rawCommits = raw.status === 'ready' ? raw.rawCommits : null;
   const view = useMemo<GraphView | null>(() => {
     if (!meta || !rawCommits) return null;
-    return transformNetwork(
-      { meta, commits: rawCommits },
-      { mode, inputOwner: owner, inputRepo: repo },
-    );
-  }, [meta, rawCommits, mode, owner, repo]);
+    return transform({ meta, commits: rawCommits }, { mode, inputOwner: owner, inputRepo: repo });
+  }, [transform, meta, rawCommits, mode, owner, repo]);
 
   const request = useMemo(() => ({ owner, repo, refreshKey }), [owner, repo, refreshKey]);
 

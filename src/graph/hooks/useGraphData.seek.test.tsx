@@ -7,7 +7,7 @@ import type {
   NetworkRawCommit,
   RetryNotice,
 } from '../lib/networkApi.types';
-import type * as Transform from '../lib/transform';
+import type * as GraphTransformer from '../lib/graphTransformer';
 import { useGraphData } from './useGraphData';
 import { SEEK_CONCURRENCY } from './useSeek';
 
@@ -44,13 +44,16 @@ function newestFirst(startInclusive: number, endExclusive: number): NetworkRawCo
   return commits;
 }
 
-vi.mock('../lib/transform', async (importOriginal) => {
-  const original = await importOriginal<typeof Transform>();
+vi.mock('../lib/graphTransformer', async (importOriginal) => {
+  const original = await importOriginal<typeof GraphTransformer>();
   return {
     ...original,
-    transformNetwork: (...args: Parameters<typeof original.transformNetwork>) => {
-      stats.transforms += 1;
-      return original.transformNetwork(...args);
+    createGraphTransformer: () => {
+      const transform = original.createGraphTransformer();
+      return (...args: Parameters<typeof transform>) => {
+        stats.transforms += 1;
+        return transform(...args);
+      };
     },
   };
 });
