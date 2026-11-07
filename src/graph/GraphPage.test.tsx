@@ -16,7 +16,6 @@ const PAGE: FetchedInitialPage = {
     nethash: 'h',
     focus: 0,
     dates: [],
-    name: 'r',
     users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: C }] }],
   },
   commits: [
@@ -41,14 +40,13 @@ const PAGE: FetchedInitialPage = {
     { id: A, author: 0, time: 1, space: 0, parents: [], message: 'Initial', authorName: 'Alice' },
   ],
   nextEnd: 0,
-  totalCount: 3,
 };
 
 vi.mock('./lib/networkApi', async (importOriginal) => ({
   ...(await importOriginal<typeof NetworkApi>()),
   createGithubNetworkClient: () => ({
     fetchInitialPage: async () => PAGE,
-    fetchOlderPage: async () => ({ commits: [], nextEnd: 0, exhausted: true }),
+    fetchOlderPage: async () => ({ commits: [], nextEnd: 0 }),
   }),
 }));
 

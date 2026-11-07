@@ -14,7 +14,6 @@ function commit(sha: string): ViewCommit {
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents: [],

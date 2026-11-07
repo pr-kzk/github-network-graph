@@ -36,6 +36,7 @@ function renderMenu(
       branches={BRANCHES}
       forkBranches={forkBranches}
       selectedSha={selectedSha}
+      busy={false}
       onSelect={onSelect}
     />,
   );

@@ -35,7 +35,7 @@ vi.mock('../lib/networkApi', async (importOriginal) => ({
       }),
     fetchOlderPage: () =>
       new Promise((resolve) => {
-        olderRequests.push(() => resolve({ commits: [], nextEnd: 0, exhausted: true }));
+        olderRequests.push(() => resolve({ commits: [], nextEnd: 0 }));
       }),
   }),
 }));
@@ -46,12 +46,10 @@ function page(message: string, nextEnd = 0): FetchedInitialPage {
       nethash: 'h',
       focus: 0,
       dates: [],
-      name: 'r',
       users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: 'a' }] }],
     },
     commits: [{ id: 'a', author: 0, time: 1, space: 0, parents: [], message }],
     nextEnd,
-    totalCount: 1,
   };
 }
 
@@ -74,7 +72,9 @@ async function loadedHook(args: Parameters<typeof useGraphData>[0], nextEnd = 0)
 describe('useGraphData', () => {
   it('counts GitHub retries while the first load is pending', async () => {
     requests.length = 0;
-    const { result } = renderHook(() => useGraphData({ owner: 'o', repo: 'r', mode: 'network' }));
+    const { result } = renderHook(() =>
+      useGraphData({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 }),
+    );
     await waitFor(() => expect(requests).toHaveLength(1));
 
     act(() => latest().onPending?.(3));
@@ -83,7 +83,12 @@ describe('useGraphData', () => {
   });
 
   it('keeps showing the previous commits while a refresh is in flight', async () => {
-    const { result, rerender } = await loadedHook({ owner: 'o', repo: 'r', mode: 'network' });
+    const { result, rerender } = await loadedHook({
+      owner: 'o',
+      repo: 'r',
+      mode: 'network',
+      refreshKey: 0,
+    });
 
     rerender({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 1 });
     await waitFor(() => expect(requests).toHaveLength(2));
@@ -105,6 +110,7 @@ describe('useGraphData', () => {
       owner: 'o',
       repo: 'r',
       mode: 'network',
+      refreshKey: 0,
       onRefreshFailed,
     });
 
@@ -117,9 +123,14 @@ describe('useGraphData', () => {
   });
 
   it('drops the previous commits when switching to another repository', async () => {
-    const { result, rerender } = await loadedHook({ owner: 'o', repo: 'r', mode: 'network' });
+    const { result, rerender } = await loadedHook({
+      owner: 'o',
+      repo: 'r',
+      mode: 'network',
+      refreshKey: 0,
+    });
 
-    rerender({ owner: 'o', repo: 'other', mode: 'network' });
+    rerender({ owner: 'o', repo: 'other', mode: 'network', refreshKey: 0 });
     await waitFor(() => expect(requests).toHaveLength(2));
 
     expect(result.current.state.status).toBe('loading');
@@ -128,7 +139,7 @@ describe('useGraphData', () => {
   it('allows loading older commits again after a refresh interrupts an older page', async () => {
     const onRefreshFailed = vi.fn<() => void>();
     const { result, rerender } = await loadedHook(
-      { owner: 'o', repo: 'r', mode: 'network', onRefreshFailed },
+      { owner: 'o', repo: 'r', mode: 'network', refreshKey: 0, onRefreshFailed },
       5,
     );
     act(() => result.current.loadMore());
@@ -146,7 +157,9 @@ describe('useGraphData', () => {
 
   it('shows the retry countdown on the first load and clears it once the data arrives', async () => {
     requests.length = 0;
-    const { result } = renderHook(() => useGraphData({ owner: 'o', repo: 'r', mode: 'network' }));
+    const { result } = renderHook(() =>
+      useGraphData({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 }),
+    );
     await waitFor(() => expect(requests).toHaveLength(1));
     const notice: RetryNotice = { kind: 'network', attempt: 2, maxAttempts: 3, resumeAt: 9000 };
 
@@ -160,13 +173,18 @@ describe('useGraphData', () => {
   });
 
   it('cancels the previous repository request when switching repositories', async () => {
-    const { rerender } = await loadedHook({ owner: 'o', repo: 'r', mode: 'network' });
+    const { rerender } = await loadedHook({
+      owner: 'o',
+      repo: 'r',
+      mode: 'network',
+      refreshKey: 0,
+    });
     rerender({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 1 });
     await waitFor(() => expect(requests).toHaveLength(2));
     const refresh = latest();
     expect(refresh.signal?.aborted).toBe(false);
 
-    rerender({ owner: 'o', repo: 'other', mode: 'network' });
+    rerender({ owner: 'o', repo: 'other', mode: 'network', refreshKey: 0 });
 
     expect(refresh.signal?.aborted).toBe(true);
   });
@@ -176,7 +194,7 @@ describe('useGraphData', () => {
     const { rerender } = renderHook(
       (props: Parameters<typeof useGraphData>[0]) => useGraphData(props),
       {
-        initialProps: { owner: 'o', repo: 'r', mode: 'network' },
+        initialProps: { owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 },
       },
     );
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -189,7 +207,9 @@ describe('useGraphData', () => {
 
   it('shows the final error with its kind when retries are exhausted on the first load', async () => {
     requests.length = 0;
-    const { result } = renderHook(() => useGraphData({ owner: 'o', repo: 'r', mode: 'network' }));
+    const { result } = renderHook(() =>
+      useGraphData({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 }),
+    );
     await waitFor(() => expect(requests).toHaveLength(1));
 
     await act(async () => latest().reject(new NetworkApiError('rateLimit', 'slow down', 429)));

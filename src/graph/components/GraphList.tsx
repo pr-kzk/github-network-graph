@@ -4,10 +4,10 @@ import { t, tWith } from '@/shared/i18n';
 import { CommitRow } from './CommitRow';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphListFooter } from './GraphListFooter';
-import type { OlderError } from '../hooks/useGraphData';
 import { useElementWidth } from '../hooks/useElementWidth';
 import { useFocusSelectedRow } from '../hooks/useFocusSelectedRow';
 import { useRevealSelectedRow } from '../hooks/useRevealSelectedRow';
+import type { GraphErrorInfo } from '../lib/networkApi';
 import { ROW_HEIGHT, createGraphLayout } from '../lib/graphMetrics';
 import { collectPath, priorityLanes } from '../lib/laneBudget';
 import { visibleColumns } from '../lib/listColumns';
@@ -31,7 +31,7 @@ type GraphListProps = {
   onContextCommit: (sha: string, x: number, y: number) => void;
   hasMore: boolean;
   loadingMore: boolean;
-  olderError: OlderError | null;
+  olderError: GraphErrorInfo | null;
   onLoadMore: () => void;
 };
 
@@ -85,13 +85,13 @@ function GraphListImpl({
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
 
-  const commitVirtualItems = virtualItems.filter((vi) => vi.index < view.commits.length);
-  const rangeStart = commitVirtualItems[0]?.index ?? 0;
-  const lastVisibleIndex =
-    commitVirtualItems.length > 0 ? commitVirtualItems[commitVirtualItems.length - 1].index : -1;
-  const rangeEnd = lastVisibleIndex >= 0 ? lastVisibleIndex + 1 : 0;
+  const lastVisibleIndex = Math.min(
+    virtualItems[virtualItems.length - 1]?.index ?? -1,
+    view.commits.length - 1,
+  );
+  const rangeStart = lastVisibleIndex >= 0 ? virtualItems[0].index : 0;
+  const rangeEnd = lastVisibleIndex + 1;
 
-  // commitVirtualItems は毎 render 新配列になるため deps に取らず、末尾 index の number で判定する。
   useEffect(() => {
     if (!hasMore || loadingMore || olderError) return;
     if (view.commits.length === 0 || lastVisibleIndex < 0) return;
@@ -100,11 +100,7 @@ function GraphListImpl({
     }
   }, [lastVisibleIndex, hasMore, loadingMore, olderError, onLoadMore, view.commits.length]);
 
-  const selectedRow = useMemo(() => {
-    if (!selectedSha) return null;
-    const idx = view.commits.findIndex((c) => c.sha === selectedSha);
-    return idx >= 0 ? idx : null;
-  }, [selectedSha, view.commits]);
+  const selectedRow = selectedSha ? (commitBySha.get(selectedSha)?.row ?? null) : null;
 
   useRevealSelectedRow(virtualizer, scrollRef, selectedRow);
   useFocusSelectedRow(scrollRef, selectedSha);
@@ -156,6 +152,7 @@ function GraphListImpl({
             {virtualItems.map((vi) => {
               const commit = vi.index < view.commits.length ? view.commits[vi.index] : null;
               const key = commit ? commit.sha : '__footer__';
+              const isMatch = commit !== null && matchShas.has(commit.sha);
               return (
                 <li
                   key={key}
@@ -181,8 +178,8 @@ function GraphListImpl({
                     <CommitRow
                       commit={commit}
                       isSelected={commit.sha === selectedSha}
-                      isMatch={matchShas.has(commit.sha)}
-                      query={matchShas.has(commit.sha) ? query : ''}
+                      isMatch={isMatch}
+                      query={isMatch ? query : ''}
                       isTabStop={commit.sha === tabStopSha}
                       isFlashing={commit.sha === flashSha}
                       columns={columns}

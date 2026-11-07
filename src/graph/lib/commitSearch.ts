@@ -1,6 +1,6 @@
 import type { ViewCommit } from './transform.types';
 
-// 1〜3 文字から SHA 前方一致を許す方式は、短い 16 進の語が大半のコミットに一致して絞り込みにならないため採らない。
+// SHA prefix matching from 1-3 characters is avoided: a short hex word matches most commits and narrows nothing.
 const SHA_PREFIX_MIN_LENGTH = 4;
 
 type CommitSearchResult = {
@@ -10,7 +10,7 @@ type CommitSearchResult = {
 
 export const NO_MATCHES: CommitSearchResult = { rows: [], shas: new Set() };
 
-export function normalizeQuery(raw: string): string {
+function normalizeQuery(raw: string): string {
   return raw.trim().toLowerCase();
 }
 

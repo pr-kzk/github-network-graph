@@ -13,7 +13,6 @@ type TransformOptions = {
   mode: GraphMode;
   inputOwner?: string;
   inputRepo?: string;
-  previousSpaceToLane?: ReadonlyMap<number, number>;
 };
 
 const RESOLVE_DEPTH_LIMIT = 200;
@@ -48,8 +47,8 @@ function searchVisibleAncestor(
 ): string | null {
   const seen = new Set<string>();
   const stack: Array<{ sha: string; depth: number }> = [{ sha: startSha, depth: 0 }];
-  while (stack.length > 0) {
-    const { sha, depth } = stack.pop()!;
+  for (let item = stack.pop(); item; item = stack.pop()) {
+    const { sha, depth } = item;
     if (seen.has(sha)) continue;
     seen.add(sha);
     if (depth > RESOLVE_DEPTH_LIMIT) continue;
@@ -69,8 +68,7 @@ function computeFocusReachable(
 ): Set<string> {
   const reached = new Set<string>();
   const stack = [...focusHeadShas];
-  while (stack.length > 0) {
-    const sha = stack.pop()!;
+  for (let sha = stack.pop(); sha !== undefined; sha = stack.pop()) {
     if (reached.has(sha)) continue;
     const c = commitsBySha.get(sha);
     if (!c) continue;
@@ -125,21 +123,10 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
 
   const visibleCommits: NetworkRawCommit[] = commits.filter(isVisible);
 
-  const usedSpaces = new Set<number>();
-  for (const c of visibleCommits) usedSpaces.add(c.space);
   const spaceToLane = new Map<number, number>();
-  let nextLane = 0;
-  if (options.previousSpaceToLane) {
-    for (const [space, lane] of options.previousSpaceToLane) {
-      if (!usedSpaces.has(space)) continue;
-      spaceToLane.set(space, lane);
-      if (lane >= nextLane) nextLane = lane + 1;
-    }
-  }
   for (const c of visibleCommits) {
-    if (!spaceToLane.has(c.space)) spaceToLane.set(c.space, nextLane++);
+    if (!spaceToLane.has(c.space)) spaceToLane.set(c.space, spaceToLane.size);
   }
-  const laneCount = nextLane;
 
   const resolvedCache = new Map<string, string | null>();
   const viewCommits: ViewCommit[] = visibleCommits.map((c, row) => {
@@ -167,7 +154,6 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
       authorName: authorDisplay,
       authorLogin: c.login || user?.name || '',
       authorRepo: user?.repo ?? '',
-      isFocus: c.author === focusIndex,
       message: c.message,
       subject: firstLine(c.message),
       parents: resolvedParents,
@@ -195,12 +181,6 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
     });
   }
 
-  const focusHeads: ViewRef[] = (focusUser?.heads ?? []).map((h) => ({
-    name: h.name,
-    isFocus: true,
-    ownerName: focusUser?.name ?? '',
-  }));
-
   const branches: GraphBranch[] = (focusUser?.heads ?? [])
     .map((h) => ({ name: h.name, sha: h.id }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -221,13 +201,8 @@ export function transformNetwork(data: FetchedNetwork, options: TransformOptions
   return {
     commits: viewCommits,
     edges,
-    laneCount,
-    totalCommitsAvailable: commits.length,
-    focusOwner: focusUser?.name ?? '',
-    focusRepo: focusUser?.repo ?? '',
-    focusHeads,
+    laneCount: spaceToLane.size,
     branches,
     forkBranches,
-    spaceToLane,
   };
 }

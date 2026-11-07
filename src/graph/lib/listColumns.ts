@@ -10,8 +10,6 @@ export type ListColumns = {
   authorName: boolean;
 };
 
-// The subject is what people scan for, so the least informative columns give way first and the
-// author keeps its avatar longer than its name.
 export function visibleColumns(textAreaWidth: number): ListColumns {
   if (textAreaWidth <= 0) return { sha: true, date: true, authorName: true };
   const fits = (used: number) => textAreaWidth - used >= SUBJECT_MIN_WIDTH;

@@ -13,7 +13,6 @@ export type NetworkMeta = {
   nethash: string;
   focus: number;
   dates: string[];
-  name: string;
   users: NetworkUser[];
 };
 
@@ -47,13 +46,11 @@ export type FetchedInitialPage = {
   meta: NetworkMeta;
   commits: NetworkRawCommit[];
   nextEnd: number;
-  totalCount: number;
 };
 
 export type FetchedOlderPage = {
   commits: NetworkRawCommit[];
   nextEnd: number;
-  exhausted: boolean;
 };
 
 export type RetryKind = 'rateLimit' | 'network' | 'server';

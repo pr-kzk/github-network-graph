@@ -14,7 +14,6 @@ function makeCommit(sha: string, overrides: Partial<ViewCommit> = {}): ViewCommi
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents: [],

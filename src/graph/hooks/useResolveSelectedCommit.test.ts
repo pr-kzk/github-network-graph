@@ -8,13 +8,8 @@ const VIEW: GraphView = {
   commits: [],
   edges: [],
   laneCount: 0,
-  totalCommitsAvailable: 0,
-  focusOwner: 'o',
-  focusRepo: 'r',
-  focusHeads: [],
   branches: [],
   forkBranches: [],
-  spaceToLane: new Map(),
 };
 
 function readyState({
@@ -28,7 +23,7 @@ function readyState({
 }): GraphDataState {
   return {
     status: 'ready',
-    meta: { nethash: '', focus: 0, dates: [], name: '', users: [] },
+    meta: { nethash: '', focus: 0, dates: [], users: [] },
     rawCommits: rawShas.map((id) => ({
       id,
       author: 0,

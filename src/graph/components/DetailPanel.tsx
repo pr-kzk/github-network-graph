@@ -7,7 +7,7 @@ const KEYBOARD_STEP = 24;
 type DetailPanelProps = {
   layout: DetailLayout;
   panelRef: Ref<HTMLElement>;
-  hasSelection?: boolean;
+  hasSelection: boolean;
   children: ReactNode;
 };
 
@@ -28,12 +28,7 @@ function Chevron({ pointsLeft }: { pointsLeft: boolean }) {
   );
 }
 
-export function DetailPanel({
-  layout,
-  panelRef,
-  hasSelection = false,
-  children,
-}: DetailPanelProps) {
+export function DetailPanel({ layout, panelRef, hasSelection, children }: DetailPanelProps) {
   const { width, collapsed, previewWidth, commitWidth, setCollapsed } = layout;
   const drag = useRef<{ startX: number; startWidth: number; latest: number } | null>(null);
 

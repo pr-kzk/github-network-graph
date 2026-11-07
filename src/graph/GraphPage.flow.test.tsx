@@ -17,7 +17,6 @@ function pageFor(subject: string): FetchedInitialPage {
       nethash: 'h',
       focus: 0,
       dates: [],
-      name: 'r',
       users: [
         { name: 'o', repo: 'r', heads: [{ name: 'main', id: C }] },
         { name: 'alice', repo: 'r', heads: [{ name: 'experiment', id: F }] },
@@ -54,7 +53,6 @@ function pageFor(subject: string): FetchedInitialPage {
       { id: A, author: 0, time: 1, space: 0, parents: [], message: 'Initial', authorName: 'Al' },
     ],
     nextEnd: 0,
-    totalCount: 4,
   };
 }
 
@@ -64,7 +62,7 @@ vi.mock('./lib/networkApi', async (importOriginal) => ({
   ...(await importOriginal<typeof NetworkApi>()),
   createGithubNetworkClient: () => ({
     fetchInitialPage,
-    fetchOlderPage: async () => ({ commits: [], nextEnd: 0, exhausted: true }),
+    fetchOlderPage: async () => ({ commits: [], nextEnd: 0 }),
   }),
 }));
 

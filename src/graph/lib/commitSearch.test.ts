@@ -13,7 +13,6 @@ function commit(sha: string, overrides: Partial<ViewCommit> = {}): ViewCommit {
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents: [],

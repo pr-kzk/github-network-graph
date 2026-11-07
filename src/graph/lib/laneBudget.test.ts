@@ -18,7 +18,6 @@ function commit(
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: false,
     message: '',
     subject: '',
     parents,

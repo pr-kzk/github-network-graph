@@ -15,8 +15,7 @@ export function findContainingRefs(
   const seen = new Set<string>();
   const stack = [startSha];
   const found: ContainingRef[] = [];
-  while (stack.length > 0) {
-    const sha = stack.pop()!;
+  for (let sha = stack.pop(); sha !== undefined; sha = stack.pop()) {
     if (seen.has(sha)) continue;
     seen.add(sha);
     for (const ref of commitBySha.get(sha)?.refs ?? []) {

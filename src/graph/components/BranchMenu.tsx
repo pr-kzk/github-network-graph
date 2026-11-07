@@ -9,7 +9,7 @@ type BranchMenuProps = {
   branches: GraphBranch[];
   forkBranches: GraphForkBranches[];
   selectedSha: string | null;
-  busy?: boolean;
+  busy: boolean;
   onSelect: (sha: string) => void;
 };
 
@@ -19,7 +19,7 @@ export function BranchMenu({
   branches,
   forkBranches,
   selectedSha,
-  busy = false,
+  busy,
   onSelect,
 }: BranchMenuProps) {
   const [open, setOpen] = useState(false);

@@ -28,7 +28,8 @@ export function useCommitSearch({
       trackEvent('search_used');
       const fromRow = selectedSha ? (commitBySha.get(selectedSha)?.row ?? null) : null;
       const row = stepMatchRow(result.rows, fromRow, direction);
-      if (row !== null) onSelect(commits[row].sha);
+      const target = row === null ? undefined : commits[row];
+      if (target) onSelect(target.sha);
     },
     [commits, commitBySha, onSelect, result, selectedSha],
   );

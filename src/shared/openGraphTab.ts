@@ -1,8 +1,6 @@
 import { focusExistingGraphTab } from './graphTabFocus';
 import { recordRecentRepo } from './storage';
-import { trackEvent } from './telemetry';
-
-type GraphOpenSource = 'detected' | 'manual' | 'recent';
+import { trackEvent, type GraphOpenSource } from './telemetry';
 
 export async function openGraphTab(
   owner: string,

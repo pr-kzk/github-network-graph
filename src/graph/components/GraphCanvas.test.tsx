@@ -17,7 +17,6 @@ function makeView(rows: number): GraphView {
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents: row + 1 < rows ? [sha(row + 1)] : [],
@@ -36,13 +35,8 @@ function makeView(rows: number): GraphView {
     commits,
     edges,
     laneCount: 3,
-    totalCommitsAvailable: rows,
-    focusOwner: 'o',
-    focusRepo: 'r',
-    focusHeads: [],
     branches: [],
     forkBranches: [],
-    spaceToLane: new Map(),
   };
 }
 

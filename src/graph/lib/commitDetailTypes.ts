@@ -17,8 +17,6 @@ export type CommitDetailExtra = {
   truncated: boolean;
 };
 
-type CommitDetailErrorKind = 'network' | 'notFound' | 'rateLimit' | 'auth' | 'shape' | 'http';
-
 export type CommitDetailError = {
   kind: CommitDetailErrorKind;
   status?: number;
@@ -27,14 +25,9 @@ export type CommitDetailError = {
 
 export const MAX_LISTED_FILES = 300;
 
-const ERROR_KINDS: readonly string[] = [
-  'network',
-  'notFound',
-  'rateLimit',
-  'auth',
-  'shape',
-  'http',
-] satisfies CommitDetailErrorKind[];
+const ERROR_KINDS = ['network', 'notFound', 'rateLimit', 'auth', 'shape', 'http'] as const;
+
+type CommitDetailErrorKind = (typeof ERROR_KINDS)[number];
 
 export function makeError(
   kind: CommitDetailErrorKind,
@@ -45,7 +38,7 @@ export function makeError(
 }
 
 export function isCommitDetailError(e: unknown): e is CommitDetailError {
-  return isObject(e) && typeof e.kind === 'string' && ERROR_KINDS.includes(e.kind);
+  return isObject(e) && typeof e.kind === 'string' && ERROR_KINDS.some((kind) => kind === e.kind);
 }
 
 function rateLimitResetAt(response: Response): number | undefined {

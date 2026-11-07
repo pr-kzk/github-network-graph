@@ -13,7 +13,6 @@ function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents,

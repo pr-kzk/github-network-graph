@@ -62,12 +62,10 @@ vi.mock('../lib/networkApi', async (importOriginal) => ({
         nethash: 'h',
         focus: 0,
         dates: [],
-        name: 'r',
         users: [{ name: 'o', repo: 'r', heads: [{ name: 'main', id: `p${TOTAL - 1}` }] }],
       },
       commits: newestFirst(TOTAL - PAGE, TOTAL),
       nextEnd: TOTAL - PAGE,
-      totalCount: TOTAL,
     }),
     fetchOlderPage: async (
       _owner: string,
@@ -86,7 +84,7 @@ vi.mock('../lib/networkApi', async (importOriginal) => ({
       stats.inFlight -= 1;
       if (stats.failEnd === end) throw new Error('offline');
       const start = Math.max(0, end - PAGE);
-      return { commits: newestFirst(start, end), nextEnd: start, exhausted: start === 0 };
+      return { commits: newestFirst(start, end), nextEnd: start };
     },
   }),
 }));
@@ -95,7 +93,7 @@ async function readyHook() {
   let renders = 0;
   const hook = renderHook(() => {
     renders += 1;
-    return useGraphData({ owner: 'o', repo: 'r', mode: 'network' });
+    return useGraphData({ owner: 'o', repo: 'r', mode: 'network', refreshKey: 0 });
   });
   await waitFor(() => expect(hook.result.current.state.status).toBe('ready'));
   return { ...hook, renders: () => renders };

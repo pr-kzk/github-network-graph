@@ -3,12 +3,15 @@ import { assertNever } from '@/shared/errors';
 import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
 import { trackEvent } from '@/shared/telemetry';
-import { createGithubNetworkClient, toGraphError, type GraphErrorKind } from '../lib/networkApi';
+import {
+  CHUNK_PAGE_SIZE,
+  createGithubNetworkClient,
+  toGraphError,
+  type GraphErrorInfo,
+} from '../lib/networkApi';
 import type { NetworkMeta, NetworkRawCommit, RetryNotice } from '../lib/networkApi.types';
 import { transformNetwork } from '../lib/transform';
 import type { GraphView } from '../lib/transform.types';
-
-export type OlderError = { kind: GraphErrorKind; message: string };
 
 export const SEEK_CONCURRENCY = 2;
 
@@ -20,24 +23,22 @@ type ReadyFields = {
   nextEnd: number;
   hasMore: boolean;
   loadingMore: boolean;
-  olderError: OlderError | null;
+  olderError: GraphErrorInfo | null;
   seek: SeekProgress | null;
   refreshing: boolean;
   pendingAttempts: number;
   retry: RetryNotice | null;
 };
 
+type ReadyRaw = { status: 'ready' } & ReadyFields;
+
 type RawState =
   | { status: 'idle' }
   | { status: 'loading'; pendingAttempts: number; retry: RetryNotice | null }
-  | { status: 'error'; kind: GraphErrorKind; message: string }
-  | ({ status: 'ready' } & ReadyFields);
+  | ({ status: 'error' } & GraphErrorInfo)
+  | ReadyRaw;
 
-export type GraphDataState =
-  | { status: 'idle' }
-  | { status: 'loading'; pendingAttempts: number; retry: RetryNotice | null }
-  | { status: 'error'; kind: GraphErrorKind; message: string }
-  | ({ status: 'ready'; view: GraphView } & ReadyFields);
+export type GraphDataState = Exclude<RawState, ReadyRaw> | (ReadyRaw & { view: GraphView });
 
 type UseGraphDataResult = {
   state: GraphDataState;
@@ -50,8 +51,7 @@ type UseGraphDataArgs = {
   owner: string;
   repo: string;
   mode: GraphMode;
-  pageSize?: number;
-  refreshKey?: number;
+  refreshKey: number;
   onRefreshFailed?: () => void;
 };
 
@@ -67,7 +67,7 @@ type Action =
       rawCommits: NetworkRawCommit[];
       nextEnd: number;
     }
-  | { type: 'init/error'; kind: GraphErrorKind; message: string }
+  | { type: 'init/error'; error: GraphErrorInfo }
   | { type: 'refresh/error' }
   | { type: 'older/start' }
   | {
@@ -75,12 +75,14 @@ type Action =
       commits: NetworkRawCommit[];
       nextEnd: number;
     }
-  | { type: 'older/error'; kind: GraphErrorKind; message: string }
+  | { type: 'older/error'; error: GraphErrorInfo }
   | { type: 'seek/start' }
   | { type: 'seek/progress'; commits: NetworkRawCommit[]; nextEnd: number }
-  | { type: 'seek/end'; error?: OlderError };
+  | { type: 'seek/end'; error?: GraphErrorInfo };
 
-function settleSeek(state: ReadyFields & { status: 'ready' }, error: OlderError | null): RawState {
+const IDLE: RawState = { status: 'idle' };
+
+function settleSeek(state: ReadyRaw, error: GraphErrorInfo | null): RawState {
   if (!state.seek) return state;
   return {
     ...state,
@@ -97,7 +99,7 @@ function settleSeek(state: ReadyFields & { status: 'ready' }, error: OlderError 
 function reducer(state: RawState, action: Action): RawState {
   switch (action.type) {
     case 'reset':
-      return { status: 'idle' };
+      return IDLE;
     case 'init/start':
       return LOADING;
     case 'refresh/start':
@@ -136,7 +138,7 @@ function reducer(state: RawState, action: Action): RawState {
         retry: null,
       };
     case 'init/error':
-      return { status: 'error', kind: action.kind, message: action.message };
+      return { status: 'error', ...action.error };
     case 'refresh/error':
       if (state.status !== 'ready') return state;
       return { ...state, refreshing: false, pendingAttempts: 0, retry: null };
@@ -159,7 +161,7 @@ function reducer(state: RawState, action: Action): RawState {
       return {
         ...state,
         loadingMore: false,
-        olderError: { kind: action.kind, message: action.message },
+        olderError: action.error,
         retry: null,
       };
     case 'seek/start':
@@ -198,7 +200,6 @@ function pageOptions(signal: AbortSignal, dispatch: Dispatch<Action>) {
   };
 }
 
-const INITIAL_STATE: RawState = { status: 'idle' };
 const LOADING: Extract<RawState, { status: 'loading' }> = {
   status: 'loading',
   pendingAttempts: 0,
@@ -209,11 +210,10 @@ export function useGraphData({
   owner,
   repo,
   mode,
-  pageSize = 100,
-  refreshKey = 0,
+  refreshKey,
   onRefreshFailed,
 }: UseGraphDataArgs): UseGraphDataResult {
-  const [raw, dispatch] = useReducer(reducer, INITIAL_STATE);
+  const [raw, dispatch] = useReducer(reducer, IDLE);
 
   const client = useMemo(() => createGithubNetworkClient(), []);
 
@@ -241,16 +241,13 @@ export function useGraphData({
     );
   }, [meta, rawCommits, mode, owner, repo]);
 
-  const request = useMemo(
-    () => ({ owner, repo, pageSize, refreshKey }),
-    [owner, repo, pageSize, refreshKey],
-  );
+  const request = useMemo(() => ({ owner, repo, refreshKey }), [owner, repo, refreshKey]);
 
   useEffect(() => {
     generation.current += 1;
     const abort = new AbortController();
     pagesAbort.current = abort;
-    const { owner: targetOwner, repo: targetRepo, pageSize: size } = request;
+    const { owner: targetOwner, repo: targetRepo } = request;
     if (!targetOwner || !targetRepo) {
       loadedFor.current = null;
       dispatch({ type: 'reset' });
@@ -262,7 +259,6 @@ export function useGraphData({
     dispatch({ type: refreshing ? 'refresh/start' : 'init/start' });
     client
       .fetchInitialPage(targetOwner, targetRepo, {
-        pageSize: size,
         signal: abort.signal,
         onPending: (attempt) => {
           if (!cancelled) dispatch({ type: 'pending', attempt });
@@ -286,7 +282,7 @@ export function useGraphData({
           return;
         }
         loadedFor.current = null;
-        dispatch({ type: 'init/error', kind: info.kind, message: info.message });
+        dispatch({ type: 'init/error', error: info });
       });
     return () => {
       cancelled = true;
@@ -301,10 +297,7 @@ export function useGraphData({
     const { signal } = pagesAbort.current;
     dispatch({ type: 'older/start' });
     client
-      .fetchOlderPage(owner, repo, r.meta, r.nextEnd, {
-        pageSize,
-        ...pageOptions(signal, dispatch),
-      })
+      .fetchOlderPage(owner, repo, r.meta, r.nextEnd, pageOptions(signal, dispatch))
       .then(({ commits, nextEnd }) => {
         if (generation.current !== startedIn) return;
         dispatch({ type: 'older/success', commits, nextEnd });
@@ -313,9 +306,9 @@ export function useGraphData({
         if (generation.current !== startedIn || signal.aborted) return;
         const info = toGraphError(err, t('error_unknown_body'));
         trackEvent('graph_error', { phase: 'older', kind: info.kind });
-        dispatch({ type: 'older/error', kind: info.kind, message: info.message });
+        dispatch({ type: 'older/error', error: info });
       });
-  }, [client, owner, repo, pageSize]);
+  }, [client, owner, repo]);
 
   const seekTo = useCallback(
     (sha: string) => {
@@ -332,20 +325,21 @@ export function useGraphData({
         try {
           while (nextEnd > 0) {
             const ends: number[] = [];
-            for (let end = nextEnd; end > 0 && ends.length < SEEK_CONCURRENCY; end -= pageSize) {
+            for (
+              let end = nextEnd;
+              end > 0 && ends.length < SEEK_CONCURRENCY;
+              end -= CHUNK_PAGE_SIZE
+            ) {
               ends.push(end);
             }
             const pages = await Promise.all(
               ends.map((end) =>
-                client.fetchOlderPage(owner, repo, r.meta, end, {
-                  pageSize,
-                  ...pageOptions(signal, dispatch),
-                }),
+                client.fetchOlderPage(owner, repo, r.meta, end, pageOptions(signal, dispatch)),
               ),
             );
             if (superseded()) return;
             const commits = pages.flatMap((p) => p.commits);
-            nextEnd = pages[pages.length - 1].nextEnd;
+            nextEnd = Math.min(...pages.map((p) => p.nextEnd));
             dispatch({ type: 'seek/progress', commits, nextEnd });
             if (commits.some((c) => c.id === sha)) break;
           }
@@ -354,11 +348,11 @@ export function useGraphData({
           if (superseded()) return;
           const info = toGraphError(err, t('error_unknown_body'));
           trackEvent('graph_error', { phase: 'older', kind: info.kind });
-          dispatch({ type: 'seek/end', error: { kind: info.kind, message: info.message } });
+          dispatch({ type: 'seek/end', error: info });
         }
       })();
     },
-    [client, owner, repo, pageSize],
+    [client, owner, repo],
   );
 
   const cancelSeek = useCallback(() => {

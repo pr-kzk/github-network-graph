@@ -42,7 +42,7 @@ describe('no-op invariants', () => {
     vi.stubEnv('VITE_APTABASE_APP_KEY', APP_KEY);
     await localStore.set('telemetry', { enabled: false, promptSeen: true });
     await initTelemetry();
-    trackEvent('graph_open');
+    trackEvent('graph_refresh');
     expect(initMock).toHaveBeenCalledTimes(1);
     expect(trackMock).not.toHaveBeenCalled();
   });
@@ -62,7 +62,7 @@ describe('when configured and enabled', () => {
   it('stops tracking after setTelemetryEnabled(false)', async () => {
     await initTelemetry();
     await setTelemetryEnabled(false);
-    trackEvent('graph_open');
+    trackEvent('graph_refresh');
     expect(trackMock).not.toHaveBeenCalled();
     expect((await localStore.get('telemetry')).enabled).toBe(false);
   });
@@ -70,7 +70,7 @@ describe('when configured and enabled', () => {
   it('reacts to enabled changes from another context via storage.onChanged', async () => {
     await initTelemetry();
     await chrome.storage.local.set({ telemetry: { enabled: false, promptSeen: true } });
-    trackEvent('graph_open');
+    trackEvent('graph_refresh');
     expect(trackMock).not.toHaveBeenCalled();
   });
 
@@ -82,7 +82,7 @@ describe('when configured and enabled', () => {
   it('declineTelemetry disables tracking and marks the prompt seen at once', async () => {
     await initTelemetry();
     await declineTelemetry();
-    trackEvent('graph_open');
+    trackEvent('graph_refresh');
     expect(trackMock).not.toHaveBeenCalled();
     expect(await localStore.get('telemetry')).toEqual({ enabled: false, promptSeen: true });
   });

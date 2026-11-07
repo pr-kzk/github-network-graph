@@ -1,7 +1,24 @@
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
-import { localStore, parseLocalValue } from './storage';
+import { localStore, parseLocalValue, type GraphMode } from './storage';
 
-type EventProps = Record<string, string | number | boolean>;
+export type GraphOpenSource = 'detected' | 'manual' | 'recent';
+
+type TelemetryEvents = {
+  graph_open: { source: GraphOpenSource };
+  graph_refresh: undefined;
+  graph_error: { phase: 'init' | 'older'; kind: string };
+  commit_select: undefined;
+  commit_detail_error: { kind: string };
+  repo_switch: undefined;
+  link_copy: undefined;
+  shortcuts_open: undefined;
+  search_used: undefined;
+  mode_change: { mode: GraphMode };
+};
+
+type EventArgs<E extends keyof TelemetryEvents> = TelemetryEvents[E] extends undefined
+  ? []
+  : [props: TelemetryEvents[E]];
 
 function appKey(): string | undefined {
   return import.meta.env.VITE_APTABASE_APP_KEY;
@@ -31,9 +48,9 @@ export async function initTelemetry(): Promise<void> {
   });
 }
 
-export function trackEvent(name: string, props?: EventProps): void {
+export function trackEvent<E extends keyof TelemetryEvents>(name: E, ...args: EventArgs<E>): void {
   if (!enabled || !isTelemetryConfigured()) return;
-  void aptabaseTrackEvent(name, props).catch(() => {});
+  void aptabaseTrackEvent(name, args[0]).catch(() => {});
 }
 
 export function setTelemetryEnabled(value: boolean): Promise<void> {

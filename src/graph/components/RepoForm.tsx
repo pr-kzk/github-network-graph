@@ -3,12 +3,11 @@ import { t } from '@/shared/i18n';
 import { parseRepoFromInput } from '../lib/parseUrl';
 
 type RepoFormProps = {
-  initialValue?: string;
   onSubmit: (owner: string, repo: string) => void;
 };
 
-export function RepoForm({ initialValue = '', onSubmit }: RepoFormProps) {
-  const [value, setValue] = useState(initialValue);
+export function RepoForm({ onSubmit }: RepoFormProps) {
+  const [value, setValue] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   return (

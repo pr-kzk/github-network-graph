@@ -13,7 +13,7 @@ type RecentRepo = {
   openedAt: number;
 };
 
-export type TelemetryPrefs = {
+type TelemetryPrefs = {
   enabled: boolean;
   promptSeen: boolean;
 };

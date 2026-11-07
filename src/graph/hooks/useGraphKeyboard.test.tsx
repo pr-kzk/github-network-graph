@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useGraphKeyboard, type UseGraphKeyboardArgs } from './useGraphKeyboard';
+import { useGraphKeyboard } from './useGraphKeyboard';
 import type { ViewCommit } from '../lib/transform.types';
 
 function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
@@ -14,7 +14,6 @@ function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
     authorName: '',
     authorLogin: '',
     authorRepo: '',
-    isFocus: true,
     message: '',
     subject: '',
     parents,
@@ -25,7 +24,7 @@ function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
 const COMMITS = [commit('c', 0, ['b']), commit('b', 1, ['a']), commit('a', 2)];
 
 type Handlers = Pick<
-  UseGraphKeyboardArgs,
+  Parameters<typeof useGraphKeyboard>[0],
   'onSelect' | 'onFocusDetail' | 'onFocusSearch' | 'onShowShortcuts'
 >;
 

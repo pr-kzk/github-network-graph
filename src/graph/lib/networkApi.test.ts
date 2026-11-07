@@ -109,39 +109,6 @@ describe('createGithubNetworkClient', () => {
     expect(chunk.commits[0]?.parents).toEqual([{ sha: 'sha-b', space: 0 }]);
   });
 
-  it('fetchAll stops early when a chunk returns fewer than pageSize commits', async () => {
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse(META_BODY))
-      .mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
-
-    const client = createGithubNetworkClient();
-    const result = await client.fetchAll('owner', 'repo', { maxCommits: 500, pageSize: 100 });
-    expect(result.commits).toHaveLength(2);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it('fetchAll pages through multiple chunks when each returns a full page', async () => {
-    const fullPage = (offset: number) => ({
-      commits: Array.from({ length: 2 }, (_v, i) => ({
-        id: `sha-${offset + i}`,
-        author: 0,
-        time: 100 - (offset + i),
-        space: 0,
-        parents: [],
-        message: 'm',
-      })),
-    });
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse(META_BODY))
-      .mockResolvedValueOnce(jsonResponse(fullPage(0)))
-      .mockResolvedValueOnce(jsonResponse({ commits: [] }));
-
-    const client = createGithubNetworkClient();
-    const result = await client.fetchAll('owner', 'repo', { maxCommits: 10, pageSize: 2 });
-    expect(result.commits).toHaveLength(2);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-  });
-
   it('throws NetworkApiError on 401', async () => {
     fetchMock.mockResolvedValueOnce(new Response('', { status: 401 }));
     const client = createGithubNetworkClient();
@@ -271,7 +238,7 @@ git push -u origin main</pre>
     expect(url).toBe('https://github.com/foo%20bar/repo%2Bx/network/meta');
   });
 
-  it('fetchInitialPage requests [totalCount - pageSize, totalCount) and returns nextEnd', async () => {
+  it('fetchInitialPage requests the newest pageSize commits and returns nextEnd', async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse(META_BODY))
       .mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
@@ -283,13 +250,12 @@ git push -u origin main</pre>
     expect(fetchMock.mock.calls[1][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=6&end=9',
     );
-    expect(result.totalCount).toBe(10);
     expect(result.nextEnd).toBe(6);
     expect(result.commits).toHaveLength(2);
     expect(result.commits.map((c) => c.id)).toEqual(['sha2', 'sha1']);
   });
 
-  it('fetchInitialPage handles totalCount smaller than pageSize (start = 0)', async () => {
+  it('fetchInitialPage handles a history smaller than pageSize (start = 0)', async () => {
     const meta = {
       ...META_BODY,
       dates: Array.from({ length: 3 }, () => '2026-05-19'),
@@ -305,10 +271,9 @@ git push -u origin main</pre>
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=2',
     );
     expect(result.nextEnd).toBe(0);
-    expect(result.totalCount).toBe(3);
   });
 
-  it('fetchOlderPage requests [max(0, nextEnd - pageSize), nextEnd) and sets exhausted on reaching 0', async () => {
+  it('fetchOlderPage requests [max(0, nextEnd - pageSize), nextEnd) and reaches 0 when history is covered', async () => {
     const meta = { ...META_BODY };
     fetchMock.mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
 
@@ -320,7 +285,6 @@ git push -u origin main</pre>
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=0&end=4',
     );
     expect(result.nextEnd).toBe(0);
-    expect(result.exhausted).toBe(true);
     expect(result.commits.map((c) => c.id)).toEqual(['sha2', 'sha1']);
   });
 
@@ -332,21 +296,20 @@ git push -u origin main</pre>
     expect(fetchMock).not.toHaveBeenCalled();
     expect(result.commits).toEqual([]);
     expect(result.nextEnd).toBe(0);
-    expect(result.exhausted).toBe(true);
   });
 
-  it('fetchOlderPage sets exhausted=false when more pages remain', async () => {
-    const meta = { ...META_BODY };
+  it('fetchOlderPage leaves nextEnd above 0 when more pages remain', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
 
     const client = createGithubNetworkClient();
-    const result = await client.fetchOlderPage('owner', 'repo', meta, 100, { pageSize: 10 });
+    const result = await client.fetchOlderPage('owner', 'repo', { ...META_BODY }, 100, {
+      pageSize: 10,
+    });
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       'https://github.com/owner/repo/network/chunk?nethash=abc123&start=90&end=99',
     );
     expect(result.nextEnd).toBe(90);
-    expect(result.exhausted).toBe(false);
   });
 
   it('does not double-fetch the boundary commit across initial + older pages (end is inclusive)', async () => {
@@ -377,7 +340,6 @@ git push -u origin main</pre>
     expect(olderIds).toEqual(['sha-1', 'sha-0']);
     expect(initialIds.filter((id) => olderIds.includes(id))).toEqual([]);
     expect(older.nextEnd).toBe(0);
-    expect(older.exhausted).toBe(true);
   });
 });
 

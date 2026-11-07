@@ -40,7 +40,6 @@ function makeView(): GraphView {
         authorName: 'alice',
         authorLogin: 'alice',
         authorRepo: '',
-        isFocus: true,
         message: 'first\n\nbody',
         subject: 'first',
         parents: [],
@@ -56,7 +55,6 @@ function makeView(): GraphView {
         authorName: 'bob',
         authorLogin: 'bob',
         authorRepo: '',
-        isFocus: true,
         message: '',
         subject: '',
         parents: [],
@@ -65,13 +63,8 @@ function makeView(): GraphView {
     ],
     edges: [],
     laneCount: 1,
-    totalCommitsAvailable: 2,
-    focusOwner: 'o',
-    focusRepo: 'r',
-    focusHeads: [],
     branches: [],
     forkBranches: [],
-    spaceToLane: new Map(),
   };
 }
 
@@ -79,11 +72,12 @@ const A = 'a'.repeat(40);
 const B = 'b'.repeat(40);
 
 function renderList(overrides: Partial<ComponentProps<typeof GraphList>> = {}) {
+  const view = overrides.view ?? makeView();
   const props: ComponentProps<typeof GraphList> = {
-    view: makeView(),
+    view,
     selectedSha: null,
     flashSha: null,
-    commitBySha: new Map(),
+    commitBySha: new Map(view.commits.map((c) => [c.sha, c])),
     childrenBySha: new Map(),
     matchShas: new Set(),
     query: '',
