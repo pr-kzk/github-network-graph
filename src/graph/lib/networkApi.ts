@@ -129,7 +129,8 @@ function looksLikeEmptyRepoPage(body: string): boolean {
 }
 
 function parseMeta(body: unknown): NetworkMeta {
-  if (!isObject(body)) throw new NetworkApiError('shape', 'meta レスポンスがオブジェクトではありません。');
+  if (!isObject(body))
+    throw new NetworkApiError('shape', 'meta レスポンスがオブジェクトではありません。');
   const { nethash, focus, dates, name, users } = body;
   if (typeof nethash !== 'string' || !nethash) {
     throw new NetworkApiError('shape', 'meta.nethash が見つかりません。');
@@ -182,7 +183,8 @@ type IntermediateCommit = {
 };
 
 function parseChunk(body: unknown): NetworkChunk {
-  if (!isObject(body)) throw new NetworkApiError('shape', 'chunk レスポンスがオブジェクトではありません。');
+  if (!isObject(body))
+    throw new NetworkApiError('shape', 'chunk レスポンスがオブジェクトではありません。');
   const { commits } = body;
   if (!Array.isArray(commits)) {
     throw new NetworkApiError('shape', 'chunk.commits が配列ではありません。');
@@ -269,11 +271,7 @@ function normalizeParents(raw: unknown, commits: IntermediateCommit[]): NetworkP
       //   [sha, globalCommitIndex, space]    (3 要素 - GitHub の現行 numpy 等)
       //   [commitIndex, space]               (2 要素 / index 形式)
       const space =
-        p.length >= 3 && typeof p[2] === 'number'
-          ? p[2]
-          : typeof p[1] === 'number'
-            ? p[1]
-            : 0;
+        p.length >= 3 && typeof p[2] === 'number' ? p[2] : typeof p[1] === 'number' ? p[1] : 0;
       if (typeof head === 'string' && head) {
         out.push({ sha: head, space });
         continue;

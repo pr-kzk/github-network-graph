@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatRelativeFromMs,
-  formatRelativeFromDateString,
-  formatFullDate,
-} from './format';
+import { formatRelativeFromMs, formatRelativeFromDateString, formatFullDate } from './format';
 
 const NOW = Date.UTC(2025, 5, 1, 12, 0, 0); // 2025-06-01T12:00:00Z (deterministic)
 const SECOND = 1_000;

@@ -35,9 +35,7 @@ export function GraphCanvas({
   onContextMenu,
 }: GraphCanvasProps) {
   const height = view.commits.length * ROW_HEIGHT;
-  const interactive = Boolean(
-    onSelectCommit || onHoverCommit || onLeaveCommit || onContextMenu,
-  );
+  const interactive = Boolean(onSelectCommit || onHoverCommit || onLeaveCommit || onContextMenu);
 
   // rangeStart/End 未指定なら全範囲。指定時は overscan を加味して描画範囲を決める。
   const hasRange = rangeStart !== undefined && rangeEnd !== undefined;
@@ -124,7 +122,9 @@ export function GraphCanvas({
                 cy={cy}
                 r={r}
                 fill={laneColor(c.lane)}
-                stroke={isSelected ? 'var(--graph-node-stroke-selected)' : 'var(--graph-node-stroke)'}
+                stroke={
+                  isSelected ? 'var(--graph-node-stroke-selected)' : 'var(--graph-node-stroke)'
+                }
                 strokeWidth={isSelected ? 2.5 : 2}
               />
               {interactive ? (

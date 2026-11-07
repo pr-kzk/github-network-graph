@@ -57,9 +57,7 @@ export function GraphList({
   const commitVirtualItems = virtualItems.filter((vi) => vi.index < view.commits.length);
   const rangeStart = commitVirtualItems[0]?.index ?? 0;
   const lastVisibleIndex =
-    commitVirtualItems.length > 0
-      ? commitVirtualItems[commitVirtualItems.length - 1].index
-      : -1;
+    commitVirtualItems.length > 0 ? commitVirtualItems[commitVirtualItems.length - 1].index : -1;
   const rangeEnd = lastVisibleIndex >= 0 ? lastVisibleIndex + 1 : 0;
 
   // 末尾に近づいたら次ページを自動 fetch。
@@ -70,14 +68,7 @@ export function GraphList({
     if (lastVisibleIndex >= view.commits.length - LOAD_MORE_THRESHOLD) {
       onLoadMore();
     }
-  }, [
-    lastVisibleIndex,
-    hasMore,
-    loadingMore,
-    olderError,
-    onLoadMore,
-    view.commits.length,
-  ]);
+  }, [lastVisibleIndex, hasMore, loadingMore, olderError, onLoadMore, view.commits.length]);
 
   // selectedSha が変わったら scrollToIndex で中央へ。既に十分見えている場合は動かさない。
   const selectedRow = useMemo(() => {

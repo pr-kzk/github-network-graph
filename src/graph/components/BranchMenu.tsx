@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t, tWith } from '@/shared/i18n';
 import type { GraphBranch } from '../lib/transform.types';
 
@@ -21,11 +21,11 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
     return branches.filter((b) => b.name.toLowerCase().includes(q));
   }, [branches, query]);
 
-  function close() {
+  const close = useCallback(() => {
     setOpen(false);
     setQuery('');
     setActiveIndex(0);
-  }
+  }, []);
 
   // 開いたら検索欄へフォーカス (DOM 副作用のみ)。
   useEffect(() => {
@@ -40,7 +40,7 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
     }
     document.addEventListener('mousedown', handleDown, true);
     return () => document.removeEventListener('mousedown', handleDown, true);
-  }, [open]);
+  }, [open, close]);
 
   // ハイライト行を可視域へスクロール。
   useEffect(() => {
@@ -104,9 +104,7 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
             />
           </div>
           {filtered.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-slate-500">
-              {t('graph_branch_no_match')}
-            </div>
+            <div className="px-3 py-3 text-xs text-slate-500">{t('graph_branch_no_match')}</div>
           ) : (
             <ul ref={listRef} role="listbox" className="max-h-64 overflow-auto py-1">
               {filtered.map((b, i) => (

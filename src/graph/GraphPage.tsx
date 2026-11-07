@@ -57,11 +57,14 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
     return commitBySha.get(selectedSha) ?? null;
   }, [commitBySha, selectedSha]);
 
-  const handleModeChange = useCallback(async (next: GraphMode) => {
-    // useLocalValue が同期的に新値を返すので setMode は不要 (cache が optimistic 更新する)。
-    trackEvent('mode_change', { mode: next });
-    await localStore.set('graphPrefs', { ...prefs, mode: next });
-  }, [prefs]);
+  const handleModeChange = useCallback(
+    async (next: GraphMode) => {
+      // useLocalValue が同期的に新値を返すので setMode は不要 (cache が optimistic 更新する)。
+      trackEvent('mode_change', { mode: next });
+      await localStore.set('graphPrefs', { ...prefs, mode: next });
+    },
+    [prefs],
+  );
 
   const handleRefresh = useCallback(() => {
     trackEvent('graph_refresh');
@@ -140,9 +143,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
             commit={selectedCommit}
             owner={owner}
             repo={repo}
-            childrenShas={
-              selectedCommit ? childrenBySha.get(selectedCommit.sha) ?? [] : []
-            }
+            childrenShas={selectedCommit ? (childrenBySha.get(selectedCommit.sha) ?? []) : []}
             onParentClick={(sha) => setSelectedSha(sha)}
             onChildClick={(sha) => setSelectedSha(sha)}
           />

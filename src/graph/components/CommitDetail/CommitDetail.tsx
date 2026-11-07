@@ -51,7 +51,9 @@ export function CommitDetail({
       <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} size={18} />
         <div className="min-w-0 flex-1 truncate">
-          <span className="text-slate-700 dark:text-slate-300">{commit.authorName || t('commit_unknown_author')}</span>
+          <span className="text-slate-700 dark:text-slate-300">
+            {commit.authorName || t('commit_unknown_author')}
+          </span>
           {commit.authorRepo && commit.authorName !== commit.authorRepo ? (
             <span className="text-slate-500"> / {commit.authorRepo}</span>
           ) : null}

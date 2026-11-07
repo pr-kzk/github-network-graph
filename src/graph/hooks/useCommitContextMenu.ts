@@ -38,7 +38,7 @@ export function useCommitContextMenu({
   const [menu, setMenu] = useState<MenuState | null>(null);
 
   const hoveredCommit = useMemo(
-    () => (hover ? commitBySha.get(hover.sha) ?? null : null),
+    () => (hover ? (commitBySha.get(hover.sha) ?? null) : null),
     [commitBySha, hover],
   );
 

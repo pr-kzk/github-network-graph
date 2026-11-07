@@ -121,7 +121,11 @@ export type MessageKey =
 //     prod ビルドでは fail-safe で key 自身を返す。
 // - chrome.i18n が未定義の test 環境 (fixture 未注入時) でも key を返して壊さない。
 export function t(key: MessageKey, substitutions?: string | string[]): string {
-  const getMessage = (globalThis as { chrome?: { i18n?: { getMessage?: (key: string, subs?: string | string[]) => string } } }).chrome?.i18n?.getMessage;
+  const getMessage = (
+    globalThis as {
+      chrome?: { i18n?: { getMessage?: (key: string, subs?: string | string[]) => string } };
+    }
+  ).chrome?.i18n?.getMessage;
   if (!getMessage) return key;
   const value = getMessage(key, substitutions);
   if (value === '') {

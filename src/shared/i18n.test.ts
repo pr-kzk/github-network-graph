@@ -17,9 +17,7 @@ describe('t', () => {
 
 describe('tWith', () => {
   it('expands named placeholders in declaration order', () => {
-    expect(tWith('popup_launcher_open_detected', { repo: 'numpy/numpy' })).toBe(
-      'Open numpy/numpy',
-    );
+    expect(tWith('popup_launcher_open_detected', { repo: 'numpy/numpy' })).toBe('Open numpy/numpy');
   });
 
   it('expands a numeric placeholder for relative_hours', () => {

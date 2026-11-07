@@ -14,9 +14,7 @@ describe('useLocalValue', () => {
       graphPrefs: { mode: 'repo-only', theme: 'light' },
     });
     const { result } = renderHook(() => useLocalValue('graphPrefs'));
-    await waitFor(() =>
-      expect(result.current).toEqual({ mode: 'repo-only', theme: 'light' }),
-    );
+    await waitFor(() => expect(result.current).toEqual({ mode: 'repo-only', theme: 'light' }));
   });
 
   it('reflects optimistic updates from localStore.set in the same context', async () => {

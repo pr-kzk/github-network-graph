@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [lint, typecheck, test]
+        task: [lint, format:check, typecheck, test]
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6.1.1

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
 import { trackEvent } from '@/shared/telemetry';
-import { NetworkApiError, createGithubNetworkClient, toGraphError } from '../lib/networkApi';
+import { createGithubNetworkClient, toGraphError, type NetworkApiError } from '../lib/networkApi';
 import type { NetworkMeta, NetworkRawCommit } from '../lib/networkApi.types';
 import { transformNetwork } from '../lib/transform';
 import type { GraphView } from '../lib/transform.types';
@@ -163,9 +163,9 @@ export function useGraphData({
     dispatch({ type: 'init/start' });
     client
       .fetchInitialPage(owner, repo, { pageSize })
-      .then(({ meta, commits, nextEnd }) => {
+      .then(({ meta: loadedMeta, commits, nextEnd }) => {
         if (cancelled) return;
-        dispatch({ type: 'init/success', meta, rawCommits: commits, nextEnd });
+        dispatch({ type: 'init/success', meta: loadedMeta, rawCommits: commits, nextEnd });
       })
       .catch((err: unknown) => {
         if (cancelled) return;

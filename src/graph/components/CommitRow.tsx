@@ -44,7 +44,11 @@ export function CommitRow({ commit, isSelected, onSelect, graphAreaWidth }: Comm
         <span className="min-w-0 truncate">{commit.authorName || t('commit_unknown_author')}</span>
       </div>
       <div className="min-w-0 flex-1 truncate pr-3 text-slate-900 dark:text-slate-100">
-        {commit.subject || <span className="text-slate-400 dark:text-slate-500">{t('commit_detail_no_message')}</span>}
+        {commit.subject || (
+          <span className="text-slate-400 dark:text-slate-500">
+            {t('commit_detail_no_message')}
+          </span>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-1 pr-3">
         {commit.refs.map((r) => (

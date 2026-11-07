@@ -33,11 +33,7 @@ export function ChangesReady({ data }: ChangesReadyProps) {
             <li
               key={f.filename}
               className="flex items-center gap-2 rounded px-1 hover:bg-slate-100 dark:hover:bg-slate-900/40"
-              title={
-                f.previousFilename
-                  ? `${f.previousFilename} → ${f.filename}`
-                  : f.filename
-              }
+              title={f.previousFilename ? `${f.previousFilename} → ${f.filename}` : f.filename}
             >
               <FileStatusBadge status={f.status} />
               <span className="min-w-0 flex-1 truncate font-mono text-slate-700 dark:text-slate-300">
@@ -53,9 +49,7 @@ export function ChangesReady({ data }: ChangesReadyProps) {
         </ul>
       )}
       {data.truncated ? (
-        <p className="text-[11px] text-slate-500">
-          {t('commit_detail_changes_truncated_note')}
-        </p>
+        <p className="text-[11px] text-slate-500">{t('commit_detail_changes_truncated_note')}</p>
       ) : null}
     </div>
   );

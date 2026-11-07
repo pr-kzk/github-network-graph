@@ -54,10 +54,7 @@ describe('recordRecentRepo', () => {
     await recordRecentRepo('numpy', 'numpy');
     await recordRecentRepo('facebook', 'react');
     const list = await localStore.get('recentRepos');
-    expect(list.map((e) => `${e.owner}/${e.repo}`)).toEqual([
-      'facebook/react',
-      'numpy/numpy',
-    ]);
+    expect(list.map((e) => `${e.owner}/${e.repo}`)).toEqual(['facebook/react', 'numpy/numpy']);
   });
 
   it('deduplicates case-insensitively and moves to top', async () => {
