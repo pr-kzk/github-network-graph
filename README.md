@@ -22,7 +22,19 @@ A Chrome extension (Manifest V3) that opens a VSCode-Git-Graph-style commit view
 
 ## Screenshots
 
-Screenshots will be added alongside the first Chrome Web Store release. To preview locally, load the built `dist/` folder as an unpacked extension (see [Install → From source](#from-source)) and open any GitHub repository.
+The screenshots use a fictional repository (`acme/widgets`) with invented authors and forks. More are in [`store-listing/screenshots`](./store-listing/screenshots).
+
+![Commit graph with the detail panel showing parents, children and changed files](./store-listing/screenshots/01-graph-overview.png)
+
+![Searching loaded commits by subject, SHA, author or branch](./store-listing/screenshots/02-search.png)
+
+![Jumping to a branch that is not loaded yet, with a progress bar and Cancel](./store-listing/screenshots/04-seek-banner.png)
+
+![A large network with crowded lanes folded into a +N gutter and the selected path highlighted](./store-listing/screenshots/09-narrow-lanes.png)
+
+![Light theme with the Japanese UI](./store-listing/screenshots/08-light-theme-ja.png)
+
+To try it locally, load the built `dist/` folder as an unpacked extension (see [Install → From source](#from-source)) and open any GitHub repository.
 
 ## Install
 
