@@ -1,11 +1,9 @@
-// 小さな型ガード / coercion ヘルパ群。
-// "本物の Error 以外を吸収しない" 方針で predictable に。
-// errorMessage は Error instance のみアンラップし、それ以外は fallback を返す。
-
 export function isObject(value: unknown): value is Record<string, unknown> {
-  // 注意: Array や Date も typeof 'object' && !== null を満たすため、
-  // この narrow では Record として扱える。呼び出し側が必要なら追加判定すること。
   return typeof value === 'object' && value !== null;
+}
+
+export function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${JSON.stringify(value)}`);
 }
 
 export function asString(value: unknown, fallback: string = ''): string {

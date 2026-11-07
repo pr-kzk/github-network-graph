@@ -1,34 +1,51 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { t, tWith } from '@/shared/i18n';
 import { CommitRow } from './CommitRow';
 import { GraphCanvas } from './GraphCanvas';
-import { ROW_HEIGHT, graphWidth } from '../lib/graphMetrics';
-import type { GraphView } from '../lib/transform.types';
+import { GraphListFooter } from './GraphListFooter';
+import type { OlderError } from '../hooks/useGraphData';
+import { useElementWidth } from '../hooks/useElementWidth';
+import { useFocusSelectedRow } from '../hooks/useFocusSelectedRow';
+import { useRevealSelectedRow } from '../hooks/useRevealSelectedRow';
+import { ROW_HEIGHT, createGraphLayout } from '../lib/graphMetrics';
+import { collectPath, priorityLanes } from '../lib/laneBudget';
+import { visibleColumns } from '../lib/listColumns';
+import type { GraphView, ViewCommit } from '../lib/transform.types';
 
-// 末尾から何行ぶん残った時点で次ページを fetch するかの閾値。
 const LOAD_MORE_THRESHOLD = 20;
-// 仮想化の overscan 行数 (上下に余分にレンダする行数)。GraphCanvas の rangeOverscan と揃える。
 const VIRTUAL_OVERSCAN = 20;
 
-export type GraphListProps = {
+type GraphListProps = {
   view: GraphView;
   selectedSha: string | null;
+  flashSha: string | null;
+  commitBySha: ReadonlyMap<string, ViewCommit>;
+  childrenBySha: ReadonlyMap<string, readonly string[]>;
+  matchShas: ReadonlySet<string>;
+  query: string;
   onSelect: (sha: string) => void;
   onHoverCommit: (sha: string, x: number, y: number) => void;
-  onLeaveCommit: (sha: string) => void;
+  onKeyboardFocusCommit: (sha: string, x: number, y: number) => void;
+  onLeaveCommit: () => void;
   onContextCommit: (sha: string, x: number, y: number) => void;
   hasMore: boolean;
   loadingMore: boolean;
-  olderError: { kind: string; message: string } | null;
+  olderError: OlderError | null;
   onLoadMore: () => void;
 };
 
-export function GraphList({
+function GraphListImpl({
   view,
   selectedSha,
+  flashSha,
+  commitBySha,
+  childrenBySha,
+  matchShas,
+  query,
   onSelect,
   onHoverCommit,
+  onKeyboardFocusCommit,
   onLeaveCommit,
   onContextCommit,
   hasMore,
@@ -36,10 +53,25 @@ export function GraphList({
   olderError,
   onLoadMore,
 }: GraphListProps) {
-  const gw = graphWidth(view);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const listWidth = useElementWidth(scrollRef);
+  const priority = useMemo(() => priorityLanes(view.commits), [view.commits]);
+  const layout = useMemo(
+    () => createGraphLayout(view.laneCount, listWidth, priority),
+    [view.laneCount, listWidth, priority],
+  );
+  const gw = layout.width;
+  const textAreaWidth = listWidth - gw;
+  const columns = useMemo(() => visibleColumns(textAreaWidth), [textAreaWidth]);
 
-  // hasMore のあいだは末尾に「読み込み中…」/「再試行」用の追加 1 行を確保するため count + 1。
+  const pathShas = useMemo(
+    () =>
+      layout.crowded && selectedSha && commitBySha.has(selectedSha)
+        ? collectPath(selectedSha, commitBySha, childrenBySha)
+        : null,
+    [layout.crowded, selectedSha, commitBySha, childrenBySha],
+  );
+
   const showFooterRow = hasMore || loadingMore || olderError !== null;
   const itemCount = view.commits.length + (showFooterRow ? 1 : 0);
 
@@ -53,57 +85,31 @@ export function GraphList({
   const virtualItems = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
 
-  // commit 行のレンジ (footer 行を除く) を GraphCanvas に渡す。
   const commitVirtualItems = virtualItems.filter((vi) => vi.index < view.commits.length);
   const rangeStart = commitVirtualItems[0]?.index ?? 0;
   const lastVisibleIndex =
-    commitVirtualItems.length > 0
-      ? commitVirtualItems[commitVirtualItems.length - 1].index
-      : -1;
+    commitVirtualItems.length > 0 ? commitVirtualItems[commitVirtualItems.length - 1].index : -1;
   const rangeEnd = lastVisibleIndex >= 0 ? lastVisibleIndex + 1 : 0;
 
-  // 末尾に近づいたら次ページを自動 fetch。
-  // commitVirtualItems (毎 render 新配列) を deps に取らず、末尾 index の number だけで判定する。
+  // commitVirtualItems は毎 render 新配列になるため deps に取らず、末尾 index の number で判定する。
   useEffect(() => {
     if (!hasMore || loadingMore || olderError) return;
     if (view.commits.length === 0 || lastVisibleIndex < 0) return;
     if (lastVisibleIndex >= view.commits.length - LOAD_MORE_THRESHOLD) {
       onLoadMore();
     }
-  }, [
-    lastVisibleIndex,
-    hasMore,
-    loadingMore,
-    olderError,
-    onLoadMore,
-    view.commits.length,
-  ]);
+  }, [lastVisibleIndex, hasMore, loadingMore, olderError, onLoadMore, view.commits.length]);
 
-  // selectedSha が変わったら scrollToIndex で中央へ。既に十分見えている場合は動かさない。
   const selectedRow = useMemo(() => {
     if (!selectedSha) return null;
     const idx = view.commits.findIndex((c) => c.sha === selectedSha);
     return idx >= 0 ? idx : null;
   }, [selectedSha, view.commits]);
 
-  useEffect(() => {
-    if (selectedRow === null) return;
-    const items = virtualizer.getVirtualItems();
-    const visible = items.find((vi) => vi.index === selectedRow);
-    if (visible) {
-      const container = scrollRef.current;
-      if (container) {
-        const cTop = container.scrollTop;
-        const cBottom = cTop + container.clientHeight;
-        const marginTop = cTop + ROW_HEIGHT;
-        const marginBottom = cBottom - ROW_HEIGHT;
-        const rowTop = visible.start;
-        const rowBottom = visible.start + visible.size;
-        if (rowTop >= marginTop && rowBottom <= marginBottom) return;
-      }
-    }
-    virtualizer.scrollToIndex(selectedRow, { align: 'center', behavior: 'smooth' });
-  }, [selectedRow, virtualizer]);
+  useRevealSelectedRow(virtualizer, scrollRef, selectedRow);
+  useFocusSelectedRow(scrollRef, selectedSha);
+
+  const tabStopSha = selectedRow !== null ? selectedSha : (view.commits[rangeStart]?.sha ?? null);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -111,35 +117,50 @@ export function GraphList({
         className="flex items-center border-b border-slate-200 bg-slate-50 px-0 text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900/40"
         style={{ height: 24 }}
       >
-        <div style={{ width: gw }} className="shrink-0 px-3">
-          Graph
+        <div
+          style={{ width: gw }}
+          className="flex shrink-0 items-center justify-between gap-1 px-3"
+        >
+          <span className="truncate">{t('graph_column_graph')}</span>
+          {layout.foldedCount > 0 ? (
+            <abbr
+              title={tWith('graph_lanes_folded_hint', { count: String(layout.foldedCount) })}
+              className="shrink-0 cursor-help rounded-full no-underline bg-slate-200 px-1.5 py-px text-[10px] font-semibold normal-case tracking-normal text-slate-700 tabular-nums dark:bg-slate-800 dark:text-slate-200"
+            >
+              {tWith('graph_lanes_folded', { count: String(layout.foldedCount) })}
+            </abbr>
+          ) : null}
         </div>
-        <div className="w-32 shrink-0 pr-3">Author</div>
-        <div className="min-w-0 flex-1 truncate pr-3">Subject</div>
-        <div className="w-16 shrink-0 pr-3">SHA</div>
-        <div className="w-16 shrink-0 pr-3 text-right">Date</div>
+        {columns.authorName ? (
+          <div className="w-32 shrink-0 pr-3">{t('graph_column_author')}</div>
+        ) : (
+          <div className="w-8 shrink-0" />
+        )}
+        <div className="min-w-0 flex-1 truncate pr-3">{t('graph_column_subject')}</div>
+        {columns.sha ? <div className="w-16 shrink-0 pr-3">{t('graph_column_sha')}</div> : null}
+        {columns.date ? (
+          <div className="w-16 shrink-0 pr-3 text-right">{t('graph_column_date')}</div>
+        ) : null}
       </div>
       <div ref={scrollRef} className="relative flex-1 overflow-auto">
         <div className="relative" style={{ height: totalSize }}>
           <GraphCanvas
             view={view}
             selectedSha={selectedSha}
-            width={gw}
+            pathShas={pathShas}
+            layout={layout}
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}
-            rangeOverscan={VIRTUAL_OVERSCAN}
-            onSelectCommit={onSelect}
-            onHoverCommit={onHoverCommit}
-            onLeaveCommit={onLeaveCommit}
-            onContextMenu={onContextCommit}
           />
-          <div role="list" className="relative z-0">
+          <ul className="relative z-0" data-commit-list="" aria-label={t('graph_list_label')}>
             {virtualItems.map((vi) => {
-              const isFooter = vi.index >= view.commits.length;
-              const key = isFooter ? '__footer__' : view.commits[vi.index].sha;
+              const commit = vi.index < view.commits.length ? view.commits[vi.index] : null;
+              const key = commit ? commit.sha : '__footer__';
               return (
-                <div
+                <li
                   key={key}
+                  aria-posinset={commit ? vi.index + 1 : undefined}
+                  aria-setsize={commit ? view.commits.length : undefined}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -149,8 +170,8 @@ export function GraphList({
                     transform: `translateY(${vi.start}px)`,
                   }}
                 >
-                  {isFooter ? (
-                    <FooterRow
+                  {commit === null ? (
+                    <GraphListFooter
                       loadingMore={loadingMore}
                       olderError={olderError}
                       onRetry={onLoadMore}
@@ -158,16 +179,25 @@ export function GraphList({
                     />
                   ) : (
                     <CommitRow
-                      commit={view.commits[vi.index]}
-                      isSelected={view.commits[vi.index].sha === selectedSha}
+                      commit={commit}
+                      isSelected={commit.sha === selectedSha}
+                      isMatch={matchShas.has(commit.sha)}
+                      query={matchShas.has(commit.sha) ? query : ''}
+                      isTabStop={commit.sha === tabStopSha}
+                      isFlashing={commit.sha === flashSha}
+                      columns={columns}
                       onSelect={onSelect}
+                      onContextMenu={onContextCommit}
+                      onHover={onHoverCommit}
+                      onKeyboardFocus={onKeyboardFocusCommit}
+                      onLeave={onLeaveCommit}
                       graphAreaWidth={gw}
                     />
                   )}
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
         {view.commits.length === 0 ? (
           <div className="p-6 text-sm text-slate-500">{t('graph_empty_commits')}</div>
@@ -177,41 +207,4 @@ export function GraphList({
   );
 }
 
-function FooterRow({
-  loadingMore,
-  olderError,
-  onRetry,
-  graphAreaWidth,
-}: {
-  loadingMore: boolean;
-  olderError: { kind: string; message: string } | null;
-  onRetry: () => void;
-  graphAreaWidth: number;
-}) {
-  return (
-    <div
-      className="flex w-full items-center border-b border-slate-200 text-xs text-slate-600 dark:border-slate-900/40 dark:text-slate-400"
-      style={{ height: ROW_HEIGHT }}
-    >
-      <div style={{ width: graphAreaWidth }} className="shrink-0" aria-hidden="true" />
-      {olderError ? (
-        <div className="flex items-center gap-2 pr-3">
-          <span className="text-rose-400">
-            {tWith('graph_footer_load_error', { message: olderError.message })}
-          </span>
-          <button
-            type="button"
-            onClick={onRetry}
-            className="rounded bg-slate-200 px-2 py-0.5 text-[11px] text-slate-800 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            {t('graph_footer_retry')}
-          </button>
-        </div>
-      ) : loadingMore ? (
-        <span className="pr-3">{t('graph_footer_loading_more')}</span>
-      ) : (
-        <span className="pr-3 text-slate-500">{t('graph_footer_will_load_more')}</span>
-      )}
-    </div>
-  );
-}
+export const GraphList = memo(GraphListImpl);

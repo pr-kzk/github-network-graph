@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterEach, vi, type Mock } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import enMessages from '../public/_locales/en/messages.json' with { type: 'json' };
-import { __resetLocalStoreCacheForTest } from '@/shared/storage';
+import { resetLocalStoreCacheForTest } from '@/shared/storage';
 
 type I18nMessageEntry = {
   message: string;
@@ -10,12 +10,7 @@ type I18nMessageEntry = {
   placeholders?: Record<string, { content: string; example?: string }>;
 };
 
-// chrome.i18n のテスト用 fixture は en/messages.json を再利用する。
-// (ja は本番ロケール解決経由でのみ使われるため、ユニットテストでは en で十分。)
-const i18nFixture: Record<string, I18nMessageEntry> = enMessages as Record<
-  string,
-  I18nMessageEntry
->;
+const i18nFixture: Record<string, I18nMessageEntry> = enMessages;
 
 type StorageChange = { oldValue?: unknown; newValue?: unknown };
 type StorageAreaName = 'local' | 'sync' | 'managed' | 'session';
@@ -24,11 +19,23 @@ type StorageChangeListener = (
   areaName: StorageAreaName,
 ) => void;
 
+type StorageGet = (
+  keys?: string | string[] | Record<string, unknown>,
+) => Promise<Record<string, unknown>>;
+type StorageSet = (items: Record<string, unknown>) => Promise<void>;
+type StorageRemove = (keys: string | string[]) => Promise<void>;
+type StorageClear = () => Promise<void>;
+type MessageListener = (
+  msg: unknown,
+  sender: unknown,
+  sendResponse: (r: unknown) => void,
+) => boolean | void;
+
 type StorageArea = {
-  get: ReturnType<typeof vi.fn>;
-  set: ReturnType<typeof vi.fn>;
-  remove: ReturnType<typeof vi.fn>;
-  clear: ReturnType<typeof vi.fn>;
+  get: Mock<StorageGet>;
+  set: Mock<StorageSet>;
+  remove: Mock<StorageRemove>;
+  clear: Mock<StorageClear>;
 };
 
 function createStorageArea(
@@ -37,7 +44,7 @@ function createStorageArea(
 ): StorageArea {
   const store = new Map<string, unknown>();
   return {
-    get: vi.fn(async (keys?: string | string[] | Record<string, unknown>) => {
+    get: vi.fn<StorageGet>(async (keys) => {
       if (keys === undefined || keys === null) {
         return Object.fromEntries(store);
       }
@@ -53,7 +60,7 @@ function createStorageArea(
       for (const k of Object.keys(keys)) if (store.has(k)) out[k] = store.get(k);
       return out;
     }),
-    set: vi.fn(async (items: Record<string, unknown>) => {
+    set: vi.fn<StorageSet>(async (items) => {
       const changes: Record<string, StorageChange> = {};
       for (const [k, v] of Object.entries(items)) {
         const oldValue = store.get(k);
@@ -62,7 +69,7 @@ function createStorageArea(
       }
       emit(changes, areaName);
     }),
-    remove: vi.fn(async (keys: string | string[]) => {
+    remove: vi.fn<StorageRemove>(async (keys) => {
       const ks = Array.isArray(keys) ? keys : [keys];
       const changes: Record<string, StorageChange> = {};
       for (const k of ks) {
@@ -73,7 +80,7 @@ function createStorageArea(
       }
       if (Object.keys(changes).length > 0) emit(changes, areaName);
     }),
-    clear: vi.fn(async () => {
+    clear: vi.fn<StorageClear>(async () => {
       const changes: Record<string, StorageChange> = {};
       for (const [k, v] of store) changes[k] = { oldValue: v };
       store.clear();
@@ -83,57 +90,70 @@ function createStorageArea(
 }
 
 function createChromeMock() {
-  const messageListeners: Array<
-    (msg: unknown, sender: unknown, sendResponse: (r: unknown) => void) => boolean | void
-  > = [];
+  const messageListeners: MessageListener[] = [];
   const onChangedListeners: StorageChangeListener[] = [];
   const emitStorageChange: StorageChangeListener = (changes, area) => {
     for (const l of onChangedListeners.slice()) l(changes, area);
   };
   return {
     runtime: {
-      onInstalled: { addListener: vi.fn() },
+      id: 'test-extension-id',
+      onInstalled: { addListener: vi.fn<(cb: () => void) => void>() },
       onMessage: {
-        addListener: vi.fn((cb: (typeof messageListeners)[number]) => {
+        addListener: vi.fn<(cb: MessageListener) => void>((cb) => {
           messageListeners.push(cb);
         }),
+        removeListener: vi.fn<(cb: MessageListener) => void>((cb) => {
+          const i = messageListeners.indexOf(cb);
+          if (i >= 0) messageListeners.splice(i, 1);
+        }),
       },
-      sendMessage: vi.fn(async (message: unknown) => {
+      sendMessage: vi.fn<(message: unknown) => Promise<unknown>>(async (message) => {
         return new Promise((resolve) => {
           for (const listener of messageListeners) {
-            const isAsync = listener(message, {}, resolve);
+            const isAsync = listener(message, { id: 'test-extension-id' }, resolve);
             if (isAsync) return;
           }
           resolve(undefined);
         });
       }),
-      openOptionsPage: vi.fn(),
-      getURL: vi.fn((path: string) => `github-network-graph://test-id/${path}`),
+      openOptionsPage: vi.fn<() => void>(),
+      getURL: vi.fn<(path: string) => string>((path) => `github-network-graph://test-id/${path}`),
     },
     storage: {
       local: createStorageArea('local', emitStorageChange),
       sync: createStorageArea('sync', emitStorageChange),
+      session: createStorageArea('session', emitStorageChange),
       onChanged: {
-        addListener: vi.fn((cb: StorageChangeListener) => {
+        addListener: vi.fn<(cb: StorageChangeListener) => void>((cb) => {
           onChangedListeners.push(cb);
         }),
-        removeListener: vi.fn((cb: StorageChangeListener) => {
+        removeListener: vi.fn<(cb: StorageChangeListener) => void>((cb) => {
           const i = onChangedListeners.indexOf(cb);
           if (i >= 0) onChangedListeners.splice(i, 1);
         }),
       },
     },
-    action: { onClicked: { addListener: vi.fn() } },
+    action: { onClicked: { addListener: vi.fn<(cb: () => void) => void>() } },
     tabs: {
-      query: vi.fn(async () => [] as Array<{ url?: string }>),
-      create: vi.fn(async () => ({ id: 1 })),
+      query: vi.fn<() => Promise<Array<{ url?: string }>>>(async () => []),
+      create: vi.fn<() => Promise<{ id: number }>>(async () => ({ id: 1 })),
+      getCurrent: vi.fn<() => Promise<{ id: number; windowId: number }>>(async () => ({
+        id: 1,
+        windowId: 1,
+      })),
+      update: vi.fn<(tabId: number, props: object) => Promise<{ id: number }>>(async (id) => ({
+        id,
+      })),
+    },
+    windows: {
+      update: vi.fn<(windowId: number, info: object) => Promise<{ id: number }>>(async (id) => ({
+        id,
+      })),
     },
     i18n: {
-      // chrome.i18n.getMessage の最小実装。
-      //   1. messages.json の placeholders.<name>.content = "$N" → subsArr[N-1] にマップ
-      //   2. メッセージ中の $NAME$ を解決済み値で置換 (Chrome 同様 case-insensitive)
-      // 未定義キーは Chrome 本体と同じく空文字列を返す。
-      getMessage: vi.fn((key: string, subs?: string | string[]): string => {
+      getUILanguage: vi.fn<() => string>(() => 'en'),
+      getMessage: vi.fn<(key: string, subs?: string | string[]) => string>((key, subs) => {
         const entry = i18nFixture[key];
         if (!entry) return '';
         let msg = entry.message;
@@ -154,8 +174,25 @@ function createChromeMock() {
 
 vi.stubGlobal('chrome', createChromeMock());
 
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+vi.stubGlobal(
+  'matchMedia',
+  vi.fn((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: vi.fn<() => void>(),
+    removeEventListener: vi.fn<() => void>(),
+  })),
+);
+Element.prototype.scrollIntoView = vi.fn<Element['scrollIntoView']>();
+
 afterEach(() => {
   cleanup();
   vi.stubGlobal('chrome', createChromeMock());
-  __resetLocalStoreCacheForTest();
+  resetLocalStoreCacheForTest();
 });

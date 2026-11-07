@@ -1,6 +1,6 @@
 import type React from 'react';
 
-export type IconButtonProps = {
+type IconButtonProps = {
   label: string;
   onClick: () => void;
   disabled?: boolean;

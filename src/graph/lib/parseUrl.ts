@@ -60,8 +60,8 @@ export function parseRepoFromInput(input: string): RepoRef | null {
 
   const match = /^([\w.-]+)\s*\/\s*([\w.-]+)$/.exec(trimmed);
   if (!match) return null;
-  const owner = sanitizeSegment(match[1]!);
-  const repo = sanitizeSegment(match[2]!);
+  const owner = sanitizeSegment(match[1]);
+  const repo = sanitizeSegment(match[2]);
   if (!owner || !repo) return null;
   if (RESERVED_OWNERS.has(owner.toLowerCase())) return null;
   return { owner, repo };

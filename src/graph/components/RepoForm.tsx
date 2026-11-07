@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { t } from '@/shared/i18n';
 import { parseRepoFromInput } from '../lib/parseUrl';
 
-export type RepoFormProps = {
+type RepoFormProps = {
   initialValue?: string;
   onSubmit: (owner: string, repo: string) => void;
 };
@@ -25,7 +25,10 @@ export function RepoForm({ initialValue = '', onSubmit }: RepoFormProps) {
       }}
       className="flex flex-col gap-3"
     >
-      <label className="text-xs font-medium text-slate-600 dark:text-slate-400" htmlFor="repo-input">
+      <label
+        className="text-xs font-medium text-slate-600 dark:text-slate-400"
+        htmlFor="repo-input"
+      >
         {t('graph_repoform_label')}
       </label>
       <input

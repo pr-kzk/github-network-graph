@@ -1,16 +1,9 @@
-// GitHub Network ページが内部利用しているエンドポイントのレスポンス型。
-// 公式仕様ではないため、実機 (DevTools の Network タブ) で観察した実物と
-// 差異があれば実物に合わせて更新すること。
-// 観察対象:
-//   GET https://github.com/{owner}/{repo}/network/meta
-//   GET https://github.com/{owner}/{repo}/network/chunk?nethash=...&start=N&end=M
-
-export type NetworkHead = {
+type NetworkHead = {
   name: string;
   id: string;
 };
 
-export type NetworkUser = {
+type NetworkUser = {
   name: string;
   repo: string;
   heads: NetworkHead[];
@@ -50,8 +43,6 @@ export type FetchedNetwork = {
   commits: NetworkRawCommit[];
 };
 
-// 初回ページ取得結果。commits は新→古の順。nextEnd は次回 fetchOlderPage に渡す end。
-// nextEnd === 0 でリポジトリの最古に到達。
 export type FetchedInitialPage = {
   meta: NetworkMeta;
   commits: NetworkRawCommit[];
@@ -59,9 +50,23 @@ export type FetchedInitialPage = {
   totalCount: number;
 };
 
-// 古い側のページ取得結果。commits は新→古の順。exhausted=true で最古到達。
 export type FetchedOlderPage = {
   commits: NetworkRawCommit[];
   nextEnd: number;
   exhausted: boolean;
+};
+
+export type RetryKind = 'rateLimit' | 'network' | 'server';
+
+export type RetryNotice = {
+  kind: RetryKind;
+  attempt: number;
+  maxAttempts: number;
+  resumeAt: number;
+};
+
+export type RequestOptions = {
+  signal?: AbortSignal;
+  onPending?: (attempt: number) => void;
+  onRetry?: (notice: RetryNotice) => void;
 };

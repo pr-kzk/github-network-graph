@@ -24,12 +24,8 @@
     "description": "Popup link that opens the options page."
   },
   "popup_launcher_title": {
-    "message": "Git Graph",
+    "message": "コミットグラフを開く",
     "description": "Title of the graph launcher card in the popup."
-  },
-  "popup_launcher_description": {
-    "message": "現在のリポジトリのコミットグラフを別タブで表示します。",
-    "description": "Description for the graph launcher card."
   },
   "popup_launcher_open_detected": {
     "message": "$REPO$ を開く",
@@ -42,15 +38,15 @@
     }
   },
   "popup_launcher_not_on_github": {
-    "message": "GitHub のリポジトリページではないため、下に入力してください。",
+    "message": "GitHub のリポジトリページではありません。",
     "description": "Hint shown when the active tab is not a GitHub repository."
   },
   "popup_launcher_input_placeholder": {
-    "message": "owner/repo",
+    "message": "owner/repo または URL",
     "description": "Placeholder for the manual owner/repo input."
   },
   "popup_launcher_submit": {
-    "message": "手入力で開く",
+    "message": "開く",
     "description": "Submit button label for the manual repo input."
   },
   "popup_launcher_input_error": {
@@ -112,6 +108,14 @@
   "options_theme_legend": {
     "message": "テーマ",
     "description": "Fieldset legend for the theme radio group."
+  },
+  "options_theme_system_label": {
+    "message": "システム",
+    "description": "Radio label for following the OS color scheme."
+  },
+  "options_theme_system_desc": {
+    "message": "OS のライト／ダーク設定に合わせて自動で切り替えます。",
+    "description": "Description of the system theme."
   },
   "options_theme_dark_label": {
     "message": "ダーク",
@@ -189,6 +193,16 @@
     "message": "フォーク含む",
     "description": "Mode toggle button: include forks."
   },
+  "graph_tab_title": {
+    "message": "$REPO$ - Git Graph",
+    "description": "Browser tab title of the graph page for a repository.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "octocat/hello-world"
+      }
+    }
+  },
   "graph_branch_button": {
     "message": "ブランチ ($COUNT$)",
     "description": "Branch jump menu button label in the graph header. $COUNT$ is the number of branches.",
@@ -202,6 +216,10 @@
   "graph_branch_search_placeholder": {
     "message": "ブランチを検索…",
     "description": "Placeholder for the branch search input in the branch jump menu."
+  },
+  "graph_branch_search_label": {
+    "message": "ブランチを検索",
+    "description": "Accessible name of the branch search input."
   },
   "graph_branch_no_match": {
     "message": "一致するブランチがありません",
@@ -270,7 +288,7 @@
     "description": "Heading shown for an authentication error."
   },
   "error_notfound_heading": {
-    "message": "リポジトリが見つかりません",
+    "message": "リポジトリが見つからないか、非公開です",
     "description": "Heading shown when the repository is not found."
   },
   "error_network_heading": {
@@ -289,6 +307,10 @@
     "message": "HTTP エラー",
     "description": "Heading shown for a generic HTTP error."
   },
+  "error_ratelimit_heading": {
+    "message": "リクエストが多すぎます",
+    "description": "Heading shown when GitHub answers HTTP 429."
+  },
   "error_pending_heading": {
     "message": "GitHub がグラフを生成中です",
     "description": "Heading shown when GitHub is still computing the network graph data (HTTP 202)."
@@ -302,12 +324,12 @@
     "description": "Body text for an authentication / access denied error from the GitHub network endpoint."
   },
   "error_notfound_body": {
-    "message": "リポジトリが見つかりません。",
+    "message": "リポジトリが存在しないか、非公開でこのブラウザが GitHub にログインしていません。",
     "description": "Body text for a 404 from the GitHub network endpoint."
   },
   "error_network_body": {
-    "message": "通信に失敗しました: $CAUSE$",
-    "description": "Body text for a generic network failure. $CAUSE$ is the underlying error message.",
+    "message": "GitHub に接続できませんでした: $CAUSE$",
+    "description": "Body text for a network failure. $CAUSE$ is the underlying error message.",
     "placeholders": {
       "cause": {
         "content": "$1",
@@ -343,29 +365,17 @@
       }
     }
   },
+  "error_ratelimit_body": {
+    "message": "GitHub がこのブラウザからのリクエストを制限しています。",
+    "description": "Body text shown when GitHub answers HTTP 429 without saying how long to wait."
+  },
   "error_pending_body": {
-    "message": "GitHub がこのリポジトリのグラフデータを生成中です。少し時間を置いてから再読み込みしてください。",
+    "message": "GitHub がこのリポジトリのグラフデータを生成中です。少し待ってから「再試行」を押してください。",
     "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
   },
   "error_unknown_body": {
     "message": "予期しないエラーが発生しました。",
     "description": "Body text fallback for an unknown error."
-  },
-  "error_commit_notfound_body": {
-    "message": "コミットが見つかりません。",
-    "description": "Body text for a 404 on a single-commit detail fetch."
-  },
-  "error_ratelimit_body": {
-    "message": "GitHub API のレート制限に達しました (未認証は 60 回/時間)。",
-    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
-  },
-  "error_auth_denied_body": {
-    "message": "リポジトリへのアクセスが拒否されました。",
-    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
-  },
-  "error_auth_required_body": {
-    "message": "認証が必要です。",
-    "description": "Body text for a 401 on a single-commit detail fetch."
   },
   "error_target_label": {
     "message": "対象: $REPO$",
@@ -390,7 +400,7 @@
     "description": "Placeholder shown in the commit detail pane when no commit is selected."
   },
   "commit_detail_no_message": {
-    "message": "(no message)",
+    "message": "(メッセージなし)",
     "description": "Placeholder shown when a commit has no subject/message."
   },
   "commit_detail_action_open_github": {
@@ -414,15 +424,15 @@
     "description": "Action: select the parent commit in the graph."
   },
   "commit_detail_parents_heading": {
-    "message": "parents",
+    "message": "親コミット",
     "description": "Heading for the parents relation list."
   },
   "commit_detail_parents_empty": {
-    "message": "(root commit)",
+    "message": "(ルートコミット)",
     "description": "Empty label for a root commit's parents list."
   },
   "commit_detail_children_heading": {
-    "message": "children",
+    "message": "子コミット",
     "description": "Heading for the children relation list."
   },
   "commit_detail_children_empty": {
@@ -430,7 +440,7 @@
     "description": "Empty label when no children are visible in the current view."
   },
   "commit_detail_changes_heading": {
-    "message": "changes",
+    "message": "変更",
     "description": "Heading for the file changes section."
   },
   "commit_detail_changes_loading": {
@@ -442,19 +452,49 @@
     "description": "Empty state for the file changes section."
   },
   "commit_detail_changes_files_singular": {
-    "message": "files",
+    "message": "ファイル",
     "description": "Suffix after the file count when not truncated."
   },
   "commit_detail_changes_files_truncated": {
-    "message": "+ files",
+    "message": "+ ファイル",
     "description": "Suffix after the file count when the list is truncated."
   },
   "commit_detail_changes_truncated_note": {
-    "message": "※ GitHub API は files を 300 件で打ち切ります。残りは GitHub 上で確認してください。",
-    "description": "Note explaining the 300-file truncation."
+    "message": "※ 一部のファイルのみ表示しています。残りは GitHub 上で確認してください。",
+    "description": "Note shown when the file list is cut short."
+  },
+  "commit_detail_changes_error_ratelimit": {
+    "message": "GitHub API のレート制限に達したため、変更ファイルを表示できません。制限は 1 時間以内に解除されます。それまでは GitHub で直接ご確認ください。",
+    "description": "Shown in the Changes section when the GitHub API rate limit is hit."
+  },
+  "commit_detail_changes_error_ratelimit_reset": {
+    "message": "認証なしのリクエストに対する GitHub のレート制限 (1 時間あたり 60 回) に達したため、変更ファイルを表示できません。$TIME$ に解除されます。それまでは GitHub で直接ご確認ください。",
+    "description": "Shown in the Changes section when the rate limit is hit and the reset time is known. $TIME$ is a local clock time.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "15:45"
+      }
+    }
+  },
+  "commit_detail_changes_error_auth": {
+    "message": "このリポジトリへのアクセス権が必要です。このブラウザで GitHub にログインしてから、もう一度お試しください。",
+    "description": "Shown in the Changes section when GitHub denies access."
+  },
+  "commit_detail_changes_error_notfound": {
+    "message": "GitHub でこのコミットが見つかりませんでした。非公開リポジトリの場合は、先にこのブラウザで GitHub にログインしてください。",
+    "description": "Shown in the Changes section when the commit is not found."
+  },
+  "commit_detail_changes_error_network": {
+    "message": "変更ファイルを読み込めませんでした。接続を確認して、もう一度お試しください。",
+    "description": "Shown in the Changes section on a network failure."
+  },
+  "commit_detail_changes_error_generic": {
+    "message": "GitHub から変更ファイルを読み込めませんでした。",
+    "description": "Shown in the Changes section for unexpected HTTP or response-shape errors."
   },
   "commit_unknown_author": {
-    "message": "unknown",
+    "message": "不明",
     "description": "Fallback shown when a commit's author name is missing."
   },
   "popup_telemetry_banner_text": {
@@ -484,5 +524,503 @@
   "options_telemetry_learn_more": {
     "message": "収集する内容について",
     "description": "Link text to the privacy policy detailing what is collected."
+  },
+  "toast_copied": {
+    "message": "コピーしました",
+    "description": "Toast shown after text was copied to the clipboard."
+  },
+  "toast_copy_failed": {
+    "message": "コピーできませんでした",
+    "description": "Toast shown when copying to the clipboard failed."
+  },
+  "toast_refresh_failed": {
+    "message": "再取得できませんでした。以前のデータを表示しています。",
+    "description": "Toast shown when a refresh fails while earlier data is still displayed."
+  },
+  "graph_column_graph": {
+    "message": "グラフ",
+    "description": "Column header for the branch graph lanes."
+  },
+  "graph_column_author": {
+    "message": "作成者",
+    "description": "Column header for the commit author."
+  },
+  "graph_column_subject": {
+    "message": "件名",
+    "description": "Column header for the commit subject line."
+  },
+  "graph_column_sha": {
+    "message": "SHA",
+    "description": "Column header for the abbreviated commit SHA."
+  },
+  "graph_column_date": {
+    "message": "日付",
+    "description": "Column header for the commit date."
+  },
+  "graph_tooltip_commit": {
+    "message": "コミット",
+    "description": "Label of the abbreviated SHA in the commit hover tooltip."
+  },
+  "graph_tooltip_parents": {
+    "message": "親コミット",
+    "description": "Label of the parent SHAs in the commit hover tooltip."
+  },
+  "graph_mode_group_label": {
+    "message": "表示モード",
+    "description": "Accessible name of the mode toggle button group."
+  },
+  "graph_mode_help_label": {
+    "message": "表示モードについて",
+    "description": "Accessible name of the help button next to the mode toggle."
+  },
+  "graph_mode_repo_only_hint": {
+    "message": "入力したリポジトリのコミットだけを表示します。",
+    "description": "Help text for the main-only mode."
+  },
+  "graph_mode_network_hint": {
+    "message": "フォークのコミットも表示します。読み込むデータが増えるため、大きなネットワークでは時間がかかることがあります。",
+    "description": "Help text for the include-forks mode."
+  },
+  "graph_status_commits_one": {
+    "message": "1 件のコミットを読み込み済み",
+    "description": "Status line text when exactly one commit is loaded."
+  },
+  "graph_status_commits_many": {
+    "message": "$COUNT$ 件のコミットを読み込み済み",
+    "description": "Status line text for several loaded commits. $COUNT$ is the number.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "250"
+      }
+    }
+  },
+  "graph_status_more_available": {
+    "message": "さらに古い履歴があります",
+    "description": "Status line suffix when older commits can still be loaded."
+  },
+  "graph_status_complete": {
+    "message": "すべての履歴を読み込み済み",
+    "description": "Status line suffix when the oldest commit has been reached."
+  },
+  "file_status_added": {
+    "message": "追加",
+    "description": "Accessible name of the file status badge: added."
+  },
+  "file_status_modified": {
+    "message": "変更",
+    "description": "Accessible name of the file status badge: modified."
+  },
+  "file_status_removed": {
+    "message": "削除",
+    "description": "Accessible name of the file status badge: removed."
+  },
+  "file_status_renamed": {
+    "message": "名前変更",
+    "description": "Accessible name of the file status badge: renamed."
+  },
+  "file_status_copied": {
+    "message": "コピー",
+    "description": "Accessible name of the file status badge: copied."
+  },
+  "file_status_changed": {
+    "message": "変更あり",
+    "description": "Accessible name of the file status badge: changed."
+  },
+  "file_status_unchanged": {
+    "message": "変更なし",
+    "description": "Accessible name of the file status badge: unchanged."
+  },
+  "relative_now_short": {
+    "message": "いま",
+    "description": "Compact relative time for under a minute ago, shown in the commit list."
+  },
+  "graph_search_label": {
+    "message": "読み込み済みのコミットを検索",
+    "description": "Accessible name of the commit search field."
+  },
+  "graph_search_placeholder": {
+    "message": "件名・SHA・作者・ブランチを検索  ( / )",
+    "description": "Placeholder of the commit search field. The slash is the shortcut that focuses it."
+  },
+  "graph_search_count": {
+    "message": "読み込み済み $LOADED$ 件中 $MATCHES$ 件",
+    "description": "Search result count. $MATCHES$ is the number of matches, $LOADED$ the number of loaded commits.",
+    "placeholders": {
+      "matches": {
+        "content": "$1",
+        "example": "3"
+      },
+      "loaded": {
+        "content": "$2",
+        "example": "120"
+      }
+    }
+  },
+  "graph_search_none": {
+    "message": "読み込み済みの $LOADED$ 件に一致なし",
+    "description": "Search result text when nothing matches. $LOADED$ is the number of loaded commits.",
+    "placeholders": {
+      "loaded": {
+        "content": "$1",
+        "example": "120"
+      }
+    }
+  },
+  "graph_search_partial": {
+    "message": "古いコミットはまだ検索対象外です。",
+    "description": "Hint shown while a search is active and older history has not been loaded."
+  },
+  "graph_search_load_older": {
+    "message": "古いコミットを読み込む",
+    "description": "Button next to the search result that loads older commits so they are searched too."
+  },
+  "graph_search_previous": {
+    "message": "前の一致 (Shift+Enter)",
+    "description": "Button that selects the previous search match."
+  },
+  "graph_search_next": {
+    "message": "次の一致 (Enter)",
+    "description": "Button that selects the next search match."
+  },
+  "graph_list_label": {
+    "message": "コミット一覧",
+    "description": "Accessible name of the commit list."
+  },
+  "commit_detail_panel_label": {
+    "message": "コミットの詳細",
+    "description": "Accessible name of the commit detail panel."
+  },
+  "commit_detail_action_copy_link": {
+    "message": "このコミット表示へのリンクをコピー",
+    "description": "Copies a link that reopens the graph on this commit with the same mode."
+  },
+  "toast_commit_not_found": {
+    "message": "そのコミットはリポジトリの履歴に見つかりませんでした。削除されたか、別のリポジトリのものかもしれません。更新するか、ブランチから選び直してください。",
+    "description": "Toast shown when the commit from the link or selection cannot be found after loading all history."
+  },
+  "toast_commit_hidden_by_mode": {
+    "message": "そのコミットはフォークにのみ存在します。「フォーク含む」に切り替えると表示されます。",
+    "description": "Toast shown when the linked commit exists only in forks while forks are hidden."
+  },
+  "graph_shortcuts_button": {
+    "message": "ショートカット",
+    "description": "Header button that opens the keyboard shortcuts dialog."
+  },
+  "graph_shortcuts_title": {
+    "message": "キーボードショートカット",
+    "description": "Title of the keyboard shortcuts dialog."
+  },
+  "graph_shortcuts_close": {
+    "message": "閉じる",
+    "description": "Button that closes the keyboard shortcuts dialog."
+  },
+  "graph_shortcut_next": {
+    "message": "次の(古い)コミットを選択",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_previous": {
+    "message": "前の(新しい)コミットを選択",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_first": {
+    "message": "読み込み済みの最新コミットへ移動",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_last": {
+    "message": "読み込み済みの最古コミットへ移動",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_parent": {
+    "message": "最初の親コミットへ移動",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_child": {
+    "message": "最初の子コミットへ移動",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_open_detail": {
+    "message": "コミットの詳細へフォーカスを移動",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_back_to_list": {
+    "message": "詳細から一覧へ戻る",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search": {
+    "message": "検索欄にフォーカス",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search_step": {
+    "message": "次 / 前の一致 (検索欄内)",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_search_clear": {
+    "message": "検索をクリア (検索欄内)",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_context_menu": {
+    "message": "フォーカス中のコミットのメニューを開く",
+    "description": "Keyboard shortcut description."
+  },
+  "graph_shortcut_help": {
+    "message": "このダイアログを表示",
+    "description": "Keyboard shortcut description."
+  },
+  "popup_recent_clear": {
+    "message": "すべて削除",
+    "description": "Button that clears the whole recent repositories list."
+  },
+  "popup_recent_remove": {
+    "message": "最近のリポジトリから $REPO$ を削除",
+    "description": "Accessible label of the button that removes one recent repository. $REPO$ is owner/repo.",
+    "placeholders": {
+      "repo": {
+        "content": "$1",
+        "example": "numpy/numpy"
+      }
+    }
+  },
+  "popup_launcher_input_label": {
+    "message": "リポジトリの URL または owner/repo",
+    "description": "Accessible label of the manual repository input in the popup."
+  },
+  "popup_telemetry_banner_label": {
+    "message": "匿名の利用統計",
+    "description": "Accessible name of the first-run telemetry notice in the popup."
+  },
+  "graph_repo_switch_label": {
+    "message": "リポジトリを切り替え",
+    "description": "Tooltip and accessible name of the repository chip that opens the inline switcher."
+  },
+  "graph_repo_switch_recent": {
+    "message": "最近のリポジトリ",
+    "description": "Accessible name of the suggestion list in the inline repository switcher."
+  },
+  "graph_repo_switch_hint": {
+    "message": "Enter で開く · Esc でキャンセル",
+    "description": "Keyboard hint below the inline repository switcher."
+  },
+  "graph_repo_open_github": {
+    "message": "GitHub で開く",
+    "description": "Tooltip and accessible name of the link that opens the repository on GitHub."
+  },
+  "graph_status_refreshing": {
+    "message": "更新中…",
+    "description": "Status bar text while the graph is refreshed and the previous data stays visible."
+  },
+  "graph_status_pending": {
+    "message": "GitHub がこのグラフを準備しています。大きなリポジトリでは 1 分ほどかかることがあります。",
+    "description": "Reassuring text shown when GitHub keeps answering that the network data is not ready yet."
+  },
+  "graph_status_seek_cancel": {
+    "message": "キャンセル",
+    "description": "Button that stops the search for an older commit."
+  },
+  "graph_branch_group_repo": {
+    "message": "このリポジトリ",
+    "description": "Heading of the main repository group in the branch menu when fork branches are also listed."
+  },
+  "commit_detail_branches_heading": {
+    "message": "含まれるブランチ",
+    "description": "Heading of the list of branches whose history contains the selected commit."
+  },
+  "commit_detail_branches_empty": {
+    "message": "(読み込み済みのコミットにブランチ先端なし)",
+    "description": "Empty label when no loaded branch tip contains the selected commit."
+  },
+  "commit_detail_branches_show_all": {
+    "message": "すべて表示 ($COUNT$)",
+    "description": "Button that reveals every branch containing the selected commit when only the first few are listed.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "graph_detail_collapse": {
+    "message": "詳細パネルを隠す",
+    "description": "Tooltip and accessible name of the button that collapses the details panel."
+  },
+  "graph_detail_expand": {
+    "message": "詳細パネルを表示",
+    "description": "Tooltip and accessible name of the button that expands the details panel."
+  },
+  "graph_detail_resize": {
+    "message": "詳細パネルの幅を変更",
+    "description": "Accessible name of the drag handle that resizes the details panel."
+  },
+  "graph_seek_title": {
+    "message": "古い履歴から $TARGET$ を探しています…",
+    "description": "Banner title while older pages are fetched to reach a branch or commit. $TARGET$ is a branch name or short commit hash.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "release/1.x"
+      }
+    }
+  },
+  "graph_seek_progress_total": {
+    "message": "$TOTAL$ 件中 $COUNT$ 件をスキャン済み",
+    "description": "Progress text of the older-history search when the total number of commits is known.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3,100"
+      },
+      "total": {
+        "content": "$2",
+        "example": "8,000"
+      }
+    }
+  },
+  "graph_seek_progress": {
+    "message": "$COUNT$ 件をスキャン済み",
+    "description": "Progress text of the older-history search when the total is unknown.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3,100"
+      }
+    }
+  },
+  "graph_seek_busy": {
+    "message": "古い履歴を検索中…",
+    "description": "Tooltip of the busy indicator on the branch menu button while an older commit is being searched for."
+  },
+  "toast_jumped": {
+    "message": "$TARGET$ に移動しました",
+    "description": "Toast shown after the list reached a commit that had to be loaded first. $TARGET$ is a branch name or short commit hash.",
+    "placeholders": {
+      "target": {
+        "content": "$1",
+        "example": "release/1.x"
+      }
+    }
+  },
+  "graph_detail_rail_label": {
+    "message": "詳細",
+    "description": "Vertical label on the collapsed details panel rail."
+  },
+  "graph_lanes_folded": {
+    "message": "+$COUNT$",
+    "description": "Chip in the graph column header: number of lanes folded into the overflow gutter.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "37"
+      }
+    }
+  },
+  "graph_lanes_folded_hint": {
+    "message": "表示しきれない $COUNT$ 本のレーンは右端の点線にまとめています。コミットを選ぶとその経路が強調されます。",
+    "description": "Tooltip of the overflow chip in the graph column header.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "37"
+      }
+    }
+  },
+  "error_server_heading": {
+    "message": "GitHub 側で問題が発生しています",
+    "description": "Heading shown when GitHub answers with a server error (HTTP 5xx)."
+  },
+  "error_server_body": {
+    "message": "GitHub がサーバーエラー (HTTP $STATUS$) を返しました。",
+    "description": "Body text for an HTTP 5xx answer. $STATUS$ is the response status code.",
+    "placeholders": {
+      "status": {
+        "content": "$1",
+        "example": "503"
+      }
+    }
+  },
+  "error_ratelimit_body_wait": {
+    "message": "GitHub がこのブラウザからのリクエストを制限しています。約 $MINUTES$ 分待つよう求められました。",
+    "description": "Body text shown when GitHub says how long to wait. $MINUTES$ is a whole number of minutes.",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "error_hint_ratelimit": {
+    "message": "数分待ってから「再試行」を押してください。その間も GitHub 上ではリポジトリを閲覧できます。",
+    "description": "Advice shown under a rate limit error."
+  },
+  "error_hint_network": {
+    "message": "インターネット接続や VPN を確認してください。他のタブでは GitHub が開くのにこの表示が続く場合は、GitHub が一時的にこの接続を制限している可能性があります。数分待ってから「再試行」を押してください。",
+    "description": "Advice shown under a network error."
+  },
+  "error_hint_server": {
+    "message": "GitHub 側で問題が起きている可能性があります。少し待ってから「再試行」を押してください。",
+    "description": "Advice shown under a server error."
+  },
+  "graph_status_retry_ratelimit": {
+    "message": "GitHub がリクエストを制限しています。$SECONDS$ 秒後に再試行します (試行 $ATTEMPT$/$MAX$)…",
+    "description": "Status text while waiting to retry after GitHub throttled a request.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "8"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "2"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_retry_network": {
+    "message": "通信に問題が発生しました。$SECONDS$ 秒後に再試行します (試行 $ATTEMPT$/$MAX$)…",
+    "description": "Status text while waiting to retry after a network failure.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "4"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "2"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_retry_server": {
+    "message": "GitHub 側で問題が発生しました。$SECONDS$ 秒後に再試行します (試行 $ATTEMPT$/$MAX$)…",
+    "description": "Status text while waiting to retry after a GitHub server error.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "2"
+      },
+      "attempt": {
+        "content": "$2",
+        "example": "1"
+      },
+      "max": {
+        "content": "$3",
+        "example": "3"
+      }
+    }
+  },
+  "graph_status_cooldown": {
+    "message": "GitHub の回復を待つため、$SECONDS$ 秒間リクエストを一時停止しています…",
+    "description": "Status text shown while new requests wait for an earlier failure to cool down.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
   }
 }

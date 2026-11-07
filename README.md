@@ -8,9 +8,16 @@ A Chrome extension (Manifest V3) that opens a VSCode-Git-Graph-style commit view
 
 - Browse the **commit graph** of any GitHub repository in its own tab, with virtualized rendering for large histories.
 - **Fork-aware**: choose between `Main only` (commits reachable from the focus repo's heads) and `Include forks` (full network).
-- **Commit detail panel** with parent / children navigation and a per-file diff summary (additions / deletions / status).
-- **Recent repositories** list in the popup.
-- **Dark theme** by default.
+- **Commit detail panel** with parent / children navigation and a per-file diff summary (additions / deletions / status). If the changed files can't be loaded, the panel says why (for example a rate limit with its reset time) and offers Retry and Open on GitHub.
+- **Find and move quickly**: search loaded commits by subject, SHA, author or branch (press `/`), step through matches with Enter / Shift+Enter, and navigate the list from the keyboard (press `?` for the shortcut list).
+- **Shareable views**: the address bar always reflects the selected commit and mode, and `Copy link to this commit view` reopens exactly that view.
+- **Copy feedback**: copying a SHA or subject confirms with a short "Copied" notice.
+- **Recent repositories** list in the popup, where you can remove one entry or `Clear all`. Opening a repository that already has a graph tab brings that tab to the front instead of opening a duplicate.
+- **Switch repository in place**: click the `owner/repo` chip in the graph header, type a URL or `owner/repo`, or pick a recent repository.
+- **Stays put while refreshing**: `Refresh` keeps the list, scroll position and selection on screen with a small `Refreshing…` indicator; a status bar shows how many commits are loaded and whether older history remains.
+- **Branch orientation**: the `Branches` menu also lists fork branches grouped by owner in `Include forks` mode, and the detail panel shows which branches contain the selected commit.
+- **Adjustable layout**: drag the edge of the details panel (or use the arrow keys on it) to resize it, or hide it with `Hide details panel`.
+- **Themes**: follow your operating system, or pick the dark or light theme.
 - **Privacy-friendly.** Requests go directly to GitHub from your browser. Optional anonymous, opt-out usage and error stats — no personal data, no repository names. See [PRIVACY.md](./PRIVACY.md).
 
 ## Screenshots
@@ -41,17 +48,19 @@ Then load the `dist/` folder via `chrome://extensions` → "Load unpacked".
 The graph view supports:
 
 - Click a commit dot or row to open the detail panel.
-- Right-click for SHA / subject copy and parent jump.
-- Toggle between `Main only` / `Include forks` in the header.
+- Right-click (or Shift+F10 on a focused row) for SHA / subject / link copy and parent jump.
+- Type in the search field to highlight matching commits; the count shows how many of the loaded commits match, and `Load older commits` extends the search to older history.
+- Use `j` / `k` or the arrow keys to move between commits, `[` / `]` to jump to the first parent / child, `g` / `G` for the newest / oldest loaded commit, and `Enter` to move focus to the details.
+- Toggle between `Main only` / `Include forks` in the header; the `?` button next to it explains each mode (`Include forks` can be slower on large repositories).
 
 ## Permissions
 
-| Permission | Why |
-| --- | --- |
-| `storage` | Save the default graph mode and the recent-repositories list locally. |
-| `activeTab` | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes. |
-| `host_permissions: https://github.com/*` | Fetch the commit network data directly from GitHub on demand. |
-| `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / files) from the GitHub REST API when you select a commit. Unauthenticated, rate-limited to 60 requests/hour per IP. |
+| Permission                                   | Why                                                                                                                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                                    | Save the default graph mode and the recent-repositories list locally.                                                                                                 |
+| `activeTab`                                  | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes.                           |
+| `host_permissions: https://github.com/*`     | Fetch the commit network data and each commit's changed files directly from GitHub on demand, using your signed-in session so private repositories work.              |
+| `host_permissions: https://api.github.com/*` | Fallback for per-commit detail (stats / files) from the GitHub REST API when the page above is unavailable. Unauthenticated, rate-limited to 60 requests/hour per IP. |
 
 No `scripting`, no content scripts, no remote code; optional opt-out anonymous diagnostics. See [PRIVACY.md](./PRIVACY.md).
 
@@ -66,18 +75,20 @@ Adding a new locale: create `public/_locales/<code>/messages.json` with the same
 
 ## Development
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Vite dev server with HMR |
-| `pnpm build` | Development build |
-| `pnpm build:prod` | Production build (sourcemaps hidden) |
-| `pnpm typecheck` | `tsc -b --noEmit` |
-| `pnpm lint` | ESLint |
-| `pnpm test` | Vitest (jsdom) |
-| `pnpm test:cov` | Coverage report |
-| `pnpm package` | Build prod + zip into `releases/` |
+| Command                             | Purpose                                    |
+| ----------------------------------- | ------------------------------------------ |
+| `pnpm dev`                          | Vite dev server with HMR                   |
+| `pnpm build`                        | Development build                          |
+| `pnpm build:prod`                   | Production build (sourcemaps hidden)       |
+| `pnpm typecheck`                    | `tsc -b --noEmit`                          |
+| `pnpm lint`                         | Oxlint, type-aware (warnings fail the run) |
+| `pnpm lint:fix`                     | Oxlint with safe auto-fixes                |
+| `pnpm format` / `pnpm format:check` | Oxfmt write / check                        |
+| `pnpm test`                         | Vitest (jsdom)                             |
+| `pnpm test:cov`                     | Coverage report                            |
+| `pnpm package`                      | Build prod + zip into `releases/`          |
 
-Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`. Versions live in [`package.json`](./package.json).
+Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`, linted with Oxlint and formatted with Oxfmt. Versions live in [`package.json`](./package.json).
 
 ## Project layout
 
@@ -85,7 +96,6 @@ Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`. Versions
 src/
 ├── popup/        Popup UI (toolbar button)
 ├── options/      Options page
-├── background/   Service worker (placeholder)
 ├── graph/        Commit graph viewer (web_accessible_resource)
 │   ├── components/  React components
 │   ├── hooks/       Reducer-based data hook + UI state hooks

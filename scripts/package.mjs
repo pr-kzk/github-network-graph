@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import { createWriteStream, existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { ZipArchive } from 'archiver';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, '..');
+const root = resolve(import.meta.dirname, '..');
 const distDir = resolve(root, 'dist');
 const releasesDir = resolve(root, 'releases');
 

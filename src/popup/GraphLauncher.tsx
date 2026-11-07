@@ -30,9 +30,6 @@ export function GraphLauncher() {
       <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
         {t('popup_launcher_title')}
       </p>
-      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-        {t('popup_launcher_description')}
-      </p>
 
       {detected ? (
         <button
@@ -62,12 +59,17 @@ export function GraphLauncher() {
         className="mt-3 flex flex-col gap-2"
       >
         <input
+          aria-label={t('popup_launcher_input_label')}
           value={manual}
           onChange={(e) => setManual(e.target.value)}
           placeholder={t('popup_launcher_input_placeholder')}
           className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900 outline-none focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
-        {error ? <p className="text-[10px] text-rose-500">{error}</p> : null}
+        {error ? (
+          <p role="alert" className="text-[11px] text-rose-600 dark:text-rose-400">
+            {error}
+          </p>
+        ) : null}
         <button
           type="submit"
           className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600"

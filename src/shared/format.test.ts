@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatRelativeFromMs,
-  formatRelativeFromDateString,
-  formatFullDate,
-} from './format';
+import { formatRelativeFromMs, formatRelativeFromDateString, formatFullDate } from './format';
 
-const NOW = Date.UTC(2025, 5, 1, 12, 0, 0); // 2025-06-01T12:00:00Z (deterministic)
+const NOW = Date.UTC(2025, 5, 1, 12, 0, 0);
 const SECOND = 1_000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
@@ -33,7 +29,6 @@ describe('formatRelativeFromMs (short)', () => {
 });
 
 describe('formatRelativeFromMs (long)', () => {
-  // テスト fixture は en/messages.json を再利用するため、long 文言の期待値も英語版に合わせる。
   const long = { now: NOW, style: 'long' as const };
   it('returns "just now" within 1 minute', () => {
     expect(formatRelativeFromMs(NOW - 30 * SECOND, long)).toBe('just now');

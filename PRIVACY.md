@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-06-20
+Last updated: 2026-11-07
 
 ## Summary
 
@@ -30,22 +30,23 @@ To understand which features are used and where errors happen, the extension can
 
 On user action, the extension fetches data **directly from GitHub**. The only other request is the optional anonymous telemetry event listed below, which can be turned off.
 
-| Endpoint | When | Auth |
-| --- | --- | --- |
-| `https://github.com/{owner}/{repo}/network/meta` | When you open a repository graph | Cookie session (sent with `credentials: 'include'` so private repos work for the signed-in user) |
-| `https://github.com/{owner}/{repo}/network/chunk` | Pagination through commit pages | Same |
-| `https://api.github.com/repos/{owner}/{repo}/commits/{sha}` | When you select a commit, to load stats / files | Unauthenticated (rate-limited to 60 / hour / IP) |
-| `https://*.aptabase.com/api/v0/event` | When anonymous telemetry is enabled, to record a usage or error event | Anonymous (no cookies; sent with `credentials: 'omit'`) |
+| Endpoint                                                    | When                                                                  | Auth                                                                                             |
+| ----------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `https://github.com/{owner}/{repo}/network/meta`            | When you open a repository graph                                      | Cookie session (sent with `credentials: 'include'` so private repos work for the signed-in user) |
+| `https://github.com/{owner}/{repo}/network/chunk`           | Pagination through commit pages                                       | Same                                                                                             |
+| `https://github.com/{owner}/{repo}/commit/{sha}.diff`       | When you select a commit, to load stats / files                       | Cookie session (sent with `credentials: 'include'` so private repos work for the signed-in user) |
+| `https://api.github.com/repos/{owner}/{repo}/commits/{sha}` | Fallback when the request above is unavailable                        | Unauthenticated (rate-limited to 60 / hour / IP)                                                 |
+| `https://*.aptabase.com/api/v0/event`                       | When anonymous telemetry is enabled, to record a usage or error event | Anonymous (no cookies; sent with `credentials: 'omit'`)                                          |
 
 The session cookie is sent **only** when the request target is `github.com`. The extension never reads or transmits the cookie itself; it relies on the browser's normal credentialed fetch behavior.
 
 ## Permissions rationale
 
-| Permission | Purpose |
-| --- | --- |
-| `storage` | Persist the default graph mode and the recent-repositories list locally in the browser. |
-| `activeTab` | Read the URL of the active tab when the user clicks the toolbar icon, so the popup can offer to open the current repository. Access is granted only on explicit user action and does not persist. |
-| `host_permissions: https://github.com/*` | Fetch commit network data directly from GitHub (`github.com/{owner}/{repo}/network/meta` and `/network/chunk`). |
+| Permission                                   | Purpose                                                                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `storage`                                    | Persist the default graph mode and the recent-repositories list locally in the browser.                                                                                                                                  |
+| `activeTab`                                  | Read the URL of the active tab when the user clicks the toolbar icon, so the popup can offer to open the current repository. Access is granted only on explicit user action and does not persist.                        |
+| `host_permissions: https://github.com/*`     | Fetch commit network data directly from GitHub (`github.com/{owner}/{repo}/network/meta` and `/network/chunk`).                                                                                                          |
 | `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / file changes) from the GitHub REST API (`api.github.com/repos/{owner}/{repo}/commits/{sha}`) when you select a commit. Requests are unauthenticated and rate-limited to 60/hour per IP. |
 
 ## Contact

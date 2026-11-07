@@ -1,16 +1,5 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
 import { Options } from './Options';
-import { initTelemetry } from '@/shared/telemetry';
+import { mountApp } from '@/shared/mountApp';
 import '@/styles/globals.css';
 
-const root = document.getElementById('root');
-if (!root) throw new Error('root element not found');
-
-void initTelemetry();
-
-createRoot(root).render(
-  <StrictMode>
-    <Options />
-  </StrictMode>,
-);
+void mountApp(<Options />);

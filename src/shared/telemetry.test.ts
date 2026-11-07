@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@aptabase/web', () => ({
-  init: vi.fn(),
-  trackEvent: vi.fn(() => Promise.resolve()),
+  init: vi.fn<typeof init>(),
+  trackEvent: vi.fn<typeof aptabaseTrackEvent>(() => Promise.resolve()),
 }));
 
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
 import { localStore } from './storage';
 import {
-  __resetTelemetryForTest,
+  resetTelemetryForTest,
   declineTelemetry,
   initTelemetry,
   isTelemetryConfigured,
@@ -23,7 +23,7 @@ const trackMock = vi.mocked(aptabaseTrackEvent);
 const APP_KEY = 'A-US-0000000000';
 
 afterEach(() => {
-  __resetTelemetryForTest();
+  resetTelemetryForTest();
   vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
@@ -61,7 +61,7 @@ describe('when configured and enabled', () => {
 
   it('stops tracking after setTelemetryEnabled(false)', async () => {
     await initTelemetry();
-    await setTelemetryEnabled({ enabled: true, promptSeen: true }, false);
+    await setTelemetryEnabled(false);
     trackEvent('graph_open');
     expect(trackMock).not.toHaveBeenCalled();
     expect((await localStore.get('telemetry')).enabled).toBe(false);
@@ -75,13 +75,13 @@ describe('when configured and enabled', () => {
   });
 
   it('records that the consent prompt has been seen', async () => {
-    await markTelemetryPromptSeen({ enabled: true, promptSeen: false });
+    await markTelemetryPromptSeen();
     expect((await localStore.get('telemetry')).promptSeen).toBe(true);
   });
 
   it('declineTelemetry disables tracking and marks the prompt seen at once', async () => {
     await initTelemetry();
-    await declineTelemetry({ enabled: true, promptSeen: false });
+    await declineTelemetry();
     trackEvent('graph_open');
     expect(trackMock).not.toHaveBeenCalled();
     expect(await localStore.get('telemetry')).toEqual({ enabled: false, promptSeen: true });

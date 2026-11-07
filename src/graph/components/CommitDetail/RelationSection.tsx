@@ -1,4 +1,4 @@
-export type RelationSectionProps = {
+type RelationSectionProps = {
   title: string;
   shas: string[];
   emptyLabel: string;
@@ -8,9 +8,7 @@ export type RelationSectionProps = {
 export function RelationSection({ title, shas, emptyLabel, onClick }: RelationSectionProps) {
   return (
     <section>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {title}
-      </h3>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</h3>
       {shas.length === 0 ? (
         <p className="text-xs text-slate-500">{emptyLabel}</p>
       ) : (
