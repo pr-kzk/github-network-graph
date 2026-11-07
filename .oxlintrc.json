@@ -120,7 +120,11 @@
     "react/purity": "error",
     "react/set-state-in-render": "error",
     "react/unsupported-syntax": "warn",
-    "react/incompatible-library": "warn"
+    "react/incompatible-library": "warn",
+    "typescript/consistent-return": "off",
+    "typescript/no-unsafe-type-assertion": "off",
+    "typescript/no-unnecessary-type-parameters": "off",
+    "typescript/no-unnecessary-boolean-literal-compare": "off"
   },
   "overrides": [
     {
@@ -141,5 +145,8 @@
         "node": true
       }
     }
-  ]
+  ],
+  "options": {
+    "typeAware": true
+  }
 }
