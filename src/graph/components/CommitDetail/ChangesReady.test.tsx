@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import { ChangesSection } from './ChangesSection';
+import { ChangesReady } from './ChangesReady';
 
 const FILES = [
   { filename: 'src/a.ts', status: 'modified', additions: 3, deletions: 1, changes: 4 },
@@ -17,24 +17,19 @@ const FILES = [
 function renderReady(overrides: { truncated?: boolean; files?: typeof FILES } = {}) {
   const files = overrides.files ?? FILES;
   render(
-    <ChangesSection
-      state={{
-        status: 'ready',
-        data: {
-          additions: 3,
-          deletions: 1,
-          total: 4,
-          files,
-          truncated: overrides.truncated ?? false,
-        },
+    <ChangesReady
+      data={{
+        additions: 3,
+        deletions: 1,
+        total: 4,
+        files,
+        truncated: overrides.truncated ?? false,
       }}
-      commitUrl="https://github.com/o/r/commit/abc"
-      onRetry={() => undefined}
     />,
   );
 }
 
-describe('ChangesSection with loaded changes', () => {
+describe('ChangesReady', () => {
   it('lists each changed file with its status and line counts', () => {
     renderReady();
     const items = within(screen.getByRole('list')).getAllByRole('listitem');

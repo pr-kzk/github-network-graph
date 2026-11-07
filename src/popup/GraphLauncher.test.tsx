@@ -33,7 +33,7 @@ describe('GraphLauncher', () => {
 
     await userEvent.type(screen.getByRole('textbox'), 'not a repo{Enter}');
 
-    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a URL or owner/repo.');
     expect(chrome.tabs.create).not.toHaveBeenCalled();
   });
 });

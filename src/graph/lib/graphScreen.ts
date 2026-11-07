@@ -1,10 +1,10 @@
 import type { GraphDataState, LoadProgress } from '../hooks/graphDataReducer';
 
-export const PENDING_NOTICE_ATTEMPTS = 3;
+const PENDING_NOTICE_ATTEMPTS = 3;
 
 const NO_PROGRESS: LoadProgress = { pendingAttempts: 0, retry: null };
 
-export type GraphScreen = {
+type GraphScreen = {
   ready: Extract<GraphDataState, { status: 'ready' }> | null;
   loading: boolean;
   retry: LoadProgress['retry'];

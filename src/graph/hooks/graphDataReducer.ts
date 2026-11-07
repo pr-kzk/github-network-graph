@@ -19,7 +19,7 @@ type ReadyFields = {
   progress: LoadProgress;
 };
 
-export type ReadyRaw = { status: 'ready' } & ReadyFields;
+type ReadyRaw = { status: 'ready' } & ReadyFields;
 
 export type RawState =
   | { status: 'idle' }

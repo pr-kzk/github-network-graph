@@ -1,4 +1,6 @@
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
+import type { CommitDetailErrorKind } from '@/graph/lib/commitDetailTypes';
+import type { GraphErrorKind } from '@/graph/lib/networkApi';
 import { localStore, parseLocalValue, type GraphMode } from './storage';
 
 export type GraphOpenSource = 'detected' | 'manual' | 'recent';
@@ -6,9 +8,9 @@ export type GraphOpenSource = 'detected' | 'manual' | 'recent';
 type TelemetryEvents = {
   graph_open: { source: GraphOpenSource };
   graph_refresh: undefined;
-  graph_error: { phase: 'init' | 'older'; kind: string };
+  graph_error: { phase: 'init' | 'older'; kind: GraphErrorKind };
   commit_select: undefined;
-  commit_detail_error: { kind: string };
+  commit_detail_error: { kind: CommitDetailErrorKind };
   repo_switch: undefined;
   link_copy: undefined;
   shortcuts_open: undefined;

@@ -25,8 +25,6 @@ export default defineConfig({
     sourcemap: process.env.NODE_ENV === 'production' ? 'hidden' : true,
     target: 'esnext',
     rollupOptions: {
-      // No manifest entry references the graph page (it is opened with chrome.tabs.create), so
-      // crxjs would not bundle it unless it is an explicit input.
       input: {
         graph: resolve(__dirname, 'src/graph/index.html'),
       },

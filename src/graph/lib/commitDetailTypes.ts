@@ -27,7 +27,7 @@ export const MAX_LISTED_FILES = 300;
 
 const ERROR_KINDS = ['network', 'notFound', 'rateLimit', 'auth', 'shape', 'http'] as const;
 
-type CommitDetailErrorKind = (typeof ERROR_KINDS)[number];
+export type CommitDetailErrorKind = (typeof ERROR_KINDS)[number];
 
 export function makeError(
   kind: CommitDetailErrorKind,
