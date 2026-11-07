@@ -105,7 +105,7 @@ export function Options() {
             <label
               key={opt.value}
               className={[
-                'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition',
+                'grid cursor-pointer grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg border p-3 transition',
                 mode === opt.value
                   ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40'
                   : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
@@ -117,14 +117,10 @@ export function Options() {
                 value={opt.value}
                 checked={mode === opt.value}
                 onChange={() => handleChange(opt.value)}
-                className="mt-0.5 h-4 w-4 accent-indigo-600"
+                className="mt-0.5 row-span-2 h-4 w-4 accent-indigo-600"
               />
-              <span className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{opt.label}</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {opt.description}
-                </span>
-              </span>
+              <span className="text-sm font-medium">{opt.label}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</span>
             </label>
           ))}
         </fieldset>
@@ -144,7 +140,7 @@ export function Options() {
             <label
               key={opt.value}
               className={[
-                'flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition',
+                'grid cursor-pointer grid-cols-[auto_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg border p-3 transition',
                 theme === opt.value
                   ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40'
                   : 'border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-600',
@@ -156,14 +152,10 @@ export function Options() {
                 value={opt.value}
                 checked={theme === opt.value}
                 onChange={() => handleThemeChange(opt.value)}
-                className="mt-0.5 h-4 w-4 accent-indigo-600"
+                className="mt-0.5 row-span-2 h-4 w-4 accent-indigo-600"
               />
-              <span className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{opt.label}</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {opt.description}
-                </span>
-              </span>
+              <span className="text-sm font-medium">{opt.label}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{opt.description}</span>
             </label>
           ))}
         </fieldset>

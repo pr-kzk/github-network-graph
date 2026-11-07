@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { errorMessage, isObject } from '@/shared/errors';
+import { errorMessage } from '@/shared/errors';
 import { trackEvent } from '@/shared/telemetry';
 import {
   type CommitDetailError,
   type CommitDetailExtra,
   fetchCommitDetail,
   getCachedCommitDetail,
+  isCommitDetailError,
 } from '../lib/commitDetailApi';
 
 export type CommitDetailExtraState =
@@ -47,7 +48,7 @@ export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): CommitDeta
   }
 
   useEffect(() => {
-    if (!sha) return;
+    if (!sha) return undefined;
     // 既にキャッシュ済み (= 上で ready がセットされる) なら fetch 不要。
     const cached =
       getCachedCommitDetail({
@@ -55,7 +56,7 @@ export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): CommitDeta
         repo: authorRepo || repo,
         sha,
       }) ?? getCachedCommitDetail({ owner, repo, sha });
-    if (cached) return;
+    if (cached) return undefined;
 
     const controller = new AbortController();
     fetchCommitDetail({
@@ -100,9 +101,6 @@ function computeInitial(args: UseCommitDetailExtraArgs): CommitDetailExtraState 
 }
 
 function toError(err: unknown): CommitDetailError {
-  if (isObject(err) && typeof err.kind === 'string' && typeof err.message === 'string') {
-    // commitDetailApi の makeError 経由なので既に CommitDetailError 形。
-    return err as CommitDetailError;
-  }
+  if (isCommitDetailError(err)) return err;
   return { kind: 'network', message: errorMessage(err, 'unknown') };
 }

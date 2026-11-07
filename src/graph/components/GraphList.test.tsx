@@ -83,14 +83,14 @@ describe('GraphList', () => {
       <GraphList
         view={makeView()}
         selectedSha={null}
-        onSelect={vi.fn()}
-        onHoverCommit={vi.fn()}
-        onLeaveCommit={vi.fn()}
-        onContextCommit={vi.fn()}
+        onSelect={vi.fn<(sha: string) => void>()}
+        onHoverCommit={vi.fn<(sha: string, x: number, y: number) => void>()}
+        onLeaveCommit={vi.fn<(sha: string) => void>()}
+        onContextCommit={vi.fn<(sha: string, x: number, y: number) => void>()}
         hasMore={false}
         loadingMore={false}
         olderError={null}
-        onLoadMore={vi.fn()}
+        onLoadMore={vi.fn<() => void>()}
       />,
     );
     expect(screen.getByText('Subject')).toBeInTheDocument();
@@ -103,14 +103,14 @@ describe('GraphList', () => {
       <GraphList
         view={makeView()}
         selectedSha={null}
-        onSelect={vi.fn()}
-        onHoverCommit={vi.fn()}
-        onLeaveCommit={vi.fn()}
-        onContextCommit={vi.fn()}
+        onSelect={vi.fn<(sha: string) => void>()}
+        onHoverCommit={vi.fn<(sha: string, x: number, y: number) => void>()}
+        onLeaveCommit={vi.fn<(sha: string) => void>()}
+        onContextCommit={vi.fn<(sha: string, x: number, y: number) => void>()}
         hasMore={true}
         loadingMore={true}
         olderError={null}
-        onLoadMore={vi.fn()}
+        onLoadMore={vi.fn<() => void>()}
       />,
     );
     expect(screen.getByText(/Loading older commits/i)).toBeInTheDocument();

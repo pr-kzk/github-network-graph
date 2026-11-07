@@ -102,7 +102,7 @@ export async function fetchCommitDetail(args: FetchCommitDetailArgs): Promise<Co
   throw makeError('shape', 'no candidate repo to query');
 }
 
-function isCommitDetailError(e: unknown): e is CommitDetailError {
+export function isCommitDetailError(e: unknown): e is CommitDetailError {
   return isObject(e) && typeof e.kind === 'string' && typeof e.message === 'string';
 }
 

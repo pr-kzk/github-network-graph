@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@aptabase/web', () => ({
-  init: vi.fn(),
-  trackEvent: vi.fn(() => Promise.resolve()),
+  init: vi.fn<typeof init>(),
+  trackEvent: vi.fn<typeof aptabaseTrackEvent>(() => Promise.resolve()),
 }));
 
 import { init, trackEvent as aptabaseTrackEvent } from '@aptabase/web';
 import { localStore } from './storage';
 import {
-  __resetTelemetryForTest,
+  resetTelemetryForTest,
   declineTelemetry,
   initTelemetry,
   isTelemetryConfigured,
@@ -23,7 +23,7 @@ const trackMock = vi.mocked(aptabaseTrackEvent);
 const APP_KEY = 'A-US-0000000000';
 
 afterEach(() => {
-  __resetTelemetryForTest();
+  resetTelemetryForTest();
   vi.unstubAllEnvs();
   vi.clearAllMocks();
 });

@@ -34,9 +34,11 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
 
   // 外側クリックで閉じる。
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     function handleDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close();
+      if (rootRef.current && !(e.target instanceof Node && rootRef.current.contains(e.target))) {
+        close();
+      }
     }
     document.addEventListener('mousedown', handleDown, true);
     return () => document.removeEventListener('mousedown', handleDown, true);
@@ -45,9 +47,7 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
   // ハイライト行を可視域へスクロール。
   useEffect(() => {
     if (!open) return;
-    const list = listRef.current;
-    const el = list?.children[activeIndex] as HTMLElement | undefined;
-    el?.scrollIntoView({ block: 'nearest' });
+    listRef.current?.children.item(activeIndex)?.scrollIntoView({ block: 'nearest' });
   }, [activeIndex, open]);
 
   function jump(sha: string) {
@@ -77,7 +77,6 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => (open ? close() : setOpen(true))}
         className="flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800 dark:hover:bg-slate-800"
@@ -106,11 +105,12 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
           {filtered.length === 0 ? (
             <div className="px-3 py-3 text-xs text-slate-500">{t('graph_branch_no_match')}</div>
           ) : (
-            <ul ref={listRef} role="listbox" className="max-h-64 overflow-auto py-1">
+            <ul ref={listRef} className="max-h-64 overflow-auto py-1">
               {filtered.map((b, i) => (
-                <li key={`${b.sha}:${b.name}`} role="option" aria-selected={i === activeIndex}>
+                <li key={`${b.sha}:${b.name}`}>
                   <button
                     type="button"
+                    aria-current={i === activeIndex ? 'true' : undefined}
                     onClick={() => jump(b.sha)}
                     onMouseEnter={() => setActiveIndex(i)}
                     className={[

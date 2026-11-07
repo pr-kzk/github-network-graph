@@ -36,20 +36,58 @@ export const LOCAL_DEFAULTS: LocalSchema = {
   telemetry: DEFAULT_TELEMETRY,
 };
 
-const LOCAL_KEYS = Object.keys(LOCAL_DEFAULTS) as (keyof LocalSchema)[];
+const LOCAL_KEYS = [
+  'graphPrefs',
+  'recentRepos',
+  'telemetry',
+] as const satisfies readonly (keyof LocalSchema)[];
 
-// 旧バージョンで保存された graphPrefs に新フィールド (theme 等) を補完する。
-// 他キーは shape が変わらないので素通し。
-function normalize<K extends keyof LocalSchema>(key: K, value: unknown): LocalSchema[K] {
-  if (key === 'graphPrefs') {
-    const v = (value ?? {}) as Partial<GraphPrefs>;
-    return { ...DEFAULT_GRAPH_PREFS, ...v } as LocalSchema[K];
-  }
-  if (key === 'telemetry') {
-    const v = (value ?? {}) as Partial<TelemetryPrefs>;
-    return { ...DEFAULT_TELEMETRY, ...v } as LocalSchema[K];
-  }
-  return (value ?? LOCAL_DEFAULTS[key]) as LocalSchema[K];
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isGraphMode(value: unknown): value is GraphMode {
+  return value === 'repo-only' || value === 'network';
+}
+
+function isTheme(value: unknown): value is Theme {
+  return value === 'dark' || value === 'light';
+}
+
+function isRecentRepo(value: unknown): value is RecentRepo {
+  return (
+    isRecord(value) &&
+    typeof value.owner === 'string' &&
+    typeof value.repo === 'string' &&
+    typeof value.openedAt === 'number'
+  );
+}
+
+// chrome.storage から読んだ値は型を保証できないため、キーごとに検証して既定値で補完する。
+// 旧バージョンで保存された graphPrefs に新フィールド (theme 等) が無い場合もここで埋まる。
+const LOCAL_PARSERS: { [K in keyof LocalSchema]: (value: unknown) => LocalSchema[K] } = {
+  graphPrefs: (value) => {
+    const v = isRecord(value) ? value : {};
+    return {
+      mode: isGraphMode(v.mode) ? v.mode : DEFAULT_GRAPH_PREFS.mode,
+      theme: isTheme(v.theme) ? v.theme : DEFAULT_GRAPH_PREFS.theme,
+    };
+  },
+  recentRepos: (value) => (Array.isArray(value) ? value.filter(isRecentRepo) : []),
+  telemetry: (value) => {
+    const v = isRecord(value) ? value : {};
+    return {
+      enabled: typeof v.enabled === 'boolean' ? v.enabled : DEFAULT_TELEMETRY.enabled,
+      promptSeen: typeof v.promptSeen === 'boolean' ? v.promptSeen : DEFAULT_TELEMETRY.promptSeen,
+    };
+  },
+};
+
+export function parseLocalValue<K extends keyof LocalSchema>(
+  key: K,
+  value: unknown,
+): LocalSchema[K] {
+  return LOCAL_PARSERS[key](value);
 }
 
 type Listener = () => void;
@@ -74,7 +112,7 @@ class LocalStoreCache {
     return this.snapshots[key];
   }
 
-  subscribe<K extends keyof LocalSchema>(key: K, listener: Listener): () => void {
+  subscribe(key: keyof LocalSchema, listener: Listener): () => void {
     this.ensureOnChangedRegistered();
     void this.ensureHydrated(key);
     this.listeners[key].add(listener);
@@ -89,9 +127,7 @@ class LocalStoreCache {
   // 後追い解決が optimistic な新値を古い値で上書きするのを防ぐ。
   applyLocalWrite<K extends keyof LocalSchema>(key: K, value: LocalSchema[K]): void {
     this.hydrated.add(key);
-    if (Object.is(this.snapshots[key], value)) return;
-    this.snapshots[key] = value;
-    this.emit(key);
+    this.replaceSnapshot(key, value);
   }
 
   reset(): void {
@@ -102,11 +138,11 @@ class LocalStoreCache {
     this.onChangedRegistered = false;
   }
 
-  private emit<K extends keyof LocalSchema>(key: K): void {
+  private emit(key: keyof LocalSchema): void {
     for (const l of this.listeners[key]) l();
   }
 
-  private ensureHydrated<K extends keyof LocalSchema>(key: K): Promise<void> {
+  private ensureHydrated(key: keyof LocalSchema): Promise<void> {
     if (this.hydrated.has(key)) return Promise.resolve();
     const existing = this.hydrating.get(key);
     if (existing) return existing;
@@ -118,11 +154,7 @@ class LocalStoreCache {
         // 自身は古い情報なので破棄する。
         if (this.hydrated.has(key)) return;
         this.hydrated.add(key);
-        const next = normalize(key, data[key as string]);
-        if (!Object.is(this.snapshots[key], next)) {
-          this.snapshots[key] = next;
-          this.emit(key);
-        }
+        this.replaceSnapshot(key, parseLocalValue(key, data[key]));
       });
     this.hydrating.set(key, p);
     return p;
@@ -134,19 +166,21 @@ class LocalStoreCache {
     if (!onChanged?.addListener) return;
     onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
-      const record = changes as Record<string, { newValue?: unknown }>;
       for (const k of LOCAL_KEYS) {
-        if (!(k in record)) continue;
-        this.applyExternalChange(k, record[k as string].newValue);
+        const change = changes[k];
+        if (change) this.applyExternalChange(k, change.newValue);
       }
     });
     this.onChangedRegistered = true;
   }
 
-  private applyExternalChange<K extends keyof LocalSchema>(key: K, raw: unknown): void {
+  private applyExternalChange(key: keyof LocalSchema, raw: unknown): void {
     // 外部書き込みは hydrate より新しい情報。後追いの初回 get の上書きを防ぐ。
     this.hydrated.add(key);
-    const next = normalize(key, raw);
+    this.replaceSnapshot(key, parseLocalValue(key, raw));
+  }
+
+  private replaceSnapshot<K extends keyof LocalSchema>(key: K, next: LocalSchema[K]): void {
     if (Object.is(this.snapshots[key], next)) return;
     this.snapshots[key] = next;
     this.emit(key);
@@ -157,14 +191,14 @@ export const localStoreCache = new LocalStoreCache();
 
 // vi.stubGlobal('chrome', ...) で chrome ごと差し替わるテスト環境向け。
 // プロダクションコードからは呼ばないこと。
-export function __resetLocalStoreCacheForTest(): void {
+export function resetLocalStoreCacheForTest(): void {
   localStoreCache.reset();
 }
 
 export const localStore = {
   async get<K extends keyof LocalSchema>(key: K): Promise<LocalSchema[K]> {
     const data = await chrome.storage.local.get({ [key]: LOCAL_DEFAULTS[key] });
-    const value = normalize(key, data[key]);
+    const value = parseLocalValue(key, data[key]);
     localStoreCache.applyLocalWrite(key, value);
     return value;
   },

@@ -3,11 +3,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 export type ContextMenuItem =
   | {
       kind: 'item';
+      id: string;
       label: string;
       onClick: () => void;
       disabled?: boolean;
     }
-  | { kind: 'separator' };
+  | { kind: 'separator'; id: string };
 
 export type CommitContextMenuProps = {
   x: number;
@@ -24,22 +25,28 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    let left = x;
-    let top = y;
-    if (left + rect.width + VIEWPORT_MARGIN > vw) left = vw - rect.width - VIEWPORT_MARGIN;
-    if (top + rect.height + VIEWPORT_MARGIN > vh) top = vh - rect.height - VIEWPORT_MARGIN;
-    if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
-    if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
-    setPos({ left, top });
-  }, [x, y, items.length]);
+    if (!el) return undefined;
+    function place(target: HTMLElement) {
+      const rect = target.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      let left = x;
+      let top = y;
+      if (left + rect.width + VIEWPORT_MARGIN > vw) left = vw - rect.width - VIEWPORT_MARGIN;
+      if (top + rect.height + VIEWPORT_MARGIN > vh) top = vh - rect.height - VIEWPORT_MARGIN;
+      if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
+      if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
+      setPos((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+    }
+    place(el);
+    const observer = new ResizeObserver(() => place(el));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [x, y]);
 
   useEffect(() => {
     function handleDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      if (ref.current && !(e.target instanceof Node && ref.current.contains(e.target))) onClose();
     }
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onClose();
@@ -73,18 +80,15 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
       style={{ left: pos.left, top: pos.top }}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {items.map((it, i) => {
+      {items.map((it) => {
         if (it.kind === 'separator') {
           return (
-            <div
-              key={`sep-${i}`}
-              className="my-1 border-t border-slate-200 dark:border-slate-800"
-            />
+            <div key={it.id} className="my-1 border-t border-slate-200 dark:border-slate-800" />
           );
         }
         return (
           <button
-            key={`item-${i}-${it.label}`}
+            key={it.id}
             type="button"
             role="menuitem"
             disabled={it.disabled}
