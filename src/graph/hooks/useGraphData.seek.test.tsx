@@ -8,7 +8,8 @@ import type {
   RetryNotice,
 } from '../lib/networkApi.types';
 import type * as Transform from '../lib/transform';
-import { SEEK_CONCURRENCY, useGraphData } from './useGraphData';
+import { useGraphData } from './useGraphData';
+import { SEEK_CONCURRENCY } from './useSeek';
 
 const TOTAL = 5000;
 const PAGE = 100;
@@ -263,12 +264,12 @@ describe('useGraphData seekTo', () => {
     const notice: RetryNotice = { kind: 'rateLimit', attempt: 1, maxAttempts: 3, resumeAt: 5000 };
 
     act(() => stats.onRetry?.(notice));
-    expect(readyState(hook).retry).toEqual(notice);
+    expect(readyState(hook).progress.retry).toEqual(notice);
 
     gate.hold = false;
     await act(async () => gate.release.splice(0).forEach((release) => release()));
     await waitFor(() => expect(readyState(hook).loadingMore).toBe(false));
-    expect(readyState(hook).retry).toBeNull();
+    expect(readyState(hook).progress.retry).toBeNull();
   });
 
   it('keeps the loaded commits and offers an inline retry when an older page finally fails', async () => {
@@ -280,7 +281,7 @@ describe('useGraphData seekTo', () => {
     const state = readyState(hook);
     expect(state.rawCommits).toHaveLength(PAGE);
     expect(state.view.commits).toHaveLength(PAGE);
-    expect(state.retry).toBeNull();
+    expect(state.progress.retry).toBeNull();
     expect(state.hasMore).toBe(true);
   });
 });

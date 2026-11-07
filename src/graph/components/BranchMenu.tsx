@@ -8,7 +8,7 @@ import type { GraphBranch, GraphForkBranches } from '../lib/transform.types';
 import { BranchList } from './BranchList';
 import { Spinner } from './Spinner';
 
-type BranchMenuProps = {
+export type BranchMenuProps = {
   branches: GraphBranch[];
   forkBranches: GraphForkBranches[];
   selectedSha: string | null;

@@ -9,6 +9,14 @@ import { HighlightedText } from './HighlightedText';
 import { RefBadge } from './RefBadge';
 import { FOCUS_RING_INSET } from '@/shared/ui';
 
+export type RowHandlers = {
+  onSelect: (sha: string) => void;
+  onContextMenu: (sha: string, clientX: number, clientY: number) => void;
+  onHover: (sha: string, clientX: number, clientY: number) => void;
+  onKeyboardFocus: (sha: string, clientX: number, clientY: number) => void;
+  onLeave: () => void;
+};
+
 type CommitRowProps = {
   commit: ViewCommit;
   isSelected: boolean;
@@ -17,11 +25,7 @@ type CommitRowProps = {
   isTabStop: boolean;
   isFlashing: boolean;
   columns: ListColumns;
-  onSelect: (sha: string) => void;
-  onContextMenu: (sha: string, clientX: number, clientY: number) => void;
-  onHover: (sha: string, clientX: number, clientY: number) => void;
-  onKeyboardFocus: (sha: string, clientX: number, clientY: number) => void;
-  onLeave: () => void;
+  handlers: RowHandlers;
   graphAreaWidth: number;
 };
 
@@ -41,11 +45,7 @@ function CommitRowImpl({
   isTabStop,
   isFlashing,
   columns,
-  onSelect,
-  onContextMenu,
-  onHover,
-  onKeyboardFocus,
-  onLeave,
+  handlers: { onSelect, onContextMenu, onHover, onKeyboardFocus, onLeave },
   graphAreaWidth,
 }: CommitRowProps) {
   const mark = (text: string) => (isMatch ? <HighlightedText text={text} query={query} /> : text);

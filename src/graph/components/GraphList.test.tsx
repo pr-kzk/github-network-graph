@@ -49,15 +49,19 @@ function renderList(overrides: Partial<ComponentProps<typeof GraphList>> = {}) {
     childrenBySha: new Map(),
     matchShas: new Set(),
     query: '',
-    onSelect: vi.fn<(sha: string) => void>(),
-    onHoverCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    onKeyboardFocusCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    onLeaveCommit: vi.fn<() => void>(),
-    onContextCommit: vi.fn<(sha: string, x: number, y: number) => void>(),
-    hasMore: false,
-    loadingMore: false,
-    olderError: null,
-    onLoadMore: vi.fn<() => void>(),
+    rowHandlers: {
+      onSelect: vi.fn<(sha: string) => void>(),
+      onHover: vi.fn<(sha: string, x: number, y: number) => void>(),
+      onKeyboardFocus: vi.fn<(sha: string, x: number, y: number) => void>(),
+      onLeave: vi.fn<() => void>(),
+      onContextMenu: vi.fn<(sha: string, x: number, y: number) => void>(),
+    },
+    paging: {
+      hasMore: false,
+      loadingMore: false,
+      olderError: null,
+      onLoadMore: vi.fn<() => void>(),
+    },
     ...overrides,
   };
   const result = render(<GraphList {...props} />);
@@ -80,11 +84,18 @@ describe('GraphList', () => {
   it('opens the context menu when a commit row is right-clicked', () => {
     const { props } = renderList();
     fireEvent.contextMenu(rowOf('first'), { clientX: 40, clientY: 70 });
-    expect(props.onContextCommit).toHaveBeenCalledWith(A, 40, 70);
+    expect(props.rowHandlers.onContextMenu).toHaveBeenCalledWith(A, 40, 70);
   });
 
   it('renders the footer row when hasMore is true', () => {
-    renderList({ hasMore: true, loadingMore: true });
+    renderList({
+      paging: {
+        hasMore: true,
+        loadingMore: true,
+        olderError: null,
+        onLoadMore: vi.fn<() => void>(),
+      },
+    });
     expect(screen.getByText(/Loading older commits/i)).toBeInTheDocument();
   });
 
@@ -130,13 +141,13 @@ describe('GraphList', () => {
   it('asks for a tooltip when the pointer rests on a row', () => {
     const { props } = renderList();
     fireEvent.mouseMove(rowOf('first'), { clientX: 12, clientY: 34 });
-    expect(props.onHoverCommit).toHaveBeenCalledWith(A, 12, 34);
+    expect(props.rowHandlers.onHover).toHaveBeenCalledWith(A, 12, 34);
   });
 
   it('hides the tooltip when the pointer leaves a row', () => {
     const { props } = renderList();
     fireEvent.mouseLeave(rowOf('first'));
-    expect(props.onLeaveCommit).toHaveBeenCalled();
+    expect(props.rowHandlers.onLeave).toHaveBeenCalled();
   });
 
   it('asks for a tooltip when a row is focused with the keyboard', async () => {
@@ -144,7 +155,7 @@ describe('GraphList', () => {
     const { props } = renderList();
     await user.tab();
     expect(rowOf('first')).toHaveFocus();
-    expect(props.onKeyboardFocusCommit).toHaveBeenCalledWith(
+    expect(props.rowHandlers.onKeyboardFocus).toHaveBeenCalledWith(
       A,
       expect.any(Number),
       expect.any(Number),

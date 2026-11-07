@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { t, tWith } from '@/shared/i18n';
-import { CommitRow } from './CommitRow';
+import { CommitRow, type RowHandlers } from './CommitRow';
 import { GraphCanvas } from './GraphCanvas';
 import { GraphListFooter } from './GraphListFooter';
 import { useElementWidth } from '../hooks/useElementWidth';
@@ -16,6 +16,13 @@ import type { GraphView, ViewCommit } from '../lib/transform.types';
 const LOAD_MORE_THRESHOLD = 20;
 const VIRTUAL_OVERSCAN = 20;
 
+export type GraphPaging = {
+  hasMore: boolean;
+  loadingMore: boolean;
+  olderError: GraphErrorInfo | null;
+  onLoadMore: () => void;
+};
+
 type GraphListProps = {
   view: GraphView;
   selectedSha: string | null;
@@ -24,15 +31,8 @@ type GraphListProps = {
   childrenBySha: ReadonlyMap<string, readonly string[]>;
   matchShas: ReadonlySet<string>;
   query: string;
-  onSelect: (sha: string) => void;
-  onHoverCommit: (sha: string, x: number, y: number) => void;
-  onKeyboardFocusCommit: (sha: string, x: number, y: number) => void;
-  onLeaveCommit: () => void;
-  onContextCommit: (sha: string, x: number, y: number) => void;
-  hasMore: boolean;
-  loadingMore: boolean;
-  olderError: GraphErrorInfo | null;
-  onLoadMore: () => void;
+  rowHandlers: RowHandlers;
+  paging: GraphPaging;
 };
 
 function GraphListImpl({
@@ -43,15 +43,8 @@ function GraphListImpl({
   childrenBySha,
   matchShas,
   query,
-  onSelect,
-  onHoverCommit,
-  onKeyboardFocusCommit,
-  onLeaveCommit,
-  onContextCommit,
-  hasMore,
-  loadingMore,
-  olderError,
-  onLoadMore,
+  rowHandlers,
+  paging: { hasMore, loadingMore, olderError, onLoadMore },
 }: GraphListProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const listWidth = useElementWidth(scrollRef);
@@ -187,11 +180,7 @@ function GraphListImpl({
                       isTabStop={commit.sha === tabStopSha}
                       isFlashing={commit.sha === flashSha}
                       columns={columns}
-                      onSelect={onSelect}
-                      onContextMenu={onContextCommit}
-                      onHover={onHoverCommit}
-                      onKeyboardFocus={onKeyboardFocusCommit}
-                      onLeave={onLeaveCommit}
+                      handlers={rowHandlers}
                       graphAreaWidth={gw}
                     />
                   )}

@@ -19,9 +19,7 @@ export type CommitDetailProps = {
   containingRefs: ContainingRef[];
   onCopy: (text: string) => void;
   onCopyLink: (sha: string) => void;
-  onParentClick: (sha: string) => void;
-  onChildClick: (sha: string) => void;
-  onRefClick: (sha: string) => void;
+  onSelectSha: (sha: string) => void;
 };
 
 function CommitDetailImpl({
@@ -32,9 +30,7 @@ function CommitDetailImpl({
   containingRefs,
   onCopy,
   onCopyLink,
-  onParentClick,
-  onChildClick,
-  onRefClick,
+  onSelectSha,
 }: CommitDetailProps) {
   const { state: extra, retry } = useCommitDetailExtra({
     owner,
@@ -78,18 +74,18 @@ function CommitDetailImpl({
       <pre className="whitespace-pre-wrap break-words rounded-md bg-slate-100 p-3 font-sans text-slate-900 ring-1 ring-slate-200 dark:bg-slate-900/60 dark:text-slate-100 dark:ring-slate-800">
         {commit.message || t('commit_detail_no_message')}
       </pre>
-      <ContainingRefsSection key={commit.sha} refs={containingRefs} onClick={onRefClick} />
+      <ContainingRefsSection key={commit.sha} refs={containingRefs} onClick={onSelectSha} />
       <RelationSection
         title={t('commit_detail_parents_heading')}
         shas={commit.parents}
         emptyLabel={t('commit_detail_parents_empty')}
-        onClick={onParentClick}
+        onClick={onSelectSha}
       />
       <RelationSection
         title={t('commit_detail_children_heading')}
         shas={childrenShas}
         emptyLabel={t('commit_detail_children_empty')}
-        onClick={onChildClick}
+        onClick={onSelectSha}
       />
       <ChangesSection state={extra} commitUrl={commitUrl} onRetry={retry} />
     </div>

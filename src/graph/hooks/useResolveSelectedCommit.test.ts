@@ -38,8 +38,7 @@ function readyState({
     olderError: null,
     seek: null,
     refreshing: false,
-    pendingAttempts: 0,
-    retry: null,
+    progress: { pendingAttempts: 0, retry: null },
     view: VIEW,
   };
 }

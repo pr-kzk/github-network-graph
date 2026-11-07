@@ -1,8 +1,7 @@
 import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
 import type { RepoRef } from '../lib/parseUrl';
-import type { GraphBranch, GraphForkBranches } from '../lib/transform.types';
-import { BranchMenu } from './BranchMenu';
+import { BranchMenu, type BranchMenuProps } from './BranchMenu';
 import { ModeToggle } from './ModeToggle';
 import { RepoSwitcher } from './RepoSwitcher';
 import { SearchBox, type SearchBoxProps } from './SearchBox';
@@ -13,34 +12,26 @@ type GraphHeaderProps = {
   owner: string;
   repo: string;
   mode: GraphMode;
-  branches: GraphBranch[];
-  forkBranches: GraphForkBranches[];
-  selectedSha: string | null;
   refreshing: boolean;
-  seeking: boolean;
   onModeChange: (next: GraphMode) => void;
   onRefresh: () => void;
-  onSelectBranch: (sha: string) => void;
   onSwitchRepo: (target: RepoRef) => void;
   onShowShortcuts: () => void;
   search: SearchBoxProps | null;
+  branchMenu: BranchMenuProps | null;
 };
 
 export function GraphHeader({
   owner,
   repo,
   mode,
-  branches,
-  forkBranches,
-  selectedSha,
   refreshing,
-  seeking,
   onModeChange,
   onRefresh,
-  onSelectBranch,
   onSwitchRepo,
   onShowShortcuts,
   search,
+  branchMenu,
 }: GraphHeaderProps) {
   return (
     <header className="flex flex-wrap items-center gap-4 border-b border-slate-200 px-5 py-3 dark:border-slate-800">
@@ -50,15 +41,7 @@ export function GraphHeader({
       </div>
       {search ? <SearchBox {...search} /> : null}
       <div className="ml-auto flex items-center gap-3">
-        {branches.length + forkBranches.length > 0 ? (
-          <BranchMenu
-            branches={branches}
-            forkBranches={forkBranches}
-            selectedSha={selectedSha}
-            busy={seeking}
-            onSelect={onSelectBranch}
-          />
-        ) : null}
+        {branchMenu ? <BranchMenu {...branchMenu} /> : null}
         <ModeToggle mode={mode} onChange={onModeChange} />
         <button
           type="button"

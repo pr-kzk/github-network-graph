@@ -79,7 +79,10 @@ describe('useGraphData', () => {
 
     act(() => latest().onPending?.(3));
 
-    expect(result.current.state).toEqual({ status: 'loading', pendingAttempts: 3, retry: null });
+    expect(result.current.state).toEqual({
+      status: 'loading',
+      progress: { pendingAttempts: 3, retry: null },
+    });
   });
 
   it('keeps showing the previous commits while a refresh is in flight', async () => {
@@ -164,11 +167,11 @@ describe('useGraphData', () => {
     const notice: RetryNotice = { kind: 'network', attempt: 2, maxAttempts: 3, resumeAt: 9000 };
 
     act(() => latest().onRetry?.(notice));
-    expect(result.current.state).toMatchObject({ status: 'loading', retry: notice });
+    expect(result.current.state).toMatchObject({ status: 'loading', progress: { retry: notice } });
 
     await act(async () => latest().resolve(page('first')));
     await waitFor(() =>
-      expect(result.current.state).toMatchObject({ status: 'ready', retry: null }),
+      expect(result.current.state).toMatchObject({ status: 'ready', progress: { retry: null } }),
     );
   });
 
