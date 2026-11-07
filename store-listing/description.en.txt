@@ -9,18 +9,22 @@ repository's history (and its entire fork family) without leaving the tab.
 
 KEY FEATURES
 
-• Commit graph for any public GitHub repository, rendered in a dedicated tab
+• Commit graph for any GitHub repository, rendered in a dedicated tab
+  (private repositories work through your signed-in GitHub session)
 • Virtualized rendering — large histories stay smooth and responsive
 • Fork-aware: switch between "Main only" (the focus repo's branches) and
   "Include forks" (the full network)
-• Commit detail panel with parent / child navigation and a per-file diff
-  summary (additions, deletions, status)
+• Commit detail panel with parent / child navigation, a per-file diff
+  summary (additions, deletions, status) and the branches that contain
+  the selected commit
 • Search loaded commits by subject, SHA, author or branch, with a
   match count and one click to load older history
-• Keyboard navigation (j / k, [ / ], g / G, ? for the shortcut list)
+• Keyboard navigation (j / k, [ / ], g / G, Enter, / to search, Esc,
+  ? for the shortcut list)
 • Shareable links: "Copy link to this commit view" reopens the same
   commit and mode
-• Right-click a commit to copy its SHA, subject or link, or jump to a parent
+• Right-click a commit to open it on GitHub, copy its SHA, short SHA,
+  subject or link, or jump to a parent
 • Recent repositories list in the toolbar popup (remove one or clear all),
   and reopening a repository focuses its existing graph tab
 • Switch repository from the graph header without going back to the popup
