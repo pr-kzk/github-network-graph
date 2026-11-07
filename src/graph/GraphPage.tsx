@@ -16,6 +16,7 @@ import { useChildrenIndex } from './hooks/useChildrenIndex';
 import { useCommitContextMenu } from './hooks/useCommitContextMenu';
 import { useCopyToClipboard } from './hooks/useCopyToClipboard';
 import { useRepoDocumentTitle } from './hooks/useDocumentTitle';
+import { useFocusRequests } from './hooks/useFocusRequests';
 import { useGraphData } from './hooks/useGraphData';
 import { useToast } from './hooks/useToast';
 import type { GraphBranch, ViewCommit } from './lib/transform.types';
@@ -35,6 +36,7 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
   const [owner, setOwner] = useState(initialOwner);
   const [repo, setRepo] = useState(initialRepo);
   useRepoDocumentTitle(owner, repo);
+  useFocusRequests(owner, repo);
   const { toast, showToast } = useToast();
   const copy = useCopyToClipboard(showToast);
   const prefs = useLocalValue('graphPrefs');

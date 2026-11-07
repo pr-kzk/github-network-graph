@@ -24,7 +24,7 @@
     "description": "Popup link that opens the options page."
   },
   "popup_launcher_title": {
-    "message": "Git Graph",
+    "message": "コミットグラフを開く",
     "description": "Title of the graph launcher card in the popup."
   },
   "popup_launcher_open_detected": {
@@ -38,15 +38,15 @@
     }
   },
   "popup_launcher_not_on_github": {
-    "message": "GitHub のリポジトリページではないため、下に入力してください。",
+    "message": "GitHub のリポジトリページではありません。",
     "description": "Hint shown when the active tab is not a GitHub repository."
   },
   "popup_launcher_input_placeholder": {
-    "message": "owner/repo",
+    "message": "owner/repo または URL",
     "description": "Placeholder for the manual owner/repo input."
   },
   "popup_launcher_submit": {
-    "message": "手入力で開く",
+    "message": "開く",
     "description": "Submit button label for the manual repo input."
   },
   "popup_launcher_input_error": {

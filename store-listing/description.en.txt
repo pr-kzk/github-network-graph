@@ -16,7 +16,8 @@ KEY FEATURES
 • Commit detail panel with parent / child navigation and a per-file diff
   summary (additions, deletions, status)
 • Right-click a commit to copy its SHA or subject, or jump to a parent
-• Recent repositories list in the toolbar popup
+• Recent repositories list in the toolbar popup (remove one or clear all),
+  and reopening a repository focuses its existing graph tab
 • System, dark and light themes
 • English and Japanese UI (automatic, based on Chrome's language setting)
 

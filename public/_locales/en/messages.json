@@ -24,7 +24,7 @@
     "description": "Popup link that opens the options page."
   },
   "popup_launcher_title": {
-    "message": "Git Graph",
+    "message": "Open commit graph",
     "description": "Title of the graph launcher card in the popup."
   },
   "popup_launcher_open_detected": {
@@ -38,15 +38,15 @@
     }
   },
   "popup_launcher_not_on_github": {
-    "message": "Not a GitHub repository page. Enter one below.",
+    "message": "Not on a GitHub repository page.",
     "description": "Hint shown when the active tab is not a GitHub repository."
   },
   "popup_launcher_input_placeholder": {
-    "message": "owner/repo",
+    "message": "owner/repo or URL",
     "description": "Placeholder for the manual owner/repo input."
   },
   "popup_launcher_submit": {
-    "message": "Open manually",
+    "message": "Open",
     "description": "Submit button label for the manual repo input."
   },
   "popup_launcher_input_error": {
