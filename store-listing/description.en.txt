@@ -1,76 +1,44 @@
-Visualize the full GitHub commit network — including forks — in a clean,
-VSCode-Git-Graph-style viewer that opens in its own browser tab.
+Visualize the full GitHub commit network — including forks — in a clean, VSCode-Git-Graph-style viewer that opens in its own browser tab.
 
-GitHub's built-in network graph is great for a quick glance, but the moment
-you actually want to read a commit message or see which fork diverged where,
-you end up clicking through five separate pages. Git Graph for GitHub puts
-the graph and a full commit detail panel side by side, so you can explore a
-repository's history (and its entire fork family) without leaving the tab.
+GitHub's built-in network graph is great for a quick glance, but the moment you actually want to read a commit message or see which fork diverged where, you end up clicking through five separate pages. Git Graph for GitHub puts the graph and a full commit detail panel side by side, so you can explore a repository's history (and its entire fork family) without leaving the tab.
 
 KEY FEATURES
 
-• Commit graph for any GitHub repository, rendered in a dedicated tab
-  (private repositories work through your signed-in GitHub session)
+• Commit graph for any GitHub repository, rendered in a dedicated tab (private repositories work through your signed-in GitHub session)
 • Virtualized rendering — large histories stay smooth and responsive
-• Fork-aware: switch between "Main only" (the focus repo's branches) and
-  "Include forks" (the full network)
-• Commit detail panel with parent / child navigation, a per-file diff
-  summary (additions, deletions, status) and the branches that contain
-  the selected commit
-• Search loaded commits by subject, SHA, author or branch, with a
-  match count and one click to load older history
-• Keyboard navigation (j / k, [ / ], g / G, Enter, / to search, Esc,
-  ? for the shortcut list)
-• Shareable links: "Copy link to this commit view" reopens the same
-  commit and mode
-• Right-click a commit to open it on GitHub, copy its SHA, short SHA,
-  subject or link, or jump to a parent
-• Recent repositories list in the toolbar popup (remove one or clear all),
-  and reopening a repository focuses its existing graph tab
+• Fork-aware: switch between "Main only" (the focus repo's branches) and "Include forks" (the full network)
+• Commit detail panel with parent / child navigation, a per-file diff summary (additions, deletions, status) and the branches that contain the selected commit
+• Search loaded commits by subject, SHA, author or branch, with a match count and one click to load older history
+• Keyboard navigation (j / k, [ / ], g / G, Enter, / to search, Esc, ? for the shortcut list)
+• Shareable links: "Copy link to this commit view" reopens the same commit and mode
+• Right-click a commit to open it on GitHub, copy its SHA, short SHA, subject or link, or jump to a parent
+• Recent repositories list in the toolbar popup (remove one or clear all), and reopening a repository focuses its existing graph tab
 • Switch repository from the graph header without going back to the popup
 • Refresh keeps your list, scroll position and selection while it updates
-• Branch menu includes fork branches; the detail panel shows which
-  branches contain the selected commit
+• Branch menu includes fork branches; the detail panel shows which branches contain the selected commit
 • Resizable, collapsible detail panel
 • System, dark and light themes
 • English and Japanese UI (automatic, based on Chrome's language setting)
 
 WHY YOU MIGHT WANT IT
 
-• You contribute to or maintain open-source projects with many forks and
-  want a faster way to see who diverged, when, and why
-• You like VSCode's Git Graph extension and want a similar experience in
-  the browser, without cloning the repo locally
-• You're researching a project before contributing and want to understand
-  its structure at a glance
+• You contribute to or maintain open-source projects with many forks and want a faster way to see who diverged, when, and why
+• You like VSCode's Git Graph extension and want a similar experience in the browser, without cloning the repo locally
+• You're researching a project before contributing and want to understand its structure at a glance
 
 PRIVACY
 
 • No remote code, and no content scripts injected into the pages you visit
-• No personal data, repository names, commit SHAs, URLs, or page content is
-  ever collected or transmitted
-• GitHub requests go directly from your browser to github.com and
-  api.github.com
-• Anonymous usage and error stats are sent via Aptabase, a privacy-first
-  analytics service, to help improve the extension — on by default, and you
-  can turn it off anytime from the options page. Only a fixed event name,
-  your browser language and a random in-memory session id are sent: no
-  cookies, no persistent identifiers. Like any web request, it reaches
-  Aptabase's server with your IP address, which Aptabase says it processes
-  in memory only and never stores
-• Builds without an Aptabase key send nothing
-• The only data stored locally is your preferences (theme, default graph
-  mode) and the list of recently opened repositories
+• No personal data is collected, and repository names, commit SHAs, URLs and page content are never sent to the developer or to any analytics service
+• GitHub requests go directly from your browser to github.com and api.github.com
+• Anonymous usage and error stats are sent via Aptabase, a privacy-first analytics service, to help improve the extension — on by default, and you can turn it off anytime from the options page. Only a fixed event name, your browser language and a random in-memory session id are sent: no cookies, no persistent identifiers. Like any web request, it reaches Aptabase's server with your IP address, which Aptabase says it processes in memory only and never stores
+• Builds you compile yourself without an Aptabase key send nothing
+• The only data stored locally is your preferences (theme, default graph mode, panel layout), the list of recently opened repositories, and a temporary cache of commit details that is cleared when the browser closes
 
 PERMISSIONS
 
 • storage — save your preferences and recent repositories locally
-• activeTab — read the URL of the current tab when you open the popup, so
-  it can offer to graph the repo you're looking at
-• Access to github.com and api.github.com — to fetch the commit network
-  and per-commit details on demand (details use your signed-in GitHub
-  session; only when that fails does it fall back to the unauthenticated
-  API, subject to GitHub's 60 requests/hour rate limit)
+• activeTab — read the URL of the current tab when you open the popup, so it can offer to graph the repo you're looking at
+• Access to github.com and api.github.com — to fetch the commit network and per-commit details on demand (details use your signed-in GitHub session; only when that fails does it fall back to the unauthenticated API, subject to GitHub's 60 requests/hour rate limit)
 
-Open-source under the MIT license. Issues and feature requests welcome at
-https://github.com/pr-kzk/github-network-graph/issues
+Open-source under the MIT license. Issues and feature requests welcome at https://github.com/pr-kzk/github-network-graph/issues
