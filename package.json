@@ -30,15 +30,15 @@
   "devDependencies": {
     "@crxjs/vite-plugin": "^3.0.0",
     "@tailwindcss/vite": "^4.3.5",
-    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
-    "@types/chrome": "^0.1.43",
-    "@types/node": "^25.9.9",
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.2.1",
-    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/coverage-v8": "^5.1.0",
     "archiver": "^8.0.0",
     "cross-env": "^10.1.0",
     "jsdom": "^31.0.0",
@@ -47,16 +47,16 @@
     "oxlint-tsgolint": "^7.0.2006",
     "rimraf": "^6.1.4",
     "tailwindcss": "^4.3.5",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "^8.3.6",
-    "vitest": "^4.1.12"
+    "vitest": "^5.1.0"
   },
   "license": "MIT",
   "author": "pr-kzk <pr-kzk@gmail.com>",
   "homepage": "https://github.com/pr-kzk/github-network-graph#readme",
   "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "repository": {
     "type": "git",
