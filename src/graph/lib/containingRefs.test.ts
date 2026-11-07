@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { findContainingRefs } from './containingRefs';
 import type { ViewCommit, ViewRef } from './transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(sha: string, parents: string[], refs: ViewRef[] = []): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row: 0,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    message: '',
-    subject: '',
-    parents,
-    refs,
-  };
+  return makeCommit(sha, { parents, refs });
 }
 
 const main: ViewRef = { name: 'main', isFocus: true, ownerName: 'o' };

@@ -1,23 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { navigationTarget, type NavigationContext } from './commitNavigation';
 import type { ViewCommit } from './transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    message: '',
-    subject: '',
-    parents,
-    refs: [],
-  };
+  return makeCommit(sha, { row, parents });
 }
 
 const COMMITS = [commit('c', 0, ['b']), commit('b', 1, ['a']), commit('a', 2)];

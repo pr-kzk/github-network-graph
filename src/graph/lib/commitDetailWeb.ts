@@ -1,5 +1,6 @@
 import {
   errorFromResponse,
+  fetchOrNetworkError,
   makeError,
   summarize,
   type CommitDetailExtra,
@@ -19,12 +20,7 @@ export async function fetchCommitDetailViaWeb(
     repo,
   )}/commit/${encodeURIComponent(sha)}.diff`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, { credentials: 'include', cache: 'no-store' });
-  } catch {
-    throw makeError('network');
-  }
+  const response = await fetchOrNetworkError(url, { credentials: 'include', cache: 'no-store' });
 
   if (response.redirected && new URL(response.url).pathname.startsWith('/login')) {
     throw makeError('auth', response.status);

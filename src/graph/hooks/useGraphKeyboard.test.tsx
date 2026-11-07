@@ -2,23 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useGraphKeyboard } from './useGraphKeyboard';
 import type { ViewCommit } from '../lib/transform.types';
+import { makeCommit } from '../../../test/factories';
 
 function commit(sha: string, row: number, parents: string[] = []): ViewCommit {
-  return {
-    sha,
-    shortSha: sha,
-    row,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    message: '',
-    subject: '',
-    parents,
-    refs: [],
-  };
+  return makeCommit(sha, { row, parents });
 }
 
 const COMMITS = [commit('c', 0, ['b']), commit('b', 1, ['a']), commit('a', 2)];

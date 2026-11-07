@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 import { NetworkApiError, createGithubNetworkClient } from './networkApi';
 import type { RetryNotice } from './networkApi.types';
 import { RETRY_AFTER_MAX_MS, RETRY_MAX_ATTEMPTS } from './requestRetry';
+import { jsonResponse } from '../../../test/factories';
 
 const META_BODY = {
   nethash: 'abc123',
@@ -23,13 +24,6 @@ const CHUNK_BODY_PAGE1 = {
     { id: 'sha2', author: 0, time: 99, space: 0, parents: [], message: 'two' },
   ],
 };
-
-function jsonResponse(body: unknown, init?: { status?: number; contentType?: string }) {
-  return new Response(JSON.stringify(body), {
-    status: init?.status ?? 200,
-    headers: { 'content-type': init?.contentType ?? 'application/json; charset=utf-8' },
-  });
-}
 
 let fetchMock: Mock<typeof fetch>;
 

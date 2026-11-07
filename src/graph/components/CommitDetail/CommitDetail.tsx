@@ -5,6 +5,7 @@ import type { ViewCommit } from '../../lib/transform.types';
 import { formatFullDate } from '@/shared/format';
 import { t } from '@/shared/i18n';
 import { AuthorAvatar } from '../AuthorAvatar';
+import { AuthorLabel } from '../AuthorLabel';
 import { ChangesSection } from './ChangesSection';
 import { ContainingRefsSection } from './ContainingRefsSection';
 import { CommitDetailHeader } from './CommitDetailHeader';
@@ -66,11 +67,8 @@ function CommitDetailImpl({
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} size={18} />
         <div className="min-w-0 flex-1 truncate">
           <span className="text-slate-700 dark:text-slate-300">
-            {commit.authorName || t('commit_unknown_author')}
+            <AuthorLabel commit={commit} />
           </span>
-          {commit.authorRepo && commit.authorName !== commit.authorRepo ? (
-            <span className="text-slate-500"> / {commit.authorRepo}</span>
-          ) : null}
           <span className="px-2 text-slate-400 dark:text-slate-600">·</span>
           <span className="font-mono text-slate-500" title={absoluteDate || undefined}>
             {dateLabel}

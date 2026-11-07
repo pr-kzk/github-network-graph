@@ -1,4 +1,5 @@
 import { t, tWith, type MessageKey } from '@/shared/i18n';
+import { BUTTON_SECONDARY } from '@/shared/ui';
 import type { GraphErrorKind } from '../lib/networkApi';
 
 type ErrorStateProps = {
@@ -28,8 +29,7 @@ const HINT_KEYS: Partial<Record<GraphErrorKind, MessageKey>> = {
   server: 'error_hint_server',
 };
 
-const LINK_CLASS =
-  'rounded-md bg-slate-200 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700';
+const LINK_CLASS = `${BUTTON_SECONDARY} px-3 py-1.5 text-xs font-medium`;
 
 export function ErrorState({ kind, message, owner, repo, onRetry }: ErrorStateProps) {
   const hintKey = HINT_KEYS[kind];

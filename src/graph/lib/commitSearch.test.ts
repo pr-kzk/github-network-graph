@@ -1,30 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { highlightSegments, NO_MATCHES, searchCommits, stepMatchRow } from './commitSearch';
-import type { ViewCommit } from './transform.types';
-
-function commit(sha: string, overrides: Partial<ViewCommit> = {}): ViewCommit {
-  return {
-    sha,
-    shortSha: sha.slice(0, 7),
-    row: 0,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    message: '',
-    subject: '',
-    parents: [],
-    refs: [],
-    ...overrides,
-  };
-}
+import { makeCommit } from '../../../test/factories';
 
 const COMMITS = [
-  commit('abcd1234'.padEnd(40, '0'), { subject: 'Fix Parser crash', authorName: 'Alice Doe' }),
-  commit('ef561234'.padEnd(40, '0'), { subject: 'Add docs', authorLogin: 'bob-the-dev' }),
-  commit('9999aaaa'.padEnd(40, '0'), {
+  makeCommit('abcd1234'.padEnd(40, '0'), { subject: 'Fix Parser crash', authorName: 'Alice Doe' }),
+  makeCommit('ef561234'.padEnd(40, '0'), { subject: 'Add docs', authorLogin: 'bob-the-dev' }),
+  makeCommit('9999aaaa'.padEnd(40, '0'), {
     subject: 'Release',
     refs: [{ name: 'v2.0', isFocus: false, ownerName: 'fork-owner' }],
   }),

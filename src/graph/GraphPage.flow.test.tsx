@@ -1,7 +1,8 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { localStore } from '@/shared/storage';
+import { stubClientSize } from '../../test/graphPage';
 import { GraphPage } from './GraphPage';
 import type * as NetworkApi from './lib/networkApi';
 import type { FetchedInitialPage } from './lib/networkApi.types';
@@ -66,18 +67,12 @@ vi.mock('./lib/networkApi', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('./hooks/useCommitDetailExtra', () => ({
-  useCommitDetailExtra: () => ({ state: { status: 'idle' }, retry: () => undefined }),
-}));
+vi.mock(
+  './hooks/useCommitDetailExtra',
+  async () => (await import('../../test/graphPage')).idleCommitDetailExtra,
+);
 
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
+stubClientSize();
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/?owner=o&repo=r');

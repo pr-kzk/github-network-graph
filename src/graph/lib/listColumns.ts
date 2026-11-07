@@ -1,6 +1,6 @@
 const SUBJECT_MIN_WIDTH = 200;
-const SHA_WIDTH = 64;
-const DATE_WIDTH = 64;
+export const SHA_WIDTH = 64;
+export const DATE_WIDTH = 64;
 const AUTHOR_WIDTH = 128;
 const AVATAR_ONLY_WIDTH = 32;
 
@@ -9,6 +9,10 @@ export type ListColumns = {
   date: boolean;
   authorName: boolean;
 };
+
+export function authorColumnWidth(showName: boolean): number {
+  return showName ? AUTHOR_WIDTH : AVATAR_ONLY_WIDTH;
+}
 
 export function visibleColumns(textAreaWidth: number): ListColumns {
   if (textAreaWidth <= 0) return { sha: true, date: true, authorName: true };

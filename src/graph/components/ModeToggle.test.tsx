@@ -44,4 +44,31 @@ describe('ModeToggle', () => {
     await userEvent.keyboard('{Escape}');
     expect(help).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('hides the explanation when the user clicks elsewhere', async () => {
+    render(<ModeToggle mode="network" onChange={vi.fn<(mode: GraphMode) => void>()} />);
+    const help = screen.getByRole('button', { name: 'About display modes' });
+    await userEvent.click(help);
+
+    await userEvent.click(document.body);
+    expect(help).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('keeps the explanation open when the user clicks inside the toggle', async () => {
+    render(<ModeToggle mode="network" onChange={vi.fn<(mode: GraphMode) => void>()} />);
+    const help = screen.getByRole('button', { name: 'About display modes' });
+    await userEvent.click(help);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Main only' }));
+    expect(help).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('hides the explanation when focus moves on with Tab', async () => {
+    render(<ModeToggle mode="network" onChange={vi.fn<(mode: GraphMode) => void>()} />);
+    const help = screen.getByRole('button', { name: 'About display modes' });
+    await userEvent.click(help);
+
+    await userEvent.tab();
+    expect(help).toHaveAttribute('aria-expanded', 'false');
+  });
 });

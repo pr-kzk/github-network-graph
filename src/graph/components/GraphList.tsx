@@ -10,7 +10,7 @@ import { useRevealSelectedRow } from '../hooks/useRevealSelectedRow';
 import type { GraphErrorInfo } from '../lib/networkApi';
 import { ROW_HEIGHT, createGraphLayout } from '../lib/graphMetrics';
 import { collectPath, priorityLanes } from '../lib/laneBudget';
-import { visibleColumns } from '../lib/listColumns';
+import { authorColumnWidth, DATE_WIDTH, SHA_WIDTH, visibleColumns } from '../lib/listColumns';
 import type { GraphView, ViewCommit } from '../lib/transform.types';
 
 const LOAD_MORE_THRESHOLD = 20;
@@ -127,15 +127,19 @@ function GraphListImpl({
             </abbr>
           ) : null}
         </div>
-        {columns.authorName ? (
-          <div className="w-32 shrink-0 pr-3">{t('graph_column_author')}</div>
-        ) : (
-          <div className="w-8 shrink-0" />
-        )}
+        <div style={{ width: authorColumnWidth(columns.authorName) }} className="shrink-0 pr-3">
+          {columns.authorName ? t('graph_column_author') : null}
+        </div>
         <div className="min-w-0 flex-1 truncate pr-3">{t('graph_column_subject')}</div>
-        {columns.sha ? <div className="w-16 shrink-0 pr-3">{t('graph_column_sha')}</div> : null}
+        {columns.sha ? (
+          <div style={{ width: SHA_WIDTH }} className="shrink-0 pr-3">
+            {t('graph_column_sha')}
+          </div>
+        ) : null}
         {columns.date ? (
-          <div className="w-16 shrink-0 pr-3 text-right">{t('graph_column_date')}</div>
+          <div style={{ width: DATE_WIDTH }} className="shrink-0 pr-3 text-right">
+            {t('graph_column_date')}
+          </div>
         ) : null}
       </div>
       <div ref={scrollRef} className="relative flex-1 overflow-auto">

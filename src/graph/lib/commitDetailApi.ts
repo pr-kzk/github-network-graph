@@ -8,6 +8,7 @@ import {
 } from './commitDetailCache';
 import {
   errorFromResponse,
+  fetchOrNetworkError,
   isCommitDetailError,
   makeError,
   MAX_LISTED_FILES,
@@ -116,16 +117,11 @@ async function fetchViaApi(owner: string, repo: string, sha: string): Promise<Co
     repo,
   )}/commits/${encodeURIComponent(sha)}`;
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      credentials: 'omit',
-      headers: { Accept: 'application/vnd.github+json' },
-      cache: 'no-store',
-    });
-  } catch {
-    throw makeError('network');
-  }
+  const response = await fetchOrNetworkError(url, {
+    credentials: 'omit',
+    headers: { Accept: 'application/vnd.github+json' },
+    cache: 'no-store',
+  });
 
   const failure = errorFromResponse(response);
   if (failure) throw failure;

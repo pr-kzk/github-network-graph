@@ -1,7 +1,9 @@
 import type { ComponentProps } from 'react';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { makeCommit, makeView } from '../../../test/factories';
+import { stubClientSize } from '../../../test/graphPage';
 import type * as ElementWidth from '../hooks/useElementWidth';
 import { GraphList } from './GraphList';
 import type { GraphView } from '../lib/transform.types';
@@ -18,61 +20,27 @@ vi.mock('../hooks/useElementWidth', async (importOriginal) => {
   };
 });
 
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
+stubClientSize();
 
-afterAll(() => {
-  vi.restoreAllMocks();
-});
-
-function makeView(): GraphView {
-  return {
-    commits: [
-      {
-        sha: 'a'.repeat(40),
-        shortSha: 'aaaaaaa',
-        row: 0,
-        lane: 0,
-        time: 1,
-        dateLabel: '',
-        authorName: 'alice',
-        authorLogin: 'alice',
-        authorRepo: '',
-        message: 'first\n\nbody',
-        subject: 'first',
-        parents: [],
-        refs: [],
-      },
-      {
-        sha: 'b'.repeat(40),
-        shortSha: 'bbbbbbb',
-        row: 1,
-        lane: 0,
-        time: 0,
-        dateLabel: '',
-        authorName: 'bob',
-        authorLogin: 'bob',
-        authorRepo: '',
-        message: '',
-        subject: '',
-        parents: [],
-        refs: [],
-      },
-    ],
-    edges: [],
-    laneCount: 1,
-    branches: [],
-    forkBranches: [],
-  };
+function sampleView(): GraphView {
+  return makeView([
+    makeCommit('a'.repeat(40), {
+      row: 0,
+      time: 1,
+      authorName: 'alice',
+      authorLogin: 'alice',
+      message: 'first\n\nbody',
+      subject: 'first',
+    }),
+    makeCommit('b'.repeat(40), { row: 1, authorName: 'bob', authorLogin: 'bob' }),
+  ]);
 }
 
 const A = 'a'.repeat(40);
 const B = 'b'.repeat(40);
 
 function renderList(overrides: Partial<ComponentProps<typeof GraphList>> = {}) {
-  const view = overrides.view ?? makeView();
+  const view = overrides.view ?? sampleView();
   const props: ComponentProps<typeof GraphList> = {
     view,
     selectedSha: null,
@@ -214,7 +182,7 @@ describe('GraphList', () => {
   });
 
   it('keeps the graph column within a share of the list width however many lanes exist', () => {
-    const view = { ...makeView(), laneCount: 600 };
+    const view = { ...sampleView(), laneCount: 600 };
     const { container } = renderList({ view });
     const svg = container.querySelector('svg');
     expect(Number(svg?.getAttribute('width'))).toBe(240);
@@ -250,7 +218,7 @@ describe('GraphList', () => {
 
   describe('with more lanes than fit', () => {
     function crowdedView(): GraphView {
-      const base = makeView();
+      const base = sampleView();
       const commits = Array.from({ length: 120 }, (_, row) => ({
         ...base.commits[0],
         sha: `${row}`.padStart(40, '0'),

@@ -191,13 +191,20 @@ function reducer(state: RawState, action: Action): RawState {
   }
 }
 
-function pageOptions(signal: AbortSignal, dispatch: Dispatch<Action>) {
-  return {
-    signal,
-    onRetry: (notice: RetryNotice) => {
-      if (!signal.aborted) dispatch({ type: 'retry', notice });
-    },
+function retryDispatcher(dispatch: Dispatch<Action>, isStale: () => boolean) {
+  return (notice: RetryNotice) => {
+    if (!isStale()) dispatch({ type: 'retry', notice });
   };
+}
+
+function pageOptions(signal: AbortSignal, dispatch: Dispatch<Action>) {
+  return { signal, onRetry: retryDispatcher(dispatch, () => signal.aborted) };
+}
+
+function reportGraphError(err: unknown, phase: 'init' | 'older'): GraphErrorInfo {
+  const info = toGraphError(err, t('error_unknown_body'));
+  trackEvent('graph_error', { phase, kind: info.kind });
+  return info;
 }
 
 const LOADING: Extract<RawState, { status: 'loading' }> = {
@@ -263,9 +270,7 @@ export function useGraphData({
         onPending: (attempt) => {
           if (!cancelled) dispatch({ type: 'pending', attempt });
         },
-        onRetry: (notice) => {
-          if (!cancelled) dispatch({ type: 'retry', notice });
-        },
+        onRetry: retryDispatcher(dispatch, () => cancelled),
       })
       .then(({ meta: loadedMeta, commits, nextEnd }) => {
         if (cancelled) return;
@@ -274,8 +279,7 @@ export function useGraphData({
       })
       .catch((err: unknown) => {
         if (cancelled) return;
-        const info = toGraphError(err, t('error_unknown_body'));
-        trackEvent('graph_error', { phase: 'init', kind: info.kind });
+        const info = reportGraphError(err, 'init');
         if (refreshing) {
           dispatch({ type: 'refresh/error' });
           onRefreshFailedRef.current?.();
@@ -304,9 +308,7 @@ export function useGraphData({
       })
       .catch((err: unknown) => {
         if (generation.current !== startedIn || signal.aborted) return;
-        const info = toGraphError(err, t('error_unknown_body'));
-        trackEvent('graph_error', { phase: 'older', kind: info.kind });
-        dispatch({ type: 'older/error', error: info });
+        dispatch({ type: 'older/error', error: reportGraphError(err, 'older') });
       });
   }, [client, owner, repo]);
 
@@ -346,9 +348,7 @@ export function useGraphData({
           dispatch({ type: 'seek/end' });
         } catch (err: unknown) {
           if (superseded()) return;
-          const info = toGraphError(err, t('error_unknown_body'));
-          trackEvent('graph_error', { phase: 'older', kind: info.kind });
-          dispatch({ type: 'seek/end', error: info });
+          dispatch({ type: 'seek/end', error: reportGraphError(err, 'older') });
         }
       })();
     },

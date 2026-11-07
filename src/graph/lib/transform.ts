@@ -1,5 +1,6 @@
 import type { GraphMode } from '@/shared/storage';
 import type { FetchedNetwork, NetworkRawCommit } from './networkApi.types';
+import { shortSha } from './shortSha';
 import type {
   GraphBranch,
   GraphForkBranches,
@@ -20,10 +21,6 @@ const RESOLVE_DEPTH_LIMIT = 200;
 function firstLine(message: string): string {
   const idx = message.indexOf('\n');
   return idx < 0 ? message : message.slice(0, idx);
-}
-
-function shortSha(sha: string): string {
-  return sha.slice(0, 7);
 }
 
 function resolveToVisibleAncestor(

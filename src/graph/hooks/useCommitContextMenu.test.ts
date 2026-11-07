@@ -2,25 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useCommitContextMenu } from './useCommitContextMenu';
 import type { ViewCommit } from '../lib/transform.types';
-
-function makeCommit(sha: string, overrides: Partial<ViewCommit> = {}): ViewCommit {
-  return {
-    sha,
-    shortSha: sha.slice(0, 7),
-    row: 0,
-    lane: 0,
-    time: 0,
-    dateLabel: '',
-    authorName: '',
-    authorLogin: '',
-    authorRepo: '',
-    message: '',
-    subject: '',
-    parents: [],
-    refs: [],
-    ...overrides,
-  };
-}
+import { makeCommit } from '../../../test/factories';
 
 function setup(commit: ViewCommit) {
   const onCopyLink = vi.fn<(sha: string) => void>();

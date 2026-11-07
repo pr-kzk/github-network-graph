@@ -1,6 +1,7 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { stubClientSize } from '../../test/graphPage';
 import { GraphPage } from './GraphPage';
 import { copyToClipboard } from './lib/clipboard';
 import type * as NetworkApi from './lib/networkApi';
@@ -50,22 +51,16 @@ vi.mock('./lib/networkApi', async (importOriginal) => ({
   }),
 }));
 
-vi.mock('./hooks/useCommitDetailExtra', () => ({
-  useCommitDetailExtra: () => ({ state: { status: 'idle' }, retry: () => undefined }),
-}));
+vi.mock(
+  './hooks/useCommitDetailExtra',
+  async () => (await import('../../test/graphPage')).idleCommitDetailExtra,
+);
 
 vi.mock('./lib/clipboard', () => ({
   copyToClipboard: vi.fn<(text: string) => Promise<boolean>>(async () => true),
 }));
 
-beforeAll(() => {
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
-  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
-});
-
-afterAll(() => {
-  vi.restoreAllMocks();
-});
+stubClientSize();
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/?owner=o&repo=r');

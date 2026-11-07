@@ -37,6 +37,14 @@ export function makeError(
   return { kind, status, resetAt };
 }
 
+export async function fetchOrNetworkError(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw makeError('network');
+  }
+}
+
 export function isCommitDetailError(e: unknown): e is CommitDetailError {
   return isObject(e) && typeof e.kind === 'string' && ERROR_KINDS.some((kind) => kind === e.kind);
 }

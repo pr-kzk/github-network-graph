@@ -7,6 +7,7 @@ import { ModeToggle } from './ModeToggle';
 import { RepoSwitcher } from './RepoSwitcher';
 import { SearchBox, type SearchBoxProps } from './SearchBox';
 import { Spinner } from './Spinner';
+import { BUTTON_SECONDARY, FOCUS_RING } from '@/shared/ui';
 
 type GraphHeaderProps = {
   owner: string;
@@ -64,7 +65,7 @@ export function GraphHeader({
           onClick={onRefresh}
           disabled={refreshing}
           aria-busy={refreshing}
-          className="flex items-center gap-1.5 rounded-md bg-slate-200 px-3 py-1 text-xs text-slate-800 hover:bg-slate-300 disabled:cursor-wait disabled:opacity-80 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+          className={`flex items-center gap-1.5 px-3 py-1 text-xs disabled:cursor-wait disabled:opacity-80 ${BUTTON_SECONDARY}`}
         >
           {refreshing ? <Spinner /> : null}
           {refreshing ? t('graph_status_refreshing') : t('graph_refresh')}
@@ -72,7 +73,7 @@ export function GraphHeader({
         <button
           type="button"
           onClick={onShowShortcuts}
-          className="rounded-md bg-slate-200 px-3 py-1 text-xs text-slate-800 hover:bg-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+          className={`px-3 py-1 text-xs ${BUTTON_SECONDARY} ${FOCUS_RING}`}
         >
           {t('graph_shortcuts_button')}
         </button>

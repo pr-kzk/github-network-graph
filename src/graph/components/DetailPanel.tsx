@@ -1,6 +1,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from 'react';
 import { t } from '@/shared/i18n';
 import type { DetailLayout } from '../hooks/useDetailLayout';
+import { FOCUS_RING_FLUSH, FOCUS_RING_INSET } from '@/shared/ui';
 
 const KEYBOARD_STEP = 24;
 
@@ -69,7 +70,7 @@ export function DetailPanel({ layout, panelRef, hasSelection, children }: Detail
       aria-label={t('commit_detail_panel_label')}
       style={collapsed ? undefined : { width }}
       className={[
-        'relative flex shrink-0 flex-col border-l border-slate-200 bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500 dark:border-slate-800 dark:bg-slate-950/50',
+        `relative flex shrink-0 flex-col border-l border-slate-200 bg-slate-50 ${FOCUS_RING_INSET} dark:border-slate-800 dark:bg-slate-950/50`,
         collapsed ? 'w-9 items-center' : 'max-w-[50vw] min-w-[280px]',
       ].join(' ')}
     >
@@ -102,8 +103,8 @@ export function DetailPanel({ layout, panelRef, hasSelection, children }: Detail
           onClick={() => setCollapsed(!collapsed)}
           className={
             collapsed
-              ? 'flex h-full w-full flex-col items-center gap-3 pt-3 text-slate-600 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
-              : 'rounded p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-800 focus-visible:outline-2 focus-visible:outline-sky-500 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+              ? `flex h-full w-full flex-col items-center gap-3 pt-3 text-slate-600 hover:bg-slate-200 hover:text-slate-900 ${FOCUS_RING_INSET} dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100`
+              : `rounded p-1.5 text-slate-500 hover:bg-slate-200 hover:text-slate-800 ${FOCUS_RING_FLUSH} dark:hover:bg-slate-800 dark:hover:text-slate-100`
           }
         >
           <Chevron pointsLeft={collapsed} />

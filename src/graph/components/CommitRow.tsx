@@ -1,12 +1,13 @@
 import { memo, type FocusEvent, type MouseEvent } from 'react';
 import type { ViewCommit } from '../lib/transform.types';
 import { ROW_HEIGHT } from '../lib/graphMetrics';
-import type { ListColumns } from '../lib/listColumns';
+import { authorColumnWidth, DATE_WIDTH, SHA_WIDTH, type ListColumns } from '../lib/listColumns';
 import { formatRelativeFromDateString } from '@/shared/format';
 import { t } from '@/shared/i18n';
 import { AuthorAvatar } from './AuthorAvatar';
 import { HighlightedText } from './HighlightedText';
 import { RefBadge } from './RefBadge';
+import { FOCUS_RING_INSET } from '@/shared/ui';
 
 type CommitRowProps = {
   commit: ViewCommit;
@@ -82,7 +83,7 @@ function CommitRowImpl({
       className={[
         'group flex w-full cursor-pointer items-center text-left text-xs',
         isFlashing ? 'row-flash' : '',
-        'border-b border-slate-200 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-sky-500 dark:border-slate-900/40',
+        `border-b border-slate-200 ${FOCUS_RING_INSET} dark:border-slate-900/40`,
         isSelected
           ? 'bg-indigo-500/15 ring-1 ring-inset ring-indigo-500/40'
           : isMatch
@@ -93,10 +94,8 @@ function CommitRowImpl({
     >
       <span style={{ width: graphAreaWidth }} className="shrink-0" aria-hidden="true" />
       <span
-        className={[
-          'flex shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-600 dark:text-slate-400',
-          columns.authorName ? 'w-32' : 'w-8',
-        ].join(' ')}
+        style={{ width: authorColumnWidth(columns.authorName) }}
+        className="flex shrink-0 items-center gap-1.5 pr-3 text-[11px] text-slate-600 dark:text-slate-400"
         title={commit.authorLogin || commit.authorName}
       >
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} />
@@ -121,13 +120,17 @@ function CommitRowImpl({
         ))}
       </span>
       {columns.sha ? (
-        <span className="w-16 shrink-0 truncate pr-3 font-mono text-[10px] text-slate-500">
+        <span
+          style={{ width: SHA_WIDTH }}
+          className="shrink-0 truncate pr-3 font-mono text-[10px] text-slate-500"
+        >
           {mark(commit.shortSha)}
         </span>
       ) : null}
       {columns.date ? (
         <span
-          className="w-16 shrink-0 truncate whitespace-nowrap pr-3 text-right text-[10px] text-slate-500 tabular-nums"
+          style={{ width: DATE_WIDTH }}
+          className="shrink-0 truncate whitespace-nowrap pr-3 text-right text-[10px] text-slate-500 tabular-nums"
           title={commit.dateLabel || undefined}
         >
           {formatRelativeFromDateString(commit.dateLabel)}

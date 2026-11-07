@@ -1,5 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import { tWith, type MessageKey } from '@/shared/i18n';
+import { t, tWith, type MessageKey } from '@/shared/i18n';
 import type { RetryKind, RetryNotice } from '../lib/networkApi.types';
 
 const TICK_MS = 1000;
@@ -37,4 +37,16 @@ export function useRetryMessage(notice: RetryNotice | null): string | null {
     attempt: String(notice.attempt),
     max: String(notice.maxAttempts),
   });
+}
+
+export function useStatusMessage(
+  retry: RetryNotice | null,
+  pendingNotice: boolean,
+  fallback: string,
+): { text: string; retrying: boolean } {
+  const retryMessage = useRetryMessage(retry);
+  return {
+    text: retryMessage ?? (pendingNotice ? t('graph_status_pending') : fallback),
+    retrying: retryMessage !== null,
+  };
 }
