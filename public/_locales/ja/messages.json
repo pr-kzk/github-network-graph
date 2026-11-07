@@ -366,11 +366,11 @@
     }
   },
   "error_ratelimit_body": {
-    "message": "GitHub API のレート制限に達しました (未認証は 60 回/時間)。",
-    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
+    "message": "GitHub がこのブラウザからのリクエストを制限しています。",
+    "description": "Body text shown when GitHub answers HTTP 429 without saying how long to wait."
   },
   "error_pending_body": {
-    "message": "GitHub がこのリポジトリのグラフデータを生成中です。少し時間を置いてから再読み込みしてください。",
+    "message": "GitHub がこのリポジトリのグラフデータを生成中です。少し待ってから「再試行」を押してください。",
     "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
   },
   "error_unknown_body": {

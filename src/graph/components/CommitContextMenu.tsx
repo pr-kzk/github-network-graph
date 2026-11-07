@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { clampToViewport, useAnchoredPosition } from '../hooks/useAnchoredPosition';
 
 export type ContextMenuItem =
   | {
@@ -10,39 +11,49 @@ export type ContextMenuItem =
     }
   | { kind: 'separator'; id: string };
 
-export type CommitContextMenuProps = {
+type CommitContextMenuProps = {
   x: number;
   y: number;
   items: ContextMenuItem[];
   onClose: () => void;
 };
 
-const VIEWPORT_MARGIN = 8;
+function enabledItems(menu: HTMLElement | null): HTMLButtonElement[] {
+  return menu
+    ? [...menu.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]:enabled')]
+    : [];
+}
 
 export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
+  const { ref, position } = useAnchoredPosition<HTMLDivElement>(x, y, clampToViewport);
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    function place(target: HTMLElement) {
-      const rect = target.getBoundingClientRect();
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      let left = x;
-      let top = y;
-      if (left + rect.width + VIEWPORT_MARGIN > vw) left = vw - rect.width - VIEWPORT_MARGIN;
-      if (top + rect.height + VIEWPORT_MARGIN > vh) top = vh - rect.height - VIEWPORT_MARGIN;
-      if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN;
-      if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN;
-      setPos((prev) => (prev.left === left && prev.top === top ? prev : { left, top }));
+  useEffect(() => {
+    const opener = document.activeElement;
+    enabledItems(ref.current)[0]?.focus();
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, [ref]);
+
+  function handleKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      onClose();
+      return;
     }
-    place(el);
-    const observer = new ResizeObserver(() => place(el));
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [x, y]);
+    const buttons = enabledItems(ref.current);
+    if (buttons.length === 0) return;
+    const active = document.activeElement;
+    const current = active instanceof HTMLButtonElement ? buttons.indexOf(active) : -1;
+    let next: number;
+    if (e.key === 'ArrowDown') next = (current + 1) % buttons.length;
+    else if (e.key === 'ArrowUp') next = (current - 1 + buttons.length) % buttons.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = buttons.length - 1;
+    else return;
+    e.preventDefault();
+    buttons[next].focus();
+  }
 
   useEffect(() => {
     function handleDown(e: MouseEvent) {
@@ -69,7 +80,7 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
       window.removeEventListener('resize', onClose);
       window.removeEventListener('blur', onClose);
     };
-  }, [onClose]);
+  }, [ref, onClose]);
 
   return (
     <div
@@ -77,7 +88,8 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
       role="menu"
       tabIndex={-1}
       className="fixed z-50 min-w-[220px] overflow-hidden rounded-md border border-slate-300 bg-white/95 py-1 text-xs text-slate-900 shadow-xl ring-1 ring-black/10 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-100 dark:ring-black/40"
-      style={{ left: pos.left, top: pos.top }}
+      style={{ left: position.left, top: position.top }}
+      onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}
     >
       {items.map((it) => {

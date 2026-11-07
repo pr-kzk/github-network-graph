@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { NetworkApiError, createGithubNetworkClient } from './networkApi';
+import type { RetryNotice } from './networkApi.types';
+import { RETRY_AFTER_MAX_MS, RETRY_MAX_ATTEMPTS } from './requestRetry';
 
 const META_BODY = {
   nethash: 'abc123',
   focus: 0,
-  // fetchAll は `dates.length` を「コミット総数」と扱って後ろから取りに行くので、
-  // テストでは余裕のある長さを与える。
   dates: Array.from({ length: 10 }, () => '2026-05-19'),
   name: 'repo',
   users: [
@@ -117,7 +117,6 @@ describe('createGithubNetworkClient', () => {
     const client = createGithubNetworkClient();
     const result = await client.fetchAll('owner', 'repo', { maxCommits: 500, pageSize: 100 });
     expect(result.commits).toHaveLength(2);
-    // meta + 1 chunk (2 < 100 だったので追加 chunk は呼ばれない)
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -140,7 +139,6 @@ describe('createGithubNetworkClient', () => {
     const client = createGithubNetworkClient();
     const result = await client.fetchAll('owner', 'repo', { maxCommits: 10, pageSize: 2 });
     expect(result.commits).toHaveLength(2);
-    // meta + chunk(0,2) full + chunk(2,4) empty = 3 calls
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
@@ -163,6 +161,15 @@ describe('createGithubNetworkClient', () => {
     });
   });
 
+  it('reports malformed JSON structure with a localized message', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ focus: 0, dates: [], users: [] }));
+    const err = await createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e) => e);
+    expect(err.kind).toBe('shape');
+    expect(err.message).not.toMatch(/[ぁ-ん]/);
+  });
+
   it('throws shape error when response is HTML without empty-repo markers', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response('<!DOCTYPE html><html><body>something else</body></html>', {
@@ -174,7 +181,6 @@ describe('createGithubNetworkClient', () => {
     const err = await client.fetchMeta('owner', 'repo').catch((e) => e);
     expect(err).toBeInstanceOf(NetworkApiError);
     expect(err.kind).toBe('shape');
-    // メッセージから「内部 API」表現が漏れていないこと。
     expect(err.message).not.toMatch(/内部\s*API/);
   });
 
@@ -208,12 +214,32 @@ git push -u origin main</pre>
 
       const client = createGithubNetworkClient();
       const promise = client.fetchMeta('owner', 'repo');
-      // 各 202 後にバックオフを挟むので、十分に進める。
       await vi.runAllTimersAsync();
       const meta = await promise;
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(meta.nethash).toBe('abc123');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('reports each 202 retry so callers can show progress', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock
+        .mockResolvedValueOnce(new Response('', { status: 202 }))
+        .mockResolvedValueOnce(new Response('', { status: 202 }))
+        .mockResolvedValueOnce(jsonResponse(META_BODY));
+      const attempts: number[] = [];
+
+      const promise = createGithubNetworkClient().fetchMeta('owner', 'repo', {
+        onPending: (a) => attempts.push(a),
+      });
+      await vi.runAllTimersAsync();
+      await promise;
+
+      expect(attempts).toEqual([1, 2]);
     } finally {
       vi.useRealTimers();
     }
@@ -247,7 +273,7 @@ git push -u origin main</pre>
 
   it('fetchInitialPage requests [totalCount - pageSize, totalCount) and returns nextEnd', async () => {
     fetchMock
-      .mockResolvedValueOnce(jsonResponse(META_BODY)) // totalCount = 10
+      .mockResolvedValueOnce(jsonResponse(META_BODY))
       .mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
 
     const client = createGithubNetworkClient();
@@ -260,7 +286,6 @@ git push -u origin main</pre>
     expect(result.totalCount).toBe(10);
     expect(result.nextEnd).toBe(6);
     expect(result.commits).toHaveLength(2);
-    // 新→古に並び替えられている: CHUNK_BODY_PAGE1 は [sha1, sha2] で来るが逆順化されて [sha2, sha1] に
     expect(result.commits.map((c) => c.id)).toEqual(['sha2', 'sha1']);
   });
 
@@ -296,7 +321,6 @@ git push -u origin main</pre>
     );
     expect(result.nextEnd).toBe(0);
     expect(result.exhausted).toBe(true);
-    // 新→古順
     expect(result.commits.map((c) => c.id)).toEqual(['sha2', 'sha1']);
   });
 
@@ -326,8 +350,6 @@ git push -u origin main</pre>
   });
 
   it('does not double-fetch the boundary commit across initial + older pages (end is inclusive)', async () => {
-    // GitHub の chunk は end inclusive: index [start, end] を返す。
-    // URL の start/end をパースして inclusive レンジを再現するモック。
     const inclusiveChunk = (input: Parameters<typeof fetch>[0]) => {
       const u = new URL(new Request(input).url);
       if (u.pathname.endsWith('/network/meta')) {
@@ -351,11 +373,242 @@ git push -u origin main</pre>
 
     const initialIds = initial.commits.map((c) => c.id);
     const olderIds = older.commits.map((c) => c.id);
-    // total=4, pageSize=2 → initial=[sha-3, sha-2], older=[sha-1, sha-0]、重複なし。
     expect(initialIds).toEqual(['sha-3', 'sha-2']);
     expect(olderIds).toEqual(['sha-1', 'sha-0']);
     expect(initialIds.filter((id) => olderIds.includes(id))).toEqual([]);
     expect(older.nextEnd).toBe(0);
     expect(older.exhausted).toBe(true);
+  });
+});
+
+describe('transient failure handling', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const throttled = (retryAfter?: string) =>
+    new Response('', {
+      status: 429,
+      headers: retryAfter === undefined ? {} : { 'retry-after': retryAfter },
+    });
+
+  it('retries a network failure and returns the data once the connection recovers', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(jsonResponse(META_BODY));
+
+    const promise = createGithubNetworkClient().fetchMeta('owner', 'repo');
+    await vi.runAllTimersAsync();
+
+    expect((await promise).nethash).toBe('abc123');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([429, 502, 503, 504])('retries HTTP %i and succeeds afterwards', async (status) => {
+    fetchMock
+      .mockResolvedValueOnce(new Response('', { status }))
+      .mockResolvedValueOnce(jsonResponse(META_BODY));
+
+    const promise = createGithubNetworkClient().fetchMeta('owner', 'repo');
+    await vi.runAllTimersAsync();
+
+    expect((await promise).nethash).toBe('abc123');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits longer between each retry', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const result = createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    await vi.runAllTimersAsync();
+    await result;
+  });
+
+  it('gives up on a persistent network failure with a network error', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const result = createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e: unknown) => e);
+    await vi.runAllTimersAsync();
+
+    expect(await result).toMatchObject({ kind: 'network' });
+    expect(fetchMock).toHaveBeenCalledTimes(RETRY_MAX_ATTEMPTS + 1);
+  });
+
+  it('gives up on persistent throttling with a rateLimit error', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(throttled()));
+
+    const result = createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e: unknown) => e);
+    await vi.runAllTimersAsync();
+
+    expect(await result).toMatchObject({ kind: 'rateLimit', status: 429 });
+    expect(fetchMock).toHaveBeenCalledTimes(RETRY_MAX_ATTEMPTS + 1);
+  });
+
+  it('gives up on a persistent 503 with a server error', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(new Response('', { status: 503 })));
+
+    const result = createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e: unknown) => e);
+    await vi.runAllTimersAsync();
+
+    expect(await result).toMatchObject({ kind: 'server', status: 503 });
+  });
+
+  it('reports a plain 500 as a server error without retrying', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 500 }));
+
+    await expect(createGithubNetworkClient().fetchMeta('owner', 'repo')).rejects.toMatchObject({
+      kind: 'server',
+      status: 500,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry client errors', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('', { status: 400 }));
+
+    await expect(createGithubNetworkClient().fetchMeta('owner', 'repo')).rejects.toMatchObject({
+      kind: 'http',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for Retry-After given in seconds before retrying', async () => {
+    fetchMock.mockResolvedValueOnce(throttled('7')).mockResolvedValueOnce(jsonResponse(META_BODY));
+
+    const promise = createGithubNetworkClient().fetchMeta('owner', 'repo');
+    await vi.advanceTimersByTimeAsync(6999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await promise;
+  });
+
+  it('waits for Retry-After given as an HTTP date before retrying', async () => {
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+    fetchMock
+      .mockResolvedValueOnce(throttled('Thu, 01 Jan 2026 00:00:09 GMT'))
+      .mockResolvedValueOnce(jsonResponse(META_BODY));
+
+    const promise = createGithubNetworkClient().fetchMeta('owner', 'repo');
+    await vi.advanceTimersByTimeAsync(8999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await promise;
+  });
+
+  it('does not wait out a Retry-After longer than the cap and tells the user how long to wait', async () => {
+    const tooLong = String((RETRY_AFTER_MAX_MS / 1000) * 20);
+    fetchMock.mockImplementation(() => Promise.resolve(throttled(tooLong)));
+
+    const err = await createGithubNetworkClient()
+      .fetchMeta('owner', 'repo')
+      .catch((e: unknown) => e);
+
+    expect(err).toMatchObject({
+      kind: 'rateLimit',
+      message: expect.stringContaining('10'),
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('makes later requests of the same client wait out a shared cooldown', async () => {
+    fetchMock
+      .mockResolvedValueOnce(throttled('10'))
+      .mockImplementation(() => Promise.resolve(jsonResponse(META_BODY)));
+    const client = createGithubNetworkClient();
+
+    const first = client.fetchMeta('owner', 'repo');
+    await vi.advanceTimersByTimeAsync(0);
+    const second = client.fetchMeta('owner', 'other');
+    await vi.advanceTimersByTimeAsync(9999);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await Promise.all([first, second]);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('refuses immediately while a cooldown longer than the cap is running', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(throttled('3600')));
+    const client = createGithubNetworkClient();
+    await client.fetchMeta('owner', 'repo').catch(() => undefined);
+    fetchMock.mockClear();
+
+    await expect(client.fetchMeta('owner', 'repo')).rejects.toMatchObject({ kind: 'rateLimit' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('announces each retry with its attempt number and resume time', async () => {
+    const start = new Date('2026-01-01T00:00:00Z').getTime();
+    vi.setSystemTime(start);
+    fetchMock
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+      .mockResolvedValueOnce(jsonResponse(META_BODY));
+    const notices: RetryNotice[] = [];
+
+    const promise = createGithubNetworkClient().fetchMeta('owner', 'repo', {
+      onRetry: (notice) => notices.push(notice),
+    });
+    await vi.runAllTimersAsync();
+    await promise;
+
+    expect(notices).toEqual([
+      { kind: 'network', attempt: 1, maxAttempts: RETRY_MAX_ATTEMPTS, resumeAt: start + 1000 },
+      { kind: 'server', attempt: 2, maxAttempts: RETRY_MAX_ATTEMPTS, resumeAt: start + 3000 },
+    ]);
+  });
+
+  it('stops retrying when the request is aborted while waiting', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+    const controller = new AbortController();
+
+    const result = createGithubNetworkClient()
+      .fetchMeta('owner', 'repo', { signal: controller.signal })
+      .catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(0);
+    controller.abort();
+    await vi.runAllTimersAsync();
+
+    expect(await result).not.toBeInstanceOf(NetworkApiError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an aborted fetch as a network error', async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementation((_url, init) => {
+      controller.abort();
+      return Promise.reject(init?.signal?.reason);
+    });
+
+    const err = await createGithubNetworkClient()
+      .fetchMeta('owner', 'repo', { signal: controller.signal })
+      .catch((e: unknown) => e);
+
+    expect(err).not.toBeInstanceOf(NetworkApiError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

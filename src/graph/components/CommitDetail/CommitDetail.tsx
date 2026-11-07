@@ -1,32 +1,39 @@
+import { memo } from 'react';
 import { useCommitDetailExtra } from '../../hooks/useCommitDetailExtra';
+import type { ContainingRef } from '../../lib/containingRefs';
 import type { ViewCommit } from '../../lib/transform.types';
 import { formatFullDate } from '@/shared/format';
 import { t } from '@/shared/i18n';
 import { AuthorAvatar } from '../AuthorAvatar';
 import { ChangesSection } from './ChangesSection';
+import { ContainingRefsSection } from './ContainingRefsSection';
 import { CommitDetailHeader } from './CommitDetailHeader';
 import { RelationSection } from './RelationSection';
 
 export type CommitDetailProps = {
   commit: ViewCommit | null;
-  // 入力されている本家リポジトリ。アクション (GitHub で開く) と extra fetch の対象。
   owner: string;
   repo: string;
-  // この commit を親として参照している子コミット SHA。GraphPage で派生して渡す。
   childrenShas: string[];
+  containingRefs: ContainingRef[];
   onCopy: (text: string) => void;
+  onCopyLink: (sha: string) => void;
   onParentClick: (sha: string) => void;
   onChildClick: (sha: string) => void;
+  onRefClick: (sha: string) => void;
 };
 
-export function CommitDetail({
+function CommitDetailImpl({
   commit,
   owner,
   repo,
   childrenShas,
+  containingRefs,
   onCopy,
+  onCopyLink,
   onParentClick,
   onChildClick,
+  onRefClick,
 }: CommitDetailProps) {
   const { state: extra, retry } = useCommitDetailExtra({
     owner,
@@ -48,7 +55,12 @@ export function CommitDetail({
   const commitUrl = `https://github.com/${owner}/${repo}/commit/${commit.sha}`;
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-5 text-sm">
-      <CommitDetailHeader commit={commit} commitUrl={commitUrl} onCopy={onCopy} />
+      <CommitDetailHeader
+        commit={commit}
+        commitUrl={commitUrl}
+        onCopy={onCopy}
+        onCopyLink={onCopyLink}
+      />
       <div className="font-mono text-[11px] text-slate-500 break-all">{commit.sha}</div>
       <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} size={18} />
@@ -68,6 +80,7 @@ export function CommitDetail({
       <pre className="whitespace-pre-wrap break-words rounded-md bg-slate-100 p-3 font-sans text-slate-900 ring-1 ring-slate-200 dark:bg-slate-900/60 dark:text-slate-100 dark:ring-slate-800">
         {commit.message || t('commit_detail_no_message')}
       </pre>
+      <ContainingRefsSection key={commit.sha} refs={containingRefs} onClick={onRefClick} />
       <RelationSection
         title={t('commit_detail_parents_heading')}
         shas={commit.parents}
@@ -84,3 +97,5 @@ export function CommitDetail({
     </div>
   );
 }
+
+export const CommitDetail = memo(CommitDetailImpl);

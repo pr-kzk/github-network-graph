@@ -366,11 +366,11 @@
     }
   },
   "error_ratelimit_body": {
-    "message": "GitHub API rate limit reached (unauthenticated: 60 requests/hour).",
-    "description": "Body text for hitting the unauthenticated rate limit on api.github.com."
+    "message": "GitHub is limiting requests from this browser right now.",
+    "description": "Body text shown when GitHub answers HTTP 429 without saying how long to wait."
   },
   "error_pending_body": {
-    "message": "GitHub is still computing the graph data for this repository. Please try reloading in a moment.",
+    "message": "GitHub is still computing the graph data for this repository. Press Retry in a moment.",
     "description": "Body text shown when GitHub returns HTTP 202 (data still being computed) past our retry limit."
   },
   "error_unknown_body": {

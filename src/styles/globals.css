@@ -26,3 +26,23 @@
   --graph-node-stroke: #ffffff;
   --graph-node-stroke-selected: #0b0f1a;
 }
+
+@keyframes row-flash {
+  from {
+    background-color: rgb(99 102 241 / 0.5);
+  }
+  to {
+    background-color: rgb(99 102 241 / 0);
+  }
+}
+
+.row-flash {
+  animation: row-flash 1.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-flash {
+    animation: none;
+    box-shadow: inset 0 0 0 2px rgb(99 102 241 / 0.7);
+  }
+}

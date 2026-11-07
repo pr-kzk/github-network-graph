@@ -15,9 +15,19 @@ KEY FEATURES
   "Include forks" (the full network)
 • Commit detail panel with parent / child navigation and a per-file diff
   summary (additions, deletions, status)
-• Right-click a commit to copy its SHA or subject, or jump to a parent
+• Search loaded commits by subject, SHA, author or branch, with a
+  match count and one click to load older history
+• Keyboard navigation (j / k, [ / ], g / G, ? for the shortcut list)
+• Shareable links: "Copy link to this commit view" reopens the same
+  commit and mode
+• Right-click a commit to copy its SHA, subject or link, or jump to a parent
 • Recent repositories list in the toolbar popup (remove one or clear all),
   and reopening a repository focuses its existing graph tab
+• Switch repository from the graph header without going back to the popup
+• Refresh keeps your list, scroll position and selection while it updates
+• Branch menu includes fork branches; the detail panel shows which
+  branches contain the selected commit
+• Resizable, collapsible detail panel
 • System, dark and light themes
 • English and Japanese UI (automatic, based on Chrome's language setting)
 
