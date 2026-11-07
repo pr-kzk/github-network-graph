@@ -75,7 +75,12 @@ export function CommitContextMenu({ x, y, items, onClose }: CommitContextMenuPro
     >
       {items.map((it, i) => {
         if (it.kind === 'separator') {
-          return <div key={`sep-${i}`} className="my-1 border-t border-slate-200 dark:border-slate-800" />;
+          return (
+            <div
+              key={`sep-${i}`}
+              className="my-1 border-t border-slate-200 dark:border-slate-800"
+            />
+          );
         }
         return (
           <button

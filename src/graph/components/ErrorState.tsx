@@ -23,7 +23,9 @@ const HEADING_KEYS: Record<ErrorStateProps['kind'], MessageKey> = {
 export function ErrorState({ kind, message, owner, repo, onRetry }: ErrorStateProps) {
   return (
     <div className="m-6 max-w-xl rounded-lg border border-rose-300 bg-rose-50 p-6 dark:border-rose-900/40 dark:bg-rose-950/30">
-      <h2 className="text-base font-semibold text-rose-800 dark:text-rose-200">{t(HEADING_KEYS[kind])}</h2>
+      <h2 className="text-base font-semibold text-rose-800 dark:text-rose-200">
+        {t(HEADING_KEYS[kind])}
+      </h2>
       <p className="mt-2 text-sm text-rose-900/80 dark:text-rose-100/80">{message}</p>
       {owner && repo ? (
         <p className="mt-3 text-xs text-rose-800/60 dark:text-rose-200/60">

@@ -8,12 +8,7 @@ export type AuthorAvatarProps = {
   className?: string;
 };
 
-export function AuthorAvatar({
-  login,
-  size = 16,
-  alt = '',
-  className = '',
-}: AuthorAvatarProps) {
+export function AuthorAvatar({ login, size = 16, alt = '', className = '' }: AuthorAvatarProps) {
   const [failed, setFailed] = useState(false);
   const initial = (login || '?').charAt(0).toUpperCase();
   const style = { width: size, height: size };
@@ -42,7 +37,10 @@ export function AuthorAvatar({
       alt={alt}
       style={style}
       onError={() => setFailed(true)}
-      className={['shrink-0 rounded-full bg-slate-300 object-cover dark:bg-slate-700', className].join(' ')}
+      className={[
+        'shrink-0 rounded-full bg-slate-300 object-cover dark:bg-slate-700',
+        className,
+      ].join(' ')}
     />
   );
 }

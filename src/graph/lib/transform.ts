@@ -71,10 +71,7 @@ function computeFocusReachable(
   return reached;
 }
 
-export function transformNetwork(
-  data: FetchedNetwork,
-  options: TransformOptions,
-): GraphView {
+export function transformNetwork(data: FetchedNetwork, options: TransformOptions): GraphView {
   const { meta, commits } = data;
 
   // focus user 解決の戦略 (3 段):
@@ -83,9 +80,7 @@ export function transformNetwork(
   //   3) users[0] にフォールバック (慣例として root リポジトリが先頭)
   const focusUser =
     (options.inputOwner && options.inputRepo
-      ? meta.users.find(
-          (u) => u.name === options.inputOwner && u.repo === options.inputRepo,
-        )
+      ? meta.users.find((u) => u.name === options.inputOwner && u.repo === options.inputRepo)
       : undefined) ??
     meta.users[meta.focus] ??
     meta.users[0];

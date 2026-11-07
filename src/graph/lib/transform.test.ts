@@ -57,25 +57,41 @@ function makeFixture(): FetchedNetwork {
 describe('transformNetwork - repo-only', () => {
   it('keeps commits reachable from focus heads (including merged-in fork commits)', () => {
     // focus head = sha-merge から parent をたどると sha-fork も到達可能 = 「本家ブランチに含まれる」
-    const view = transformNetwork(makeFixture(), { mode: 'repo-only', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     expect(view.commits.map((c) => c.sha)).toEqual(['sha-merge', 'sha2', 'sha-fork', 'sha1']);
   });
 
   it('preserves lane separation between fork-derived and main-line commits', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'repo-only', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     expect(view.laneCount).toBe(2);
     const fork = view.commits.find((c) => c.sha === 'sha-fork')!;
     expect(fork.lane).toBe(1);
   });
 
   it('keeps direct parents of merge commits', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'repo-only', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     const merge = view.commits.find((c) => c.sha === 'sha-merge')!;
     expect(merge.parents).toEqual(['sha2', 'sha-fork']);
   });
 
   it('exposes focus owner/repo and focus heads only', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'repo-only', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     expect(view.focusOwner).toBe('owner');
     expect(view.focusRepo).toBe('repo');
     expect(view.focusHeads.map((h) => h.name)).toEqual(['main']);
@@ -84,7 +100,11 @@ describe('transformNetwork - repo-only', () => {
   it('falls back to author-index when focus heads are missing or unreachable', () => {
     const fixture = makeFixture();
     fixture.meta.users[0]!.heads = []; // 本家ヘッドを消す
-    const view = transformNetwork(fixture, { mode: 'repo-only', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(fixture, {
+      mode: 'repo-only',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     // フォールバックで author=0 のコミットのみ可視
     expect(view.commits.map((c) => c.sha)).toEqual(['sha-merge', 'sha2', 'sha1']);
   });
@@ -104,22 +124,32 @@ describe('transformNetwork - repo-only', () => {
 
 describe('transformNetwork - network mode', () => {
   it('keeps every commit', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'network', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'network',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     expect(view.commits).toHaveLength(4);
   });
 
   it('uses GitHub space directly as lane, so distinct fork lane is preserved', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'network', inputOwner: 'owner', inputRepo: 'repo' });
+    const view = transformNetwork(makeFixture(), {
+      mode: 'network',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
     const fork = view.commits.find((c) => c.sha === 'sha-fork')!;
     expect(fork.lane).toBe(1);
     expect(view.laneCount).toBe(2);
   });
 
   it('produces a merge edge from sha-merge to sha-fork (different lane)', () => {
-    const view = transformNetwork(makeFixture(), { mode: 'network', inputOwner: 'owner', inputRepo: 'repo' });
-    const toForkEdge = view.edges.find(
-      (e) => e.fromSha === 'sha-merge' && e.toSha === 'sha-fork',
-    );
+    const view = transformNetwork(makeFixture(), {
+      mode: 'network',
+      inputOwner: 'owner',
+      inputRepo: 'repo',
+    });
+    const toForkEdge = view.edges.find((e) => e.fromSha === 'sha-merge' && e.toSha === 'sha-fork');
     expect(toForkEdge).toBeDefined();
     expect(toForkEdge!.isMerge).toBe(true);
     expect(toForkEdge!.fromLane).toBe(0);

@@ -31,9 +31,7 @@ export type UseCommitDetailExtraArgs = {
 //   setState({status:'idle'/'loading'}) すると cascading render 警告になるため。
 // - fetch 自体は副作用なので useEffect 内で起動し、Promise の then 内で
 //   setState する (非同期パスは set-state-in-effect の対象外)。
-export function useCommitDetailExtra(
-  args: UseCommitDetailExtraArgs,
-): CommitDetailExtraState {
+export function useCommitDetailExtra(args: UseCommitDetailExtraArgs): CommitDetailExtraState {
   const { owner, repo, authorOwner, authorRepo, sha } = args;
 
   // 初期 state / key 計算は useState の lazy initial で 1 度きりに抑える。

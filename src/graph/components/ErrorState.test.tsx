@@ -4,9 +4,7 @@ import { ErrorState } from './ErrorState';
 
 describe('ErrorState', () => {
   it('renders the auth heading and a sign-in link', () => {
-    render(
-      <ErrorState kind="auth" message="Need login" owner="o" repo="r" onRetry={vi.fn()} />,
-    );
+    render(<ErrorState kind="auth" message="Need login" owner="o" repo="r" onRetry={vi.fn()} />);
     expect(screen.getByText('Sign in to GitHub', { selector: 'h2' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Sign in to GitHub/ })).toHaveAttribute(
       'href',

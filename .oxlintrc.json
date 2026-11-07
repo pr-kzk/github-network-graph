@@ -1,11 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "react",
-    "jsx-a11y",
-    "vitest"
-  ],
+  "plugins": ["typescript", "react", "jsx-a11y", "vitest"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -17,12 +12,7 @@
     "browser": true,
     "webextensions": true
   },
-  "ignorePatterns": [
-    "dist",
-    "releases",
-    "coverage",
-    "node_modules"
-  ],
+  "ignorePatterns": ["dist", "releases", "coverage", "node_modules"],
   "rules": {
     "no-var": "error",
     "prefer-const": "error",
@@ -54,49 +44,27 @@
     "jsx-a11y/no-noninteractive-element-to-interactive-role": [
       "error",
       {
-        "ul": [
-          "listbox",
-          "menu",
-          "menubar",
-          "radiogroup",
-          "tablist",
-          "tree",
-          "treegrid"
-        ],
-        "li": [
-          "menuitem",
-          "option",
-          "row",
-          "tab",
-          "treeitem"
-        ]
+        "ul": ["listbox", "menu", "menubar", "radiogroup", "tablist", "tree", "treegrid"],
+        "li": ["menuitem", "option", "row", "tab", "treeitem"]
       }
     ],
     "no-await-in-loop": "off"
   },
   "overrides": [
     {
-      "files": [
-        "src/graph/components/GraphList.tsx"
-      ],
+      "files": ["src/graph/components/GraphList.tsx"],
       "rules": {
         "react/incompatible-library": "off"
       }
     },
     {
-      "files": [
-        "**/*.test.{ts,tsx}",
-        "test/**"
-      ],
+      "files": ["**/*.test.{ts,tsx}", "test/**"],
       "rules": {
         "vitest/require-mock-type-parameters": "off"
       }
     },
     {
-      "files": [
-        "scripts/**",
-        "*.config.{js,ts,mjs}"
-      ],
+      "files": ["scripts/**", "*.config.{js,ts,mjs}"],
       "env": {
         "node": true
       }

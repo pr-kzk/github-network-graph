@@ -46,11 +46,11 @@ The graph view supports:
 
 ## Permissions
 
-| Permission | Why |
-| --- | --- |
-| `storage` | Save the default graph mode and the recent-repositories list locally. |
-| `activeTab` | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes. |
-| `host_permissions: https://github.com/*` | Fetch the commit network data directly from GitHub on demand. |
+| Permission                                   | Why                                                                                                                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `storage`                                    | Save the default graph mode and the recent-repositories list locally.                                                                                |
+| `activeTab`                                  | Read the URL of the active tab when you click the toolbar icon, so the popup can offer "Open this repo". Access ends when the popup closes.          |
+| `host_permissions: https://github.com/*`     | Fetch the commit network data directly from GitHub on demand.                                                                                        |
 | `host_permissions: https://api.github.com/*` | Fetch per-commit detail (stats / files) from the GitHub REST API when you select a commit. Unauthenticated, rate-limited to 60 requests/hour per IP. |
 
 No `scripting`, no content scripts, no remote code; optional opt-out anonymous diagnostics. See [PRIVACY.md](./PRIVACY.md).
@@ -66,18 +66,18 @@ Adding a new locale: create `public/_locales/<code>/messages.json` with the same
 
 ## Development
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Vite dev server with HMR |
-| `pnpm build` | Development build |
-| `pnpm build:prod` | Production build (sourcemaps hidden) |
-| `pnpm typecheck` | `tsc -b --noEmit` |
-| `pnpm lint` | Oxlint (warnings fail the run) |
-| `pnpm lint:fix` | Oxlint with safe auto-fixes |
-| `pnpm format` / `pnpm format:check` | Prettier write / check |
-| `pnpm test` | Vitest (jsdom) |
-| `pnpm test:cov` | Coverage report |
-| `pnpm package` | Build prod + zip into `releases/` |
+| Command                             | Purpose                              |
+| ----------------------------------- | ------------------------------------ |
+| `pnpm dev`                          | Vite dev server with HMR             |
+| `pnpm build`                        | Development build                    |
+| `pnpm build:prod`                   | Production build (sourcemaps hidden) |
+| `pnpm typecheck`                    | `tsc -b --noEmit`                    |
+| `pnpm lint`                         | Oxlint (warnings fail the run)       |
+| `pnpm lint:fix`                     | Oxlint with safe auto-fixes          |
+| `pnpm format` / `pnpm format:check` | Prettier write / check               |
+| `pnpm test`                         | Vitest (jsdom)                       |
+| `pnpm test:cov`                     | Coverage report                      |
+| `pnpm package`                      | Build prod + zip into `releases/`    |
 
 Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`, linted with Oxlint and formatted with Prettier. Versions live in [`package.json`](./package.json).
 

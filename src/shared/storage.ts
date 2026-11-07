@@ -175,17 +175,18 @@ export const localStore = {
 };
 
 function sameRepo(a: { owner: string; repo: string }, b: { owner: string; repo: string }) {
-  return a.owner.toLowerCase() === b.owner.toLowerCase() &&
-    a.repo.toLowerCase() === b.repo.toLowerCase();
+  return (
+    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
+  );
 }
 
 export async function recordRecentRepo(owner: string, repo: string): Promise<void> {
   if (!owner || !repo) return;
   const list = await localStore.get('recentRepos');
   const filtered = list.filter((entry) => !sameRepo(entry, { owner, repo }));
-  const next: RecentRepo[] = [
-    { owner, repo, openedAt: Date.now() },
-    ...filtered,
-  ].slice(0, MAX_RECENT_REPOS);
+  const next: RecentRepo[] = [{ owner, repo, openedAt: Date.now() }, ...filtered].slice(
+    0,
+    MAX_RECENT_REPOS,
+  );
   await localStore.set('recentRepos', next);
 }

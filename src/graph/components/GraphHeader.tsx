@@ -38,9 +38,7 @@ export function GraphHeader({
         ) : null}
       </div>
       <div className="ml-auto flex items-center gap-3">
-        {branches.length > 0 ? (
-          <BranchMenu branches={branches} onSelect={onSelectBranch} />
-        ) : null}
+        {branches.length > 0 ? <BranchMenu branches={branches} onSelect={onSelectBranch} /> : null}
         <div className="flex items-center gap-1 rounded-md bg-slate-100 p-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
           <button
             type="button"

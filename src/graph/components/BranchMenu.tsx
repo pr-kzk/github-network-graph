@@ -104,9 +104,7 @@ export function BranchMenu({ branches, onSelect }: BranchMenuProps) {
             />
           </div>
           {filtered.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-slate-500">
-              {t('graph_branch_no_match')}
-            </div>
+            <div className="px-3 py-3 text-xs text-slate-500">{t('graph_branch_no_match')}</div>
           ) : (
             <ul ref={listRef} role="listbox" className="max-h-64 overflow-auto py-1">
               {filtered.map((b, i) => (

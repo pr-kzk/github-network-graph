@@ -101,9 +101,7 @@ describe('createGithubNetworkClient', () => {
   it('normalizes parents from bare SHA strings', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({
-        commits: [
-          { id: 'sha-a', author: 0, time: 1, space: 0, parents: ['sha-b'], message: 'a' },
-        ],
+        commits: [{ id: 'sha-a', author: 0, time: 1, space: 0, parents: ['sha-b'], message: 'a' }],
       }),
     );
     const client = createGithubNetworkClient();

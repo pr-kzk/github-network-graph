@@ -68,17 +68,13 @@ export function clearCommitDetailCache(): void {
   cache.clear();
 }
 
-export async function fetchCommitDetail(
-  args: FetchCommitDetailArgs,
-): Promise<CommitDetailExtra> {
+export async function fetchCommitDetail(args: FetchCommitDetailArgs): Promise<CommitDetailExtra> {
   const candidates: Array<{ owner: string; repo: string }> = [];
   if (args.authorOwner && args.authorRepo) {
     candidates.push({ owner: args.authorOwner, repo: args.authorRepo });
   }
   // 本家がフォールバック (author のリポと一致する場合は重複しない)
-  if (
-    !candidates.some((c) => c.owner === args.owner && c.repo === args.repo)
-  ) {
+  if (!candidates.some((c) => c.owner === args.owner && c.repo === args.repo)) {
     candidates.push({ owner: args.owner, repo: args.repo });
   }
 
