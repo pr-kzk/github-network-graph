@@ -72,12 +72,14 @@ Adding a new locale: create `public/_locales/<code>/messages.json` with the same
 | `pnpm build` | Development build |
 | `pnpm build:prod` | Production build (sourcemaps hidden) |
 | `pnpm typecheck` | `tsc -b --noEmit` |
-| `pnpm lint` | ESLint |
+| `pnpm lint` | Oxlint (warnings fail the run) |
+| `pnpm lint:fix` | Oxlint with safe auto-fixes |
+| `pnpm format` / `pnpm format:check` | Prettier write / check |
 | `pnpm test` | Vitest (jsdom) |
 | `pnpm test:cov` | Coverage report |
 | `pnpm package` | Build prod + zip into `releases/` |
 
-Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`. Versions live in [`package.json`](./package.json).
+Stack: Vite + React + TypeScript + Tailwind CSS + `@crxjs/vite-plugin`, linted with Oxlint and formatted with Prettier. Versions live in [`package.json`](./package.json).
 
 ## Project layout
 

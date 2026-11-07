@@ -1,0 +1,105 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "react",
+    "jsx-a11y",
+    "vitest"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "env": {
+    "builtin": true,
+    "es2022": true,
+    "browser": true,
+    "webextensions": true
+  },
+  "ignorePatterns": [
+    "dist",
+    "releases",
+    "coverage",
+    "node_modules"
+  ],
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "off",
+    "typescript/consistent-type-imports": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    "react/react-in-jsx-scope": "off",
+    "react/only-export-components": [
+      "warn",
+      {
+        "allowConstantExport": true
+      }
+    ],
+    "no-underscore-dangle": "off",
+    "no-array-index-key": "off",
+    "react/exhaustive-effect-dependencies": "off",
+    "jsx-a11y/prefer-tag-over-role": "off",
+    "jsx-a11y/label-has-associated-control": [
+      "error",
+      {
+        "depth": 3
+      }
+    ],
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": [
+      "error",
+      {
+        "ul": [
+          "listbox",
+          "menu",
+          "menubar",
+          "radiogroup",
+          "tablist",
+          "tree",
+          "treegrid"
+        ],
+        "li": [
+          "menuitem",
+          "option",
+          "row",
+          "tab",
+          "treeitem"
+        ]
+      }
+    ],
+    "no-await-in-loop": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/graph/components/GraphList.tsx"
+      ],
+      "rules": {
+        "react/incompatible-library": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.test.{ts,tsx}",
+        "test/**"
+      ],
+      "rules": {
+        "vitest/require-mock-type-parameters": "off"
+      }
+    },
+    {
+      "files": [
+        "scripts/**",
+        "*.config.{js,ts,mjs}"
+      ],
+      "env": {
+        "node": true
+      }
+    }
+  ]
+}
