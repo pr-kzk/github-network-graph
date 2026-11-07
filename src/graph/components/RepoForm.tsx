@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { t } from '@/shared/i18n';
 import { parseRepoFromInput } from '../lib/parseUrl';
 
-export type RepoFormProps = {
+type RepoFormProps = {
   initialValue?: string;
   onSubmit: (owner: string, repo: string) => void;
 };

@@ -50,7 +50,6 @@ export function declineTelemetry(prefs: TelemetryPrefs): Promise<void> {
   return localStore.set('telemetry', { ...prefs, enabled: false, promptSeen: true });
 }
 
-// テスト環境でモジュール状態を初期化する。プロダクションコードからは呼ばないこと。
 export function resetTelemetryForTest(): void {
   enabled = false;
   initialized = false;

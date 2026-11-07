@@ -201,11 +201,7 @@ export type MessageKey =
   | 'graph_status_retry_ratelimit'
   | 'graph_status_retry_network'
   | 'graph_status_retry_server'
-  | 'graph_status_cooldown'
-  | 'popup_launcher_description'
-  | 'error_commit_notfound_body'
-  | 'error_auth_denied_body'
-  | 'error_auth_required_body';
+  | 'graph_status_cooldown';
 
 export function t(key: MessageKey, substitutions?: string | string[]): string {
   const getMessage = (

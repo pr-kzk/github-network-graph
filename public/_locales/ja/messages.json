@@ -1022,21 +1022,5 @@
         "example": "12"
       }
     }
-  },
-  "popup_launcher_description": {
-    "message": "現在のリポジトリのコミットグラフを別タブで表示します。",
-    "description": "Description for the graph launcher card."
-  },
-  "error_commit_notfound_body": {
-    "message": "コミットが見つかりません。",
-    "description": "Body text for a 404 on a single-commit detail fetch."
-  },
-  "error_auth_denied_body": {
-    "message": "リポジトリへのアクセスが拒否されました。",
-    "description": "Body text for a 403 (non-rate-limit) on a single-commit detail fetch."
-  },
-  "error_auth_required_body": {
-    "message": "認証が必要です。",
-    "description": "Body text for a 401 on a single-commit detail fetch."
   }
 }
