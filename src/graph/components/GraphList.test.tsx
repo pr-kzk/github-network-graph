@@ -3,31 +3,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { GraphList } from './GraphList';
 import type { GraphView } from '../lib/transform.types';
 
-// jsdom は offsetWidth/offsetHeight が常に 0 を返すため @tanstack/react-virtual が
-// 1 行も描画しない。テスト中はスクロールコンテナのサイズを偽装する。
-let originalOffsetWidth: PropertyDescriptor | undefined;
-let originalOffsetHeight: PropertyDescriptor | undefined;
-
+// jsdom はレイアウトを持たず clientWidth/clientHeight が常に 0 を返すため、
+// @tanstack/react-virtual が 1 行も描画しない。テスト中はスクロールコンテナのサイズを偽装する。
 beforeAll(() => {
-  originalOffsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
-  originalOffsetHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
-  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
-    configurable: true,
-    get: () => 800,
-  });
-  Object.defineProperty(HTMLElement.prototype, 'offsetHeight', {
-    configurable: true,
-    get: () => 600,
-  });
+  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
+  vi.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(600);
 });
 
 afterAll(() => {
-  if (originalOffsetWidth) {
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', originalOffsetWidth);
-  }
-  if (originalOffsetHeight) {
-    Object.defineProperty(HTMLElement.prototype, 'offsetHeight', originalOffsetHeight);
-  }
+  vi.restoreAllMocks();
 });
 
 function makeView(): GraphView {
