@@ -9,8 +9,9 @@ A Chrome extension (Manifest V3) that opens a VSCode-Git-Graph-style commit view
 - Browse the **commit graph** of any GitHub repository in its own tab, with virtualized rendering for large histories.
 - **Fork-aware**: choose between `Main only` (commits reachable from the focus repo's heads) and `Include forks` (full network).
 - **Commit detail panel** with parent / children navigation and a per-file diff summary (additions / deletions / status). If the changed files can't be loaded, the panel says why (for example a rate limit with its reset time) and offers Retry and Open on GitHub.
+- **Copy feedback**: copying a SHA or subject confirms with a short "Copied" notice.
 - **Recent repositories** list in the popup.
-- **Dark theme** by default.
+- **Themes**: follow your operating system, or pick the dark or light theme.
 - **Privacy-friendly.** Requests go directly to GitHub from your browser. Optional anonymous, opt-out usage and error stats — no personal data, no repository names. See [PRIVACY.md](./PRIVACY.md).
 
 ## Screenshots
@@ -42,7 +43,7 @@ The graph view supports:
 
 - Click a commit dot or row to open the detail panel.
 - Right-click for SHA / subject copy and parent jump.
-- Toggle between `Main only` / `Include forks` in the header.
+- Toggle between `Main only` / `Include forks` in the header; the `?` button next to it explains each mode (`Include forks` can be slower on large repositories).
 
 ## Permissions
 

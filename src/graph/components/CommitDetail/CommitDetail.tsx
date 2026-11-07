@@ -14,6 +14,7 @@ export type CommitDetailProps = {
   repo: string;
   // この commit を親として参照している子コミット SHA。GraphPage で派生して渡す。
   childrenShas: string[];
+  onCopy: (text: string) => void;
   onParentClick: (sha: string) => void;
   onChildClick: (sha: string) => void;
 };
@@ -23,6 +24,7 @@ export function CommitDetail({
   owner,
   repo,
   childrenShas,
+  onCopy,
   onParentClick,
   onChildClick,
 }: CommitDetailProps) {
@@ -46,7 +48,7 @@ export function CommitDetail({
   const commitUrl = `https://github.com/${owner}/${repo}/commit/${commit.sha}`;
   return (
     <div className="flex h-full flex-col gap-4 overflow-auto p-5 text-sm">
-      <CommitDetailHeader commit={commit} commitUrl={commitUrl} />
+      <CommitDetailHeader commit={commit} commitUrl={commitUrl} onCopy={onCopy} />
       <div className="font-mono text-[11px] text-slate-500 break-all">{commit.sha}</div>
       <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
         <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} size={18} />

@@ -11,9 +11,13 @@ import { ErrorState } from './components/ErrorState';
 import { GraphHeader } from './components/GraphHeader';
 import { GraphList } from './components/GraphList';
 import { RepoForm } from './components/RepoForm';
+import { Toast } from './components/Toast';
 import { useChildrenIndex } from './hooks/useChildrenIndex';
 import { useCommitContextMenu } from './hooks/useCommitContextMenu';
+import { useCopyToClipboard } from './hooks/useCopyToClipboard';
+import { useRepoDocumentTitle } from './hooks/useDocumentTitle';
 import { useGraphData } from './hooks/useGraphData';
+import { useToast } from './hooks/useToast';
 import type { GraphBranch, ViewCommit } from './lib/transform.types';
 
 // 派生 Map の deps として「コミットなし」状態の安定参照を提供する。
@@ -30,6 +34,9 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
   useTheme();
   const [owner, setOwner] = useState(initialOwner);
   const [repo, setRepo] = useState(initialRepo);
+  useRepoDocumentTitle(owner, repo);
+  const { toast, showToast } = useToast();
+  const copy = useCopyToClipboard(showToast);
   const prefs = useLocalValue('graphPrefs');
   const mode = prefs.mode;
   const [selectedSha, setSelectedSha] = useState<string | null>(null);
@@ -94,7 +101,13 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
     if (awaitingSelectedCommit && canLoadOlder) loadMore();
   }, [awaitingSelectedCommit, canLoadOlder, loadMore]);
 
-  const ctx = useCommitContextMenu({ commitBySha, owner, repo, onSelectSha: setSelectedSha });
+  const ctx = useCommitContextMenu({
+    commitBySha,
+    owner,
+    repo,
+    onSelectSha: setSelectedSha,
+    onCopy: copy,
+  });
 
   return (
     <div className="flex h-screen flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -153,12 +166,14 @@ export function GraphPage({ initialOwner, initialRepo }: GraphPageProps) {
             owner={owner}
             repo={repo}
             childrenShas={selectedCommit ? (childrenBySha.get(selectedCommit.sha) ?? []) : []}
+            onCopy={copy}
             onParentClick={(sha) => setSelectedSha(sha)}
             onChildClick={(sha) => setSelectedSha(sha)}
           />
         </aside>
       </div>
 
+      <Toast toast={toast} />
       {ctx.showTooltip && ctx.hoveredCommit ? (
         <CommitTooltip commit={ctx.hoveredCommit} x={ctx.hover!.x} y={ctx.hover!.y} />
       ) : null}

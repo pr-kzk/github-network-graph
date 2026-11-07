@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEFAULT_GRAPH_LAYOUT,
   DEFAULT_GRAPH_PREFS,
+  DETAIL_WIDTH_MAX,
+  DETAIL_WIDTH_MIN,
   DEFAULT_TELEMETRY,
   LOCAL_DEFAULTS,
   MAX_RECENT_REPOS,
   localStore,
   localStoreCache,
+  clearRecentRepos,
   recordRecentRepo,
+  removeRecentRepo,
 } from './storage';
 
 describe('localStore', () => {
@@ -19,12 +24,23 @@ describe('localStore', () => {
     expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'light' });
   });
 
-  it('back-fills missing theme on legacy graphPrefs values', async () => {
+  it('follows the system theme for users with no saved preferences', async () => {
+    expect((await localStore.get('graphPrefs')).theme).toBe('system');
+  });
+
+  it('keeps dark for legacy graphPrefs saved before themes existed', async () => {
     await chrome.storage.local.set({ graphPrefs: { mode: 'repo-only' } });
-    expect(await localStore.get('graphPrefs')).toEqual({
-      mode: 'repo-only',
-      theme: DEFAULT_GRAPH_PREFS.theme,
-    });
+    expect(await localStore.get('graphPrefs')).toEqual({ mode: 'repo-only', theme: 'dark' });
+  });
+
+  it.each(['system', 'dark', 'light'] as const)('accepts the saved %s theme', async (theme) => {
+    await chrome.storage.local.set({ graphPrefs: { mode: 'network', theme } });
+    expect((await localStore.get('graphPrefs')).theme).toBe(theme);
+  });
+
+  it('keeps dark for an unrecognised saved theme', async () => {
+    await chrome.storage.local.set({ graphPrefs: { mode: 'network', theme: 'sepia' } });
+    expect((await localStore.get('graphPrefs')).theme).toBe('dark');
   });
 
   it('returns the default recent repos when unset', async () => {
@@ -46,6 +62,51 @@ describe('localStore', () => {
       enabled: false,
       promptSeen: DEFAULT_TELEMETRY.promptSeen,
     });
+  });
+});
+
+describe('graphLayout', () => {
+  it('defaults to an automatic width and collapsed state so the window size decides', async () => {
+    expect(await localStore.get('graphLayout')).toEqual(DEFAULT_GRAPH_LAYOUT);
+  });
+
+  it('round-trips the saved layout', async () => {
+    await localStore.set('graphLayout', { detailWidth: 500, detailCollapsed: true });
+    expect(await localStore.get('graphLayout')).toEqual({
+      detailWidth: 500,
+      detailCollapsed: true,
+    });
+  });
+
+  it.each([
+    [10, DETAIL_WIDTH_MIN],
+    [5000, DETAIL_WIDTH_MAX],
+  ])('clamps a saved width of %i into the supported range', async (saved, expected) => {
+    await chrome.storage.local.set({ graphLayout: { detailWidth: saved, detailCollapsed: false } });
+    expect((await localStore.get('graphLayout')).detailWidth).toBe(expected);
+  });
+
+  it('falls back to defaults for malformed values', async () => {
+    await chrome.storage.local.set({ graphLayout: { detailWidth: 'wide', detailCollapsed: 1 } });
+    expect(await localStore.get('graphLayout')).toEqual(DEFAULT_GRAPH_LAYOUT);
+  });
+});
+
+describe('removeRecentRepo', () => {
+  it('removes only the matching entry, ignoring case', async () => {
+    await recordRecentRepo('numpy', 'numpy');
+    await recordRecentRepo('facebook', 'react');
+    await removeRecentRepo('NumPy', 'NumPy');
+    const list = await localStore.get('recentRepos');
+    expect(list.map((e) => `${e.owner}/${e.repo}`)).toEqual(['facebook/react']);
+  });
+});
+
+describe('clearRecentRepos', () => {
+  it('empties the list', async () => {
+    await recordRecentRepo('numpy', 'numpy');
+    await clearRecentRepos();
+    expect(await localStore.get('recentRepos')).toEqual([]);
   });
 });
 

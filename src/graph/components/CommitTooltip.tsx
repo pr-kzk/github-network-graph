@@ -64,9 +64,9 @@ export function CommitTooltip({ commit, x, y }: CommitTooltipProps) {
         </div>
       ) : null}
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-0.5 text-[11px]">
-        <dt className="text-slate-500">Commit</dt>
+        <dt className="text-slate-500">{t('graph_tooltip_commit')}</dt>
         <dd className="font-mono text-slate-800 dark:text-slate-200">{commit.shortSha}</dd>
-        <dt className="text-slate-500">Author</dt>
+        <dt className="text-slate-500">{t('graph_column_author')}</dt>
         <dd className="flex min-w-0 items-center gap-1.5 text-slate-800 dark:text-slate-200">
           <AuthorAvatar login={commit.authorLogin} alt={commit.authorName} size={14} />
           <span className="truncate">
@@ -78,13 +78,13 @@ export function CommitTooltip({ commit, x, y }: CommitTooltipProps) {
         </dd>
         {date ? (
           <>
-            <dt className="text-slate-500">Date</dt>
+            <dt className="text-slate-500">{t('graph_column_date')}</dt>
             <dd className="font-mono text-slate-800 dark:text-slate-200">{date}</dd>
           </>
         ) : null}
         {commit.parents.length > 0 ? (
           <>
-            <dt className="text-slate-500">Parents</dt>
+            <dt className="text-slate-500">{t('graph_tooltip_parents')}</dt>
             <dd className="truncate font-mono text-slate-800 dark:text-slate-200">
               {commit.parents.map((p) => p.slice(0, 7)).join(', ')}
             </dd>

@@ -1,13 +1,13 @@
 export type GraphMode = 'repo-only' | 'network';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'system' | 'dark' | 'light';
 
-export type GraphPrefs = {
+type GraphPrefs = {
   mode: GraphMode;
   theme: Theme;
 };
 
-export type RecentRepo = {
+type RecentRepo = {
   owner: string;
   repo: string;
   openedAt: number;
@@ -18,13 +18,25 @@ export type TelemetryPrefs = {
   promptSeen: boolean;
 };
 
+type GraphLayout = {
+  detailWidth: number | null;
+  detailCollapsed: boolean | null;
+};
+
 export type LocalSchema = {
   graphPrefs: GraphPrefs;
+  graphLayout: GraphLayout;
   recentRepos: RecentRepo[];
   telemetry: TelemetryPrefs;
 };
 
-export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'dark' };
+export const DEFAULT_GRAPH_PREFS: GraphPrefs = { mode: 'network', theme: 'system' };
+
+export const DETAIL_WIDTH_MIN = 280;
+export const DETAIL_WIDTH_MAX = 720;
+export const DEFAULT_GRAPH_LAYOUT: GraphLayout = { detailWidth: null, detailCollapsed: null };
+
+const THEME_BEFORE_THEMES_EXISTED: Theme = 'dark';
 
 export const DEFAULT_TELEMETRY: TelemetryPrefs = { enabled: true, promptSeen: false };
 
@@ -32,26 +44,32 @@ export const MAX_RECENT_REPOS = 6;
 
 export const LOCAL_DEFAULTS: LocalSchema = {
   graphPrefs: DEFAULT_GRAPH_PREFS,
+  graphLayout: DEFAULT_GRAPH_LAYOUT,
   recentRepos: [],
   telemetry: DEFAULT_TELEMETRY,
 };
 
 const LOCAL_KEYS = [
   'graphPrefs',
+  'graphLayout',
   'recentRepos',
   'telemetry',
 ] as const satisfies readonly (keyof LocalSchema)[];
+
+export function clampDetailWidth(width: number): number {
+  return Math.min(DETAIL_WIDTH_MAX, Math.max(DETAIL_WIDTH_MIN, Math.round(width)));
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isGraphMode(value: unknown): value is GraphMode {
+export function isGraphMode(value: unknown): value is GraphMode {
   return value === 'repo-only' || value === 'network';
 }
 
 function isTheme(value: unknown): value is Theme {
-  return value === 'dark' || value === 'light';
+  return value === 'system' || value === 'dark' || value === 'light';
 }
 
 function isRecentRepo(value: unknown): value is RecentRepo {
@@ -63,14 +81,26 @@ function isRecentRepo(value: unknown): value is RecentRepo {
   );
 }
 
-// chrome.storage から読んだ値は型を保証できないため、キーごとに検証して既定値で補完する。
-// 旧バージョンで保存された graphPrefs に新フィールド (theme 等) が無い場合もここで埋まる。
 const LOCAL_PARSERS: { [K in keyof LocalSchema]: (value: unknown) => LocalSchema[K] } = {
   graphPrefs: (value) => {
     const v = isRecord(value) ? value : {};
     return {
       mode: isGraphMode(v.mode) ? v.mode : DEFAULT_GRAPH_PREFS.mode,
-      theme: isTheme(v.theme) ? v.theme : DEFAULT_GRAPH_PREFS.theme,
+      theme: isTheme(v.theme)
+        ? v.theme
+        : isRecord(value)
+          ? THEME_BEFORE_THEMES_EXISTED
+          : DEFAULT_GRAPH_PREFS.theme,
+    };
+  },
+  graphLayout: (value) => {
+    const v = isRecord(value) ? value : {};
+    return {
+      detailWidth:
+        typeof v.detailWidth === 'number' && Number.isFinite(v.detailWidth)
+          ? clampDetailWidth(v.detailWidth)
+          : null,
+      detailCollapsed: typeof v.detailCollapsed === 'boolean' ? v.detailCollapsed : null,
     };
   },
   recentRepos: (value) => (Array.isArray(value) ? value.filter(isRecentRepo) : []),
@@ -92,10 +122,6 @@ export function parseLocalValue<K extends keyof LocalSchema>(
 
 type Listener = () => void;
 
-// chrome.storage.local の同期 snapshot を提供する external store。
-// React 側は useLocalValue (useSyncExternalStore) からこれを購読する。
-// 同タブの書き込みは set 時に optimistic 反映、他タブ/他コンテキストの
-// 書き込みは chrome.storage.onChanged 経由で反映される。
 class LocalStoreCache {
   private snapshots: { [K in keyof LocalSchema]: LocalSchema[K] };
   private listeners: { [K in keyof LocalSchema]: Set<Listener> };
@@ -105,7 +131,12 @@ class LocalStoreCache {
 
   constructor() {
     this.snapshots = { ...LOCAL_DEFAULTS };
-    this.listeners = { graphPrefs: new Set(), recentRepos: new Set(), telemetry: new Set() };
+    this.listeners = {
+      graphPrefs: new Set(),
+      graphLayout: new Set(),
+      recentRepos: new Set(),
+      telemetry: new Set(),
+    };
   }
 
   getSnapshot<K extends keyof LocalSchema>(key: K): LocalSchema[K] {
@@ -121,10 +152,6 @@ class LocalStoreCache {
     };
   }
 
-  // localStore.set / 内部 get からの同期書き込み (= optimistic update)。
-  // chrome.storage.onChanged で同じ値が後追いで来ても Object.is で抑止される。
-  // ここで hydrated フラグを立てておくことで、平行して走っている初回 get の
-  // 後追い解決が optimistic な新値を古い値で上書きするのを防ぐ。
   applyLocalWrite<K extends keyof LocalSchema>(key: K, value: LocalSchema[K]): void {
     this.hydrated.add(key);
     this.replaceSnapshot(key, value);
@@ -150,8 +177,6 @@ class LocalStoreCache {
       .get({ [key]: LOCAL_DEFAULTS[key] })
       .then((data: Record<string, unknown>) => {
         this.hydrating.delete(key);
-        // get 解決前に optimistic write / onChanged で hydrated が立っていたら、
-        // 自身は古い情報なので破棄する。
         if (this.hydrated.has(key)) return;
         this.hydrated.add(key);
         this.replaceSnapshot(key, parseLocalValue(key, data[key]));
@@ -175,7 +200,6 @@ class LocalStoreCache {
   }
 
   private applyExternalChange(key: keyof LocalSchema, raw: unknown): void {
-    // 外部書き込みは hydrate より新しい情報。後追いの初回 get の上書きを防ぐ。
     this.hydrated.add(key);
     this.replaceSnapshot(key, parseLocalValue(key, raw));
   }
@@ -189,10 +213,12 @@ class LocalStoreCache {
 
 export const localStoreCache = new LocalStoreCache();
 
-// vi.stubGlobal('chrome', ...) で chrome ごと差し替わるテスト環境向け。
-// プロダクションコードからは呼ばないこと。
 export function resetLocalStoreCacheForTest(): void {
   localStoreCache.reset();
+}
+
+export async function preloadLocalValues(keys: readonly (keyof LocalSchema)[]): Promise<void> {
+  await Promise.all(keys.map((key) => localStore.get(key)));
 }
 
 export const localStore = {
@@ -208,7 +234,7 @@ export const localStore = {
   },
 };
 
-function sameRepo(a: { owner: string; repo: string }, b: { owner: string; repo: string }) {
+export function isSameRepo(a: { owner: string; repo: string }, b: { owner: string; repo: string }) {
   return (
     a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
   );
@@ -217,10 +243,22 @@ function sameRepo(a: { owner: string; repo: string }, b: { owner: string; repo: 
 export async function recordRecentRepo(owner: string, repo: string): Promise<void> {
   if (!owner || !repo) return;
   const list = await localStore.get('recentRepos');
-  const filtered = list.filter((entry) => !sameRepo(entry, { owner, repo }));
+  const filtered = list.filter((entry) => !isSameRepo(entry, { owner, repo }));
   const next: RecentRepo[] = [{ owner, repo, openedAt: Date.now() }, ...filtered].slice(
     0,
     MAX_RECENT_REPOS,
   );
   await localStore.set('recentRepos', next);
+}
+
+export async function removeRecentRepo(owner: string, repo: string): Promise<void> {
+  const list = await localStore.get('recentRepos');
+  await localStore.set(
+    'recentRepos',
+    list.filter((entry) => !isSameRepo(entry, { owner, repo })),
+  );
+}
+
+export function clearRecentRepos(): Promise<void> {
+  return localStore.set('recentRepos', []);
 }

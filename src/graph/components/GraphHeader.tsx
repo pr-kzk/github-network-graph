@@ -2,6 +2,7 @@ import { t } from '@/shared/i18n';
 import type { GraphMode } from '@/shared/storage';
 import type { GraphBranch } from '../lib/transform.types';
 import { BranchMenu } from './BranchMenu';
+import { ModeToggle } from './ModeToggle';
 
 export type GraphHeaderProps = {
   owner: string;
@@ -43,32 +44,7 @@ export function GraphHeader({
         {branches.length > 0 ? (
           <BranchMenu branches={branches} selectedSha={selectedSha} onSelect={onSelectBranch} />
         ) : null}
-        <div className="flex items-center gap-1 rounded-md bg-slate-100 p-0.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-          <button
-            type="button"
-            onClick={() => onModeChange('repo-only')}
-            className={[
-              'rounded px-2.5 py-1 text-xs',
-              mode === 'repo-only'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-700 dark:text-slate-300',
-            ].join(' ')}
-          >
-            {t('graph_mode_repo_only')}
-          </button>
-          <button
-            type="button"
-            onClick={() => onModeChange('network')}
-            className={[
-              'rounded px-2.5 py-1 text-xs',
-              mode === 'network'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-700 dark:text-slate-300',
-            ].join(' ')}
-          >
-            {t('graph_mode_network')}
-          </button>
-        </div>
+        <ModeToggle mode={mode} onChange={onModeChange} />
         <button
           type="button"
           onClick={onRefresh}

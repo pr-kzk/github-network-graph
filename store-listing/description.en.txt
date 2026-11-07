@@ -17,7 +17,7 @@ KEY FEATURES
   summary (additions, deletions, status)
 • Right-click a commit to copy its SHA or subject, or jump to a parent
 • Recent repositories list in the toolbar popup
-• Dark and light themes
+• System, dark and light themes
 • English and Japanese UI (automatic, based on Chrome's language setting)
 
 WHY YOU MIGHT WANT IT

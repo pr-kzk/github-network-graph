@@ -32,6 +32,7 @@ describe('useCommitContextMenu', () => {
         owner: 'o',
         repo: 'r',
         onSelectSha: vi.fn<(sha: string) => void>(),
+        onCopy: vi.fn<(text: string) => void>(),
       }),
     );
     act(() => result.current.handlers.onContextCommit('sha1', 10, 20));
@@ -48,6 +49,7 @@ describe('useCommitContextMenu', () => {
         owner: 'o',
         repo: 'r',
         onSelectSha: vi.fn<(sha: string) => void>(),
+        onCopy: vi.fn<(text: string) => void>(),
       }),
     );
     act(() => result.current.handlers.onContextCommit('sha1', 0, 0));

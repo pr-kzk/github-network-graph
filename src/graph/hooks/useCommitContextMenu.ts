@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { t } from '@/shared/i18n';
 import type { ContextMenuItem } from '../components/CommitContextMenu';
-import { copyToClipboard } from '../lib/clipboard';
 import type { ViewCommit } from '../lib/transform.types';
 
 export type HoverState = { sha: string; x: number; y: number };
@@ -12,6 +11,7 @@ export type UseCommitContextMenuArgs = {
   owner: string;
   repo: string;
   onSelectSha: (sha: string) => void;
+  onCopy: (text: string) => void;
 };
 
 export type UseCommitContextMenuResult = {
@@ -33,6 +33,7 @@ export function useCommitContextMenu({
   owner,
   repo,
   onSelectSha,
+  onCopy,
 }: UseCommitContextMenuArgs): UseCommitContextMenuResult {
   const [hover, setHover] = useState<HoverState | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -74,19 +75,19 @@ export function useCommitContextMenu({
         kind: 'item',
         id: 'copy-sha',
         label: t('commit_detail_action_copy_sha'),
-        onClick: () => void copyToClipboard(commit.sha),
+        onClick: () => onCopy(commit.sha),
       },
       {
         kind: 'item',
         id: 'copy-short-sha',
         label: t('commit_detail_action_copy_short_sha'),
-        onClick: () => void copyToClipboard(commit.shortSha),
+        onClick: () => onCopy(commit.shortSha),
       },
       {
         kind: 'item',
         id: 'copy-subject',
         label: t('commit_detail_action_copy_subject'),
-        onClick: () => void copyToClipboard(commit.subject),
+        onClick: () => onCopy(commit.subject),
         disabled: !commit.subject,
       },
       { kind: 'separator', id: 'separator-copy' },
@@ -98,7 +99,7 @@ export function useCommitContextMenu({
         disabled: commit.parents.length === 0,
       },
     ];
-  }, [menu, commitBySha, owner, repo, onSelectSha]);
+  }, [menu, commitBySha, owner, repo, onSelectSha, onCopy]);
 
   return {
     hover,

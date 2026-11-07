@@ -103,12 +103,12 @@ export function GraphList({
         style={{ height: 24 }}
       >
         <div style={{ width: gw }} className="shrink-0 px-3">
-          Graph
+          {t('graph_column_graph')}
         </div>
-        <div className="w-32 shrink-0 pr-3">Author</div>
-        <div className="min-w-0 flex-1 truncate pr-3">Subject</div>
-        <div className="w-16 shrink-0 pr-3">SHA</div>
-        <div className="w-16 shrink-0 pr-3 text-right">Date</div>
+        <div className="w-32 shrink-0 pr-3">{t('graph_column_author')}</div>
+        <div className="min-w-0 flex-1 truncate pr-3">{t('graph_column_subject')}</div>
+        <div className="w-16 shrink-0 pr-3">{t('graph_column_sha')}</div>
+        <div className="w-16 shrink-0 pr-3 text-right">{t('graph_column_date')}</div>
       </div>
       <div ref={scrollRef} className="relative flex-1 overflow-auto">
         <div className="relative" style={{ height: totalSize }}>

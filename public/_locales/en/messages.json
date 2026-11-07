@@ -90,7 +90,7 @@
     "description": "Description of the network mode."
   },
   "options_mode_repo_only_label": {
-    "message": "Main repository only",
+    "message": "Main only",
     "description": "Radio label for the repo-only mode."
   },
   "options_mode_repo_only_desc": {
