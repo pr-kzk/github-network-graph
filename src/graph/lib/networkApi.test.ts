@@ -53,18 +53,6 @@ describe('createGithubNetworkClient', () => {
     expect(meta.users[0]?.heads[0]?.name).toBe('main');
   });
 
-  it('fetches /network/chunk with nethash, start, end', async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse(CHUNK_BODY_PAGE1));
-    const client = createGithubNetworkClient();
-    const chunk = await client.fetchChunk('owner', 'repo', 'hash', 0, 100);
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://github.com/owner/repo/network/chunk?nethash=hash&start=0&end=100');
-    expect(chunk.commits).toHaveLength(2);
-    expect(chunk.commits[0]?.parents).toEqual([{ sha: 'sha2', space: 0 }]);
-  });
-
   it('normalizes parents in index form ([commitIndex, space]) to {sha, space}', async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse({

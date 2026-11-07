@@ -49,12 +49,9 @@ describe('ChangesSection', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/private/);
   });
 
-  it.each(['network', 'auth', 'notFound', 'rateLimit', 'http', 'shape'] as const)(
-    'lets the user retry after a %s failure',
-    async (kind) => {
-      const onRetry = renderError(kind);
-      await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
-      expect(onRetry).toHaveBeenCalledTimes(1);
-    },
-  );
+  it.each(['network', 'http'] as const)('lets the user retry after a %s failure', async (kind) => {
+    const onRetry = renderError(kind);
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

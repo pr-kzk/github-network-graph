@@ -5,22 +5,24 @@ const VIEWPORT = { width: 1000, height: 800 };
 const SIZE = { width: 200, height: 100 };
 
 describe('clampToViewport', () => {
-  it('places the box at the pointer when it fits', () => {
-    expect(clampToViewport({ x: 100, y: 120 }, SIZE, VIEWPORT)).toEqual({ left: 100, top: 120 });
-  });
-
-  it('pulls the box back inside the right and bottom edges', () => {
-    expect(clampToViewport({ x: 950, y: 790 }, SIZE, VIEWPORT)).toEqual({ left: 792, top: 692 });
+  it.each([
+    ['at the pointer when it fits', { x: 100, y: 120 }, { left: 100, top: 120 }],
+    ['back inside the right and bottom edges', { x: 950, y: 790 }, { left: 792, top: 692 }],
+  ])('places the box %s', (_, pointer, expected) => {
+    expect(clampToViewport(pointer, SIZE, VIEWPORT)).toEqual(expected);
   });
 });
 
 describe('flipAroundPointer', () => {
-  it('places the box below and right of the pointer when it fits', () => {
-    expect(flipAroundPointer({ x: 100, y: 100 }, SIZE, VIEWPORT)).toEqual({ left: 114, top: 114 });
-  });
-
-  it('flips to the left and above the pointer near the bottom-right corner', () => {
-    expect(flipAroundPointer({ x: 950, y: 780 }, SIZE, VIEWPORT)).toEqual({ left: 736, top: 666 });
+  it.each([
+    ['below and right of the pointer when it fits', { x: 100, y: 100 }, { left: 114, top: 114 }],
+    [
+      'left and above the pointer near the bottom-right corner',
+      { x: 950, y: 780 },
+      { left: 736, top: 666 },
+    ],
+  ])('places the box %s', (_, pointer, expected) => {
+    expect(flipAroundPointer(pointer, SIZE, VIEWPORT)).toEqual(expected);
   });
 
   it('keeps a margin from the top-left edge', () => {

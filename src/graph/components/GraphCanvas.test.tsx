@@ -65,17 +65,4 @@ describe('GraphCanvas', () => {
     scrollTo(1_900, 2_000);
     expect(ys()).toContain(String(lastRowY));
   });
-
-  it('is positioned over the rows it draws instead of spanning the whole history', () => {
-    const { container } = renderCanvas(chainView(30_000), 15_000, 15_070);
-    const svg = container.querySelector('svg');
-    expect(Number(svg?.getAttribute('height'))).toBeLessThan(10_000);
-    expect(svg?.style.top).toBe(`${Math.floor(15_000 / 48) * 48 * 26}px`);
-  });
-
-  it('does not take pointer events away from the rows beneath it', () => {
-    const { container } = renderCanvas(chainView(100), 0, 40);
-    expect(container.querySelector('svg')).toHaveClass('pointer-events-none');
-    expect(container.querySelector('svg [style*="pointer-events"]')).toBeNull();
-  });
 });

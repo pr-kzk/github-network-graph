@@ -2,11 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { visibleColumns } from './listColumns';
 
 describe('visibleColumns', () => {
-  it('shows every column when there is room', () => {
+  it('shows every column when there is room or the width is still unknown', () => {
     expect(visibleColumns(700)).toEqual({ sha: true, date: true, authorName: true });
-  });
-
-  it('shows every column while the width is still unknown', () => {
     expect(visibleColumns(0)).toEqual({ sha: true, date: true, authorName: true });
   });
 

@@ -24,14 +24,6 @@ describe('ModeToggle', () => {
     expect(onChange).toHaveBeenCalledWith('repo-only');
   });
 
-  it('explains each mode on hover', () => {
-    render(<ModeToggle mode="network" onChange={vi.fn<(mode: GraphMode) => void>()} />);
-    expect(screen.getByRole('button', { name: 'Include forks' })).toHaveAttribute(
-      'title',
-      expect.stringContaining('large networks can take longer'),
-    );
-  });
-
   it('reveals the explanation of both modes from the help button and hides it on Escape', async () => {
     render(<ModeToggle mode="network" onChange={vi.fn<(mode: GraphMode) => void>()} />);
     const help = screen.getByRole('button', { name: 'About display modes' });

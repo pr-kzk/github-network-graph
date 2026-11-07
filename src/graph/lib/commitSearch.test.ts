@@ -16,42 +16,23 @@ describe('searchCommits', () => {
     expect(searchCommits(COMMITS, '   ')).toBe(NO_MATCHES);
   });
 
-  it('matches the subject regardless of case', () => {
-    expect(searchCommits(COMMITS, 'parser').rows).toEqual([0]);
-  });
-
-  it('matches a SHA prefix of at least four characters', () => {
-    expect(searchCommits(COMMITS, 'ef56').rows).toEqual([1]);
-  });
-
-  it('does not treat a short hex string as a SHA prefix', () => {
-    expect(searchCommits(COMMITS, 'ef5').rows).toEqual([]);
-  });
-
-  it('matches the author name', () => {
-    expect(searchCommits(COMMITS, 'alice').rows).toEqual([0]);
-  });
-
-  it('matches the author login', () => {
-    expect(searchCommits(COMMITS, 'bob-the').rows).toEqual([1]);
-  });
-
-  it('matches a ref name', () => {
-    expect(searchCommits(COMMITS, 'v2.0').rows).toEqual([2]);
-  });
-
-  it('matches a ref together with its owner name', () => {
-    expect(searchCommits(COMMITS, 'fork-owner:v2').rows).toEqual([2]);
+  it.each([
+    ['the subject regardless of case', 'parser', [0]],
+    ['a SHA prefix of at least four characters', 'ef56', [1]],
+    ['no SHA prefix shorter than four characters', 'ef5', []],
+    ['the author name', 'alice', [0]],
+    ['the author login', 'bob-the', [1]],
+    ['a ref name', 'v2.0', [2]],
+    ['a ref together with its owner name', 'fork-owner:v2', [2]],
+    ['rows in ascending order', 'e', [0, 1, 2]],
+  ])('matches %s', (_, query, rows) => {
+    expect(searchCommits(COMMITS, query).rows).toEqual(rows);
   });
 
   it('exposes matched commits by sha', () => {
     const result = searchCommits(COMMITS, 'docs');
     expect(result.shas.has(COMMITS[1].sha)).toBe(true);
     expect(result.shas.has(COMMITS[0].sha)).toBe(false);
-  });
-
-  it('lists matching rows in ascending order', () => {
-    expect(searchCommits(COMMITS, 'e').rows).toEqual([0, 1, 2]);
   });
 });
 

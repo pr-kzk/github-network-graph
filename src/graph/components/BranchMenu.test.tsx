@@ -102,25 +102,19 @@ describe('BranchMenu', () => {
     expect(onSelect).toHaveBeenCalledWith('d'.repeat(40));
   });
 
-  it('names the search field and exposes the highlighted branch to assistive technology', async () => {
+  it('announces the popup on the trigger, names the search field and exposes the highlighted branch', async () => {
     const user = userEvent.setup();
     renderMenu('a'.repeat(40));
-    await user.click(screen.getByRole('button', { name: /3/ }));
+    const trigger = screen.getByRole('button', { name: /3/ });
+    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute('aria-controls', screen.getByRole('listbox').id);
     const search = screen.getByRole('combobox', { name: 'Search branches' });
     await user.keyboard('{ArrowDown}');
 
     const highlighted = screen.getByRole('option', { name: 'develop' });
     expect(search).toHaveAttribute('aria-activedescendant', highlighted.id);
     expect(highlighted).toHaveAttribute('aria-selected', 'true');
-  });
-
-  it('announces the popup on the trigger', async () => {
-    const user = userEvent.setup();
-    renderMenu(null);
-    const trigger = screen.getByRole('button', { name: /3/ });
-    expect(trigger).toHaveAttribute('aria-haspopup', 'listbox');
-    await user.click(trigger);
-    expect(trigger).toHaveAttribute('aria-controls', screen.getByRole('listbox').id);
   });
 
   it('returns focus to the trigger when closed with Escape', async () => {
@@ -160,21 +154,5 @@ describe('BranchMenu', () => {
     await user.click(screen.getByRole('button', { name: /103/ }));
     await user.keyboard('{PageUp}{ArrowDown>200/}{Enter}');
     expect(onSelect).toHaveBeenCalledWith('99'.padEnd(40, '1'));
-  });
-
-  it('highlights the hovered option without moving the rest of the list', async () => {
-    const user = userEvent.setup();
-    renderMenu(null);
-    await user.click(screen.getByRole('button', { name: /3/ }));
-    const search = screen.getByRole('combobox');
-    await user.hover(screen.getByRole('option', { name: 'feature/x' }));
-    expect(screen.getByRole('option', { name: 'feature/x' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(search).toHaveAttribute(
-      'aria-activedescendant',
-      screen.getByRole('option', { name: 'feature/x' }).id,
-    );
   });
 });

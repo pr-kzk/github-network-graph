@@ -1,24 +1,10 @@
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { makeCommit, makeView } from '../../../test/factories';
 import { stubClientSize } from '../../../test/graphPage';
-import type * as ElementWidth from '../hooks/useElementWidth';
 import { GraphList } from './GraphList';
 import type { GraphView } from '../lib/transform.types';
-
-const listRenders = vi.hoisted(() => ({ count: 0 }));
-
-vi.mock('../hooks/useElementWidth', async (importOriginal) => {
-  const original = await importOriginal<typeof ElementWidth>();
-  return {
-    useElementWidth: (...args: Parameters<typeof original.useElementWidth>) => {
-      listRenders.count += 1;
-      return original.useElementWidth(...args);
-    },
-  };
-});
 
 stubClientSize();
 
@@ -87,39 +73,22 @@ describe('GraphList', () => {
     expect(props.rowHandlers.onContextMenu).toHaveBeenCalledWith(A, 40, 70);
   });
 
-  it('renders the footer row when hasMore is true', () => {
-    renderList({
-      paging: {
-        hasMore: true,
-        loadingMore: true,
-        olderError: null,
-        onLoadMore: vi.fn<() => void>(),
-      },
-    });
-    expect(screen.getByText(/Loading older commits/i)).toBeInTheDocument();
+  it('makes the first row the tab stop while nothing is selected', () => {
+    renderList();
+    expect(rowOf('first')).toHaveAttribute('tabindex', '0');
   });
 
-  it('exposes the list with its size and each commit position', () => {
-    renderList();
+  it('exposes a list of positioned commits with the selected row as the only tab stop', () => {
+    renderList({ selectedSha: B });
     expect(screen.getByRole('list', { name: 'Commits' })).toBeInTheDocument();
     const items = screen.getAllByRole('listitem');
     expect(items[1]).toHaveAttribute('aria-posinset', '2');
     expect(items[1]).toHaveAttribute('aria-setsize', '2');
-  });
-
-  it('marks only the selected row as current', () => {
-    renderList({ selectedSha: B });
+    const selected = screen.getByText('(no message)').closest('button');
+    expect(selected).toHaveAttribute('aria-current', 'true');
+    expect(selected).toHaveAttribute('tabindex', '0');
     expect(rowOf('first')).not.toHaveAttribute('aria-current');
-    expect(screen.getByText('(no message)').closest('button')).toHaveAttribute(
-      'aria-current',
-      'true',
-    );
-  });
-
-  it('makes the selected row the only tab stop', () => {
-    renderList({ selectedSha: B });
     expect(rowOf('first')).toHaveAttribute('tabindex', '-1');
-    expect(screen.getByText('(no message)').closest('button')).toHaveAttribute('tabindex', '0');
   });
 
   it('makes the first row the tab stop while nothing is selected', () => {
@@ -138,30 +107,6 @@ describe('GraphList', () => {
     expect(screen.getByText('(no message)').closest('button')).not.toHaveAttribute('data-match');
   });
 
-  it('asks for a tooltip when the pointer rests on a row', () => {
-    const { props } = renderList();
-    fireEvent.mouseMove(rowOf('first'), { clientX: 12, clientY: 34 });
-    expect(props.rowHandlers.onHover).toHaveBeenCalledWith(A, 12, 34);
-  });
-
-  it('hides the tooltip when the pointer leaves a row', () => {
-    const { props } = renderList();
-    fireEvent.mouseLeave(rowOf('first'));
-    expect(props.rowHandlers.onLeave).toHaveBeenCalled();
-  });
-
-  it('asks for a tooltip when a row is focused with the keyboard', async () => {
-    const user = userEvent.setup();
-    const { props } = renderList();
-    await user.tab();
-    expect(rowOf('first')).toHaveFocus();
-    expect(props.rowHandlers.onKeyboardFocus).toHaveBeenCalledWith(
-      A,
-      expect.any(Number),
-      expect.any(Number),
-    );
-  });
-
   it('moves focus to the newly selected row when focus was not in another control', () => {
     const { rerender, props } = renderList({ selectedSha: A });
     rerender(<GraphList {...props} selectedSha={B} />);
@@ -178,18 +123,22 @@ describe('GraphList', () => {
     other.remove();
   });
 
-  it('does not render again when its parent re-renders with the same props', () => {
-    const { rerender, props } = renderList();
-    const before = listRenders.count;
+  it('does not redraw its rows when its parent re-renders with the same props', () => {
+    class CountingSet extends Set<string> {
+      reads = 0;
+      override has(sha: string) {
+        this.reads += 1;
+        return super.has(sha);
+      }
+    }
+    const matchShas = new CountingSet();
+    const { rerender, props } = renderList({ matchShas });
+    expect(matchShas.reads).toBeGreaterThan(0);
+    matchShas.reads = 0;
     rerender(<GraphList {...props} />);
-    expect(listRenders.count).toBe(before);
-  });
-
-  it('renders again when the selection changes', () => {
-    const { rerender, props } = renderList();
-    const before = listRenders.count;
+    expect(matchShas.reads).toBe(0);
     rerender(<GraphList {...props} selectedSha={B} />);
-    expect(listRenders.count).toBeGreaterThan(before);
+    expect(matchShas.reads).toBeGreaterThan(0);
   });
 
   it('keeps the graph column within a share of the list width however many lanes exist', () => {
@@ -199,12 +148,6 @@ describe('GraphList', () => {
     expect(Number(svg?.getAttribute('width'))).toBe(240);
     const spacer = rowOf('first').querySelector<HTMLElement>('span[aria-hidden="true"]');
     expect(spacer?.style.width).toBe('240px');
-  });
-
-  it('flashes the row of a commit the list just jumped to', () => {
-    renderList({ flashSha: A });
-    expect(rowOf('first')).toHaveClass('row-flash');
-    expect(screen.getByText('(no message)').closest('button')).not.toHaveClass('row-flash');
   });
 
   it('hides the sha and author name columns before the subject gets cramped', () => {

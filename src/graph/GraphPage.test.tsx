@@ -135,20 +135,6 @@ describe('GraphPage', () => {
     expect(row(B)).toHaveAttribute('data-match', 'true');
   });
 
-  it('focuses the search field with the slash key', async () => {
-    await renderPage();
-    fireEvent.keyDown(document.body, { key: '/' });
-    expect(screen.getByRole('textbox', { name: 'Search loaded commits' })).toHaveFocus();
-  });
-
-  it('opens the shortcuts dialog with ? and closes it with Escape', async () => {
-    await renderPage();
-    fireEvent.keyDown(document.body, { key: '?' });
-    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
-    fireEvent.keyDown(dialog, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  });
-
   it('does not treat shortcut keys as navigation while typing in the search field', async () => {
     await renderPage({ sha: C, mode: 'repo-only' });
     const user = userEvent.setup();

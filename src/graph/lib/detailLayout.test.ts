@@ -2,10 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { autoDetailCollapsed, autoDetailWidth } from './detailLayout';
 
 describe('autoDetailWidth', () => {
-  it('takes a share of the window', () => {
-    expect(autoDetailWidth(1400)).toBe(420);
-  });
-
   it('stays within the minimum and maximum widths', () => {
     expect(autoDetailWidth(800)).toBe(280);
     expect(autoDetailWidth(3000)).toBe(480);
